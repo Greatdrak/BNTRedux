@@ -1,0 +1,440 @@
+.container {
+  min-height: 100vh;
+  padding: var(--space-4);
+  max-width: 1600px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.loadingScreen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 50vh;
+  text-align: center;
+}
+
+.loadingScreen h1 {
+  font-size: var(--font-size-3xl);
+  color: var(--accent);
+  margin-bottom: var(--space-4);
+}
+
+.loadingScreen p {
+  color: var(--muted);
+  font-size: var(--font-size-lg);
+}
+
+.mainLayout {
+  display: grid;
+  grid-template-columns: 260px 1fr 300px;
+  grid-template-rows: 1fr;
+  gap: var(--space-4);
+  flex: 1;
+  min-height: 0;
+}
+
+.leftPanel {
+  grid-column: 1;
+  grid-row: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.centerArea {
+  grid-column: 2;
+  grid-row: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  position: relative;
+  padding: var(--space-6);
+}
+
+.rightPanel {
+  grid-column: 3;
+  grid-row: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  max-height: 100vh;
+  overflow: hidden;
+}
+
+/* Space viewport — reduce heavy boxes; suggest a window into space */
+.spaceViewport {
+  width: 100%;
+  max-width: 980px;
+  min-height: 480px;
+  position: relative;
+  border-radius: 14px;
+  padding: var(--space-6);
+  background: transparent;
+}
+
+.viewportHeader {
+  text-align: center;
+  margin-bottom: var(--space-4);
+}
+
+.sectorTitle {
+  font-size: var(--font-size-2xl);
+  color: var(--accent);
+  margin-bottom: var(--space-2);
+}
+
+.sectorNumber {
+  font-size: 3.5rem;
+  font-weight: bold;
+  color: var(--text);
+  text-shadow: 0 0 15px rgba(99, 230, 190, 0.4);
+}
+
+.sectorTitle {
+  font-size: var(--font-size-2xl);
+  color: var(--accent);
+  margin-bottom: var(--space-4);
+  text-shadow: 0 0 10px rgba(99, 230, 190, 0.5);
+}
+
+.viewportControls {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-3);
+  margin: var(--space-3) 0 var(--space-5);
+}
+
+.warpGate {
+  padding: var(--space-2) var(--space-3);
+  background: var(--bgElev);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.warpGate:hover:not(:disabled) {
+  border-color: var(--accent);
+  background: rgba(99, 230, 190, 0.1);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(99, 230, 190, 0.2);
+}
+
+.warpGate:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.portInline {
+  text-align: center;
+  color: var(--accent);
+  margin-bottom: var(--space-4);
+}
+
+.portTitle {
+  font-size: var(--font-size-md);
+  color: var(--accent);
+  margin-bottom: var(--space-2);
+}
+
+.portDetails {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-2);
+  font-size: var(--font-size-sm);
+}
+
+.portResource {
+  display: flex;
+  justify-content: space-between;
+  padding: var(--space-2);
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+}
+
+.planetBelt {
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  gap: 24px;
+  margin: var(--space-5) auto var(--space-6);
+}
+
+.planetOrb {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, #c8b08a 0%, #6c5a44 40%, #2d2630 75%, #0d0d12 100%);
+  box-shadow: 0 0 20px rgba(255,255,255,0.08), 0 0 60px rgba(99,230,190,0.08);
+  transform: translateY(0);
+}
+
+.planetLabel {
+  text-align: center;
+  margin-top: 8px;
+  color: #ffc107;
+}
+
+.shipsSection {
+  width: 100%;
+  max-width: 900px;
+  margin: var(--space-4) auto 0;
+  text-align: center;
+}
+
+/* Left commands column */
+.commandsBox {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: var(--space-3);
+  color: #ffffff;
+}
+
+.commandList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.commandItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  background: var(--bgElev);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  cursor: pointer;
+  color: #ffffff;
+}
+
+.subtleNote {
+  color: var(--muted);
+  font-size: var(--font-size-xs);
+  text-align: center;
+}
+
+/* Right sidebar cards */
+.sideCard {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: var(--space-3);
+  color: #ffffff;
+}
+
+.tradeRoutesList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.tradeRouteItem {
+  background: var(--bgElev);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: var(--space-2);
+  transition: all 0.2s ease;
+}
+
+.tradeRouteItem:hover {
+  border-color: var(--accent);
+  background: rgba(0, 191, 255, 0.05);
+}
+
+.routeName {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: #ffffff;
+  margin-bottom: var(--space-1);
+}
+
+.routeStats {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: var(--font-size-xs);
+  margin-bottom: var(--space-1);
+}
+
+.routeActions {
+  display: flex;
+  justify-content: center;
+  margin-top: var(--space-1);
+}
+
+.waypointCount {
+  color: var(--muted);
+}
+
+.activeBadge {
+  background: rgba(0, 255, 0, 0.2);
+  color: #00ff00;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+}
+
+.moreRoutes {
+  text-align: center;
+  color: var(--muted);
+  font-size: var(--font-size-xs);
+  margin: var(--space-1) 0 0 0;
+  font-style: italic;
+}
+
+.executeBtn {
+  background: linear-gradient(135deg, #00bfff 0%, #0080ff 100%);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 191, 255, 0.3);
+}
+
+.executeBtn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 191, 255, 0.4);
+}
+
+.executeBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.warpList {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-2);
+}
+
+.warpLink {
+  padding: var(--space-2) var(--space-3);
+  background: var(--bgElev);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  text-align: center;
+  cursor: pointer;
+  color: #ffffff;
+}
+
+.planetTitle {
+  font-size: var(--font-size-md);
+  color: #ffc107;
+  margin-bottom: var(--space-2);
+}
+
+.planetBtn {
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  background: #ffc107;
+  border: none;
+  border-radius: var(--radius);
+  color: var(--bg);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  margin-bottom: var(--space-2);
+}
+
+.planetBtn:hover:not(:disabled) {
+  background: #e0a800;
+}
+
+.planetBtn:disabled {
+  background: var(--line);
+  color: var(--muted);
+  cursor: not-allowed;
+}
+
+.unowned {
+  color: var(--muted);
+  font-style: italic;
+  margin: 0;
+  padding: var(--space-2);
+}
+
+.costHint {
+  color: var(--muted);
+  font-size: var(--font-size-xs);
+  margin: 0;
+}
+
+.logoutButton {
+  position: fixed;
+  top: var(--space-6);
+  right: var(--space-6);
+  padding: var(--space-2) var(--space-4);
+  background: var(--danger);
+  color: white;
+  border: 1px solid var(--danger);
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-size: var(--font-size-sm);
+  transition: all 0.2s ease;
+  z-index: 1000;
+}
+
+.logoutButton:hover {
+  background: #ff4444;
+  transform: translateY(-1px);
+}
+
+/* Responsive design */
+@media (max-width: 1200px) {
+  .mainLayout {
+    grid-template-columns: 220px 1fr 260px;
+  }
+  .sectorNumber { font-size: 3rem; }
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: var(--space-2);
+  }
+  
+  .mainLayout {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto auto;
+  }
+  
+  .leftPanel,
+  .rightPanel {
+    grid-column: 1;
+    grid-row: auto;
+  }
+  
+  .centerArea {
+    grid-column: 1;
+    grid-row: 2;
+    order: 2;
+  }
+  .spaceViewport { min-height: 360px; }
+  
+  .sectorNumber {
+    font-size: 2.5rem;
+  }
+  
+  .logoutButton {
+    position: static;
+    margin-top: var(--space-4);
+    width: 100%;
+  }
+}

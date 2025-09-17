@@ -1,0 +1,6 @@
+Read /docs/CONTEXT.md. Then:
+1) small plan
+2) implement task
+3) append 3–6 lines to CONTEXT Change Log (what changed, endpoints/tables, env vars)
+4) short changelog in the PR/commit.
+Do NOT add dependencies unless asked.

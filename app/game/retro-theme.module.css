@@ -1,0 +1,49 @@
+/* Global tokens and starfield live in app/globals.css to satisfy CSS Modules purity. */
+
+/* Panels */
+.panel {
+  background: linear-gradient(180deg, var(--bnt-panelHi), var(--bnt-panel));
+  border: 1px solid var(--bnt-line);
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.panelTitle {
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  color: var(--bnt-accent);
+  margin: 0 0 8px;
+  text-transform: uppercase;
+}
+
+/* Bracketed links/buttons */
+.linkBracket, .btnBracket {
+  background: none;
+  border: none;
+  color: var(--bnt-text);
+  cursor: pointer;
+  padding: 2px 6px;
+}
+.linkBracket::before { content: '['; color: var(--bnt-accent2); }
+.linkBracket::after { content: ']'; color: var(--bnt-accent2); }
+.btnBracket::before { content: '['; color: var(--bnt-accent); }
+.btnBracket::after { content: ']'; color: var(--bnt-accent); }
+.linkBracket:hover, .btnBracket:hover { text-shadow: 0 0 8px var(--bnt-accent2); }
+.linkBracket:disabled, .btnBracket:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* Metric rows */
+.metricRow {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  letter-spacing: 0.04em;
+}
+
+/* Utility */
+.stack16 { display: flex; flex-direction: column; gap: 16px; }
+.stack8 { display: flex; flex-direction: column; gap: 8px; }
+.row8 { display: flex; gap: 8px; align-items: center; }
+.center { text-align: center; }
+.muted { color: var(--bnt-muted); }
+
+

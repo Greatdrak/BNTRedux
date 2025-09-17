@@ -1,0 +1,103 @@
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: var(--space-3);
+  width: min(720px, 95vw);
+  max-height: 70vh;
+  overflow: auto;
+}
+
+.header { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-3); }
+.close { background: var(--bgElev); border: 1px solid var(--line); color: var(--text); border-radius: var(--radius); padding: var(--space-2) var(--space-3); }
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(64px, 1fr));
+  gap: var(--space-2);
+}
+
+.cell {
+  position: relative;
+  background: var(--bgElev);
+  border: 2px solid var(--line);
+  border-radius: var(--radius);
+  padding: var(--space-2);
+  color: var(--text);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  min-height: 64px;
+  transition: box-shadow 0.15s ease, border-color 0.15s ease;
+  gap: 2px;
+}
+
+.visited { border-color: var(--accent); }
+.unvisited { opacity: 0.55; }
+.scanned::after { content: ''; position: absolute; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); bottom: 6px; right: 6px; }
+.number { 
+  font-size: var(--font-size-xs); 
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1;
+}
+.badge { position: absolute; top: 4px; right: 4px; font-size: 12px; }
+.badgeBelow { 
+  display: inline-block; 
+  font-size: 16px; 
+  line-height: 1;
+  margin: 2px 0;
+}
+
+.cell:hover, .cell:focus-visible {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(99,230,190,0.15);
+  outline: none;
+}
+
+.here {
+  position: absolute;
+  bottom: 4px;
+  left: 4px;
+  font-size: 10px;
+  color: var(--muted);
+}
+
+.planetBadge {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  font-size: 12px;
+  line-height: 1;
+}
+
+.planetOwned {
+  color: #ffc107;
+}
+
+.planetUnowned {
+  color: var(--muted);
+  opacity: 0.7;
+}
+
+.planetCount {
+  font-size: 11px;
+  color: var(--accent);
+  line-height: 1;
+  font-weight: 500;
+  opacity: 0.9;
+}
+
+

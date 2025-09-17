@@ -1,0 +1,212 @@
+:root {
+  /* Retro BNT Theme Tokens */
+  --bnt-bg: #0b0c16;
+  --bnt-star1: #0f1022;
+  --bnt-star2: #0c0d1c;
+  --bnt-panel: #15152b;
+  --bnt-panelHi: #1c1d39;
+  --bnt-line: #2a2c4d;
+  --bnt-accent: #57f0d3;
+  --bnt-accent2: #a870ff;
+  --bnt-warn: #ffd166;
+  --bnt-danger: #ff5d5d;
+  --bnt-text: #e7e9ff;
+  --bnt-muted: #a9b1d6;
+
+  /* Back-compat tokens mapped to retro */
+  --bg: var(--bnt-bg);
+  --bgElev: #0b0f18;
+  --panel: var(--bnt-panel);
+  --line: var(--bnt-line);
+  --text: var(--bnt-text);
+  --muted: var(--bnt-muted);
+  --accent: var(--bnt-accent);
+  --warn: var(--bnt-warn);
+  --danger: var(--bnt-danger);
+  
+  /* Typography */
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.875rem;
+  --font-size-base: 1rem;
+  --font-size-lg: 1.125rem;
+  --font-size-xl: 1.25rem;
+  --font-size-2xl: 1.5rem;
+  --font-size-3xl: 1.875rem;
+  
+  /* Spacing */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  
+  /* Border radius */
+  --radius: 8px;
+}
+
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+html,
+body {
+  max-width: 100vw;
+  overflow-x: hidden;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  min-height: 100vh;
+}
+
+body {
+  color: #ffffff;
+  /* Tiled starfields + nebula backdrop */
+  background-color: var(--bnt-bg);
+  background-image:
+    /* star layer 1 (dense, small) */
+    radial-gradient(1px 1px at 25px 35px, rgba(255,255,255,0.85) 1px, transparent 1.5px),
+    radial-gradient(1px 1px at 75px 90px, rgba(255,255,255,0.7) 1px, transparent 1.5px),
+    radial-gradient(1px 1px at 130px 40px, rgba(255,255,255,0.75) 1px, transparent 1.5px),
+    radial-gradient(1px 1px at 170px 80px, rgba(255,255,255,0.6) 1px, transparent 1.5px),
+    /* star layer 2 (bigger, sparser) */
+    radial-gradient(1.5px 1.5px at 60px 20px, rgba(255,255,255,0.7) 1.5px, transparent 2px),
+    radial-gradient(1.5px 1.5px at 140px 120px, rgba(255,255,255,0.6) 1.5px, transparent 2px),
+    /* nebulas */
+    radial-gradient(800px 500px at 0% 0%, var(--bnt-star1), transparent 60%),
+    radial-gradient(800px 500px at 100% 20%, var(--bnt-star2), transparent 60%);
+  background-repeat: repeat, repeat, repeat, repeat, repeat, repeat, no-repeat, no-repeat;
+  background-size: 200px 200px, 220px 220px, 260px 260px, 300px 300px, 400px 400px, 500px 500px, auto, auto;
+  min-height: 100vh;
+  background-attachment: fixed;
+}
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+/* Focus styles for accessibility */
+*:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Card component styles */
+.card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: var(--space-6);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.card:hover {
+  border-color: var(--accent);
+  box-shadow: 0 4px 16px rgba(99, 230, 190, 0.1);
+}
+
+/* Button styles */
+.btn {
+  padding: var(--space-2) var(--space-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--panel);
+  color: var(--text);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn:hover:not(:disabled) {
+  border-color: var(--accent);
+  background: var(--bgElev);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btnPrimary {
+  background: var(--accent);
+  color: var(--bg);
+  border-color: var(--accent);
+}
+
+.btnPrimary:hover:not(:disabled) {
+  background: #4dd4a8;
+}
+
+.btnDanger {
+  background: var(--danger);
+  color: white;
+  border-color: var(--danger);
+}
+
+.btnDanger:hover:not(:disabled) {
+  background: #ff4444;
+}
+
+/* Layout utilities */
+.row {
+  display: flex;
+  gap: var(--space-4);
+  align-items: center;
+}
+
+.grid {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.gridCols2 {
+  grid-template-columns: 1fr 1fr;
+}
+
+.gridCols4 {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+/* Text utilities */
+.textMuted {
+  color: var(--muted);
+  font-size: var(--font-size-sm);
+}
+
+.textAccent {
+  color: var(--accent);
+}
+
+.textWarn {
+  color: var(--warn);
+}
+
+.textDanger {
+  color: var(--danger);
+}
+
+.textCenter {
+  text-align: center;
+}
+
+/* Status styles */
+.statusSuccess {
+  color: var(--accent);
+  background: rgba(99, 230, 190, 0.1);
+  border: 1px solid var(--accent);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius);
+}
+
+.statusError {
+  color: var(--danger);
+  background: rgba(255, 93, 93, 0.1);
+  border: 1px solid var(--danger);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius);
+}

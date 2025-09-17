@@ -1,0 +1,428 @@
+.container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+  color: var(--text-primary, #ffffff);
+  padding: 2rem;
+  position: relative;
+  overflow-x: hidden;
+}
+
+.container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: 
+    radial-gradient(2px 2px at 20px 30px, #eee, transparent),
+    radial-gradient(2px 2px at 40px 70px, rgba(255,255,255,0.8), transparent),
+    radial-gradient(1px 1px at 90px 40px, #fff, transparent),
+    radial-gradient(1px 1px at 130px 80px, rgba(255,255,255,0.6), transparent),
+    radial-gradient(2px 2px at 160px 30px, #ddd, transparent);
+  background-repeat: repeat;
+  background-size: 200px 100px;
+  animation: stars 20s linear infinite;
+  opacity: 0.3;
+}
+
+@keyframes stars {
+  from { transform: translateY(0); }
+  to { transform: translateY(-100px); }
+}
+
+.hero {
+  text-align: center;
+  margin-bottom: 4rem;
+  position: relative;
+  z-index: 1;
+}
+
+.title {
+  font-size: 4rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  background: linear-gradient(45deg, #00bfff, #0080ff, #0040ff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-shadow: 0 0 30px rgba(0, 191, 255, 0.5);
+  animation: glow 2s ease-in-out infinite alternate;
+}
+
+@keyframes glow {
+  from { text-shadow: 0 0 30px rgba(0, 191, 255, 0.5); }
+  to { text-shadow: 0 0 40px rgba(0, 191, 255, 0.8); }
+}
+
+.subtitle {
+  font-size: 1.5rem;
+  color: var(--accent-secondary, #00bfff);
+  margin-bottom: 1rem;
+  font-weight: 300;
+}
+
+.description {
+  font-size: 1.1rem;
+  color: rgba(255, 255, 255, 0.8);
+  max-width: 600px;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+
+.universeSection {
+  max-width: 1200px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 1;
+}
+
+.sectionTitle {
+  font-size: 2rem;
+  text-align: center;
+  margin-bottom: 2rem;
+  color: var(--accent-primary, #00bfff);
+  border-bottom: 2px solid var(--accent-primary, #00bfff);
+  padding-bottom: 0.5rem;
+  display: inline-block;
+  width: 100%;
+}
+
+.loading, .error, .empty {
+  text-align: center;
+  padding: 2rem;
+  font-size: 1.1rem;
+}
+
+.loading {
+  color: var(--accent-secondary, #00bfff);
+}
+
+.error {
+  color: #ff4444;
+  background: rgba(255, 68, 68, 0.1);
+  border: 1px solid #ff4444;
+  border-radius: 8px;
+  margin: 1rem 0;
+}
+
+.empty {
+  color: rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  margin: 1rem 0;
+}
+
+.universeGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 2rem;
+  margin-top: 2rem;
+}
+
+.universeCard {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--accent-primary, #00bfff);
+  border-radius: 12px;
+  padding: 2rem;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  position: relative;
+  overflow: hidden;
+}
+
+.universeCard::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+  transition: left 0.5s;
+}
+
+.universeCard:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 30px rgba(0, 191, 255, 0.3);
+  border-color: var(--accent-secondary, #0080ff);
+}
+
+.universeCard:hover::before {
+  left: 100%;
+}
+
+.universeHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.universeName {
+  font-size: 1.5rem;
+  margin: 0;
+  color: var(--accent-primary, #00bfff);
+}
+
+.universeStatus {
+  background: linear-gradient(45deg, #00ff88, #00cc66);
+  color: #000;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.universeStats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.statIcon {
+  font-size: 1.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.statValue {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--accent-primary, #00bfff);
+}
+
+.statLabel {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.6);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.universeMeta {
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding-top: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.createdAt {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.9rem;
+}
+
+.joinButton {
+  width: 100%;
+  background: linear-gradient(45deg, var(--accent-primary, #00bfff), var(--accent-secondary, #0080ff));
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 1rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  box-shadow: 0 4px 15px rgba(0, 191, 255, 0.3);
+}
+
+.joinButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 191, 255, 0.4);
+}
+
+.footer {
+  text-align: center;
+  margin-top: 4rem;
+  position: relative;
+  z-index: 1;
+}
+
+.footerText {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 1rem;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .container {
+    padding: 1rem;
+  }
+  
+  .title {
+    font-size: 2.5rem;
+  }
+  
+  .subtitle {
+    font-size: 1.2rem;
+  }
+  
+  .description {
+    font-size: 1rem;
+  }
+  
+  .universeGrid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .universeCard {
+    padding: 1.5rem;
+  }
+}
+
+/* Character Section within Universe Cards */
+.characterSection {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.existingCharacter {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(0, 191, 255, 0.1);
+  border: 1px solid rgba(0, 191, 255, 0.3);
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.characterInfo {
+  flex: 1;
+}
+
+.characterName {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--accent-primary, #00bfff);
+  margin: 0 0 0.25rem 0;
+}
+
+.characterStatus {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.createCharacterSection {
+  text-align: center;
+}
+
+.createButton {
+  background: linear-gradient(45deg, var(--accent-primary, #00bfff), var(--accent-secondary, #0080ff));
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 24px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  width: 100%;
+}
+
+.createButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 191, 255, 0.4);
+}
+
+.createForm {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--accent-primary, #00bfff);
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-top: 1rem;
+  backdrop-filter: blur(10px);
+}
+
+.createForm h4 {
+  margin: 0 0 1rem 0;
+  color: var(--accent-primary, #00bfff);
+  font-size: 1.1rem;
+}
+
+.formRow {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.input {
+  flex: 1;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--accent-primary, #00bfff);
+  border-radius: 6px;
+  color: white;
+  font-size: 14px;
+}
+
+.submitButton {
+  background: linear-gradient(45deg, var(--accent-primary, #00bfff), var(--accent-secondary, #0080ff));
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.submitButton:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 15px rgba(0, 191, 255, 0.4);
+}
+
+.submitButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.cancelButton {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 6px;
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.cancelButton:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
+}
+
+.playButton {
+  background: linear-gradient(45deg, var(--accent-primary, #00bfff), var(--accent-secondary, #0080ff));
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.playButton:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 15px rgba(0, 191, 255, 0.4);
+}

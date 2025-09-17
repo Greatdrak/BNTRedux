@@ -1,0 +1,76 @@
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.panel {
+  width: min(900px, 96vw);
+  max-height: 86vh;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 16px;
+  color: #fff;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.title { color: var(--text); letter-spacing: 0.08em; text-transform: uppercase; font-size: 12px; }
+.close { background: transparent; border: 1px solid var(--line); color: #fff; padding: 4px 8px; border-radius: 6px; cursor: pointer; }
+
+.content { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.pane { border: 1px solid var(--line); border-radius: 8px; padding: 10px; }
+.paneTitle { font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 8px; color: #fff; }
+
+/* Stacked trading */
+.stack { display: grid; grid-template-columns: 1fr; gap: 12px; }
+.segmented { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.segBtn { background: transparent; color: #fff; border: none; padding: 6px 10px; cursor: pointer; }
+.segBtn + .segBtn { border-left: 1px solid var(--line); }
+.segActive { background: var(--bnt-panelHi); }
+.row { display: flex; justify-content: space-between; }
+.muted { color: var(--bnt-muted); }
+.accent { color: var(--bnt-accent); }
+
+/* Result banner */
+.result {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 8px 10px;
+  margin-bottom: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.gain { color: #4ade80; } /* green-400 */
+.loss { color: #f87171; } /* red-400 */
+.recap { font-size: 12px; color: var(--bnt-muted); }
+.recap b { color: #fff; }
+
+/* Buttons */
+.btn {
+  background: transparent;
+  color: #fff;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 8px 10px;
+  cursor: pointer;
+}
+.btn:hover { box-shadow: 0 0 0 2px rgba(127, 255, 212, 0.2) inset; }
+.btnPrimary { border-color: var(--bnt-accent); }
+
+/* Inline resource with icon */
+.res { display: inline-flex; align-items: center; gap: 6px; }
+.resIcon { opacity: 0.9; }
+.resName { text-transform: capitalize; }
+

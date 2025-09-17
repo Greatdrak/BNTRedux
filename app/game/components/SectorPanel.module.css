@@ -1,0 +1,111 @@
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: var(--space-6);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.panel h2 {
+  font-size: var(--font-size-2xl);
+  color: var(--accent);
+  margin-bottom: var(--space-6);
+  border-bottom: 1px solid var(--line);
+  padding-bottom: var(--space-3);
+}
+
+.warps h3 {
+  font-size: var(--font-size-lg);
+  color: var(--text);
+  margin-bottom: var(--space-4);
+}
+
+.warpButtons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.warpBtn {
+  padding: var(--space-3) var(--space-4);
+  background: var(--bgElev);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 80px;
+}
+
+.warpBtn:hover:not(:disabled) {
+  border-color: var(--accent);
+  background: rgba(99, 230, 190, 0.1);
+  transform: translateY(-1px);
+}
+
+.warpBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.noWarps {
+  color: var(--muted);
+  font-style: italic;
+  text-align: center;
+  padding: var(--space-4);
+}
+
+.planet {
+  margin-top: var(--space-6);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--line);
+}
+
+.planet h3 {
+  font-size: var(--font-size-lg);
+  color: var(--accent);
+  margin-bottom: var(--space-3);
+}
+
+.claimBtn,
+.manageBtn {
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  background: var(--accent);
+  border: none;
+  border-radius: var(--radius);
+  color: var(--bg);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  margin-bottom: var(--space-2);
+}
+
+.claimBtn:hover:not(:disabled),
+.manageBtn:hover:not(:disabled) {
+  background: #52d4a8;
+}
+
+.claimBtn:disabled {
+  background: var(--line);
+  color: var(--muted);
+  cursor: not-allowed;
+}
+
+.costHint {
+  color: var(--muted);
+  font-size: var(--font-size-xs);
+  text-align: center;
+  margin: 0;
+}
+
+.unowned {
+  color: var(--muted);
+  font-style: italic;
+  text-align: center;
+  margin: 0;
+  padding: var(--space-2);
+}
