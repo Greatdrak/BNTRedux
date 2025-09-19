@@ -1,4 +1,130 @@
 .container {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 24px 16px 80px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.header h1 {
+  color: #42f5b9;
+  font-size: 34px;
+  line-height: 1.2;
+  margin: 0;
+}
+
+.renameBtn {
+  background: transparent;
+  border: 1px solid #42f5b9;
+  color: #42f5b9;
+  padding: 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.topBar {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 12px;
+  background: rgba(66, 245, 185, 0.06);
+  border: 1px solid rgba(66, 245, 185, 0.25);
+  padding: 10px 12px;
+  border-radius: 8px;
+  margin-bottom: 14px;
+}
+
+.reportGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.leftCol, .rightCol {
+  background: rgba(60, 0, 70, 0.35);
+  border: 1px solid rgba(130, 60, 180, 0.5);
+  border-radius: 10px;
+  padding: 14px 16px;
+}
+
+.leftCol h3 {
+  margin: 0 0 10px 0;
+  font-size: 16px;
+  color: #e9d9ff;
+}
+
+.sectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 700;
+  color: #e9d9ff;
+  margin-bottom: 8px;
+}
+
+.subHeader {
+  margin-top: 14px;
+  margin-bottom: 6px;
+  font-weight: 700;
+  color: #e9d9ff;
+}
+
+.row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 6px 8px;
+  border-radius: 6px;
+}
+
+.row:nth-child(odd) {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.row span:first-child {
+  color: #cfc3ff;
+}
+
+.row i {
+  color: #9fe8ff;
+  font-style: italic;
+}
+
+.status {
+  margin-top: 14px;
+  color: #ffd479;
+}
+
+.loading {
+  text-align: center;
+  padding: 40px 0;
+  color: #cfc3ff;
+}
+
+.error {
+  max-width: 600px;
+  margin: 40px auto;
+  padding: 18px 16px;
+  border: 1px solid #ff6b6b;
+  border-radius: 8px;
+  background: rgba(255, 40, 40, 0.06);
+}
+
+.backBtn {
+  margin-top: 18px;
+  background: transparent;
+  border: 1px solid #cfc3ff;
+  color: #cfc3ff;
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.container {
   min-height: 100vh;
   background: var(--bg);
   color: var(--text);
@@ -258,6 +384,39 @@
 .error p {
   color: var(--muted);
   margin: 0 0 1.5rem 0;
+}
+
+/* Capacity Information Section */
+.capacitySection {
+  margin-top: 20px;
+  background: rgba(60, 0, 70, 0.35);
+  border: 1px solid rgba(130, 60, 180, 0.5);
+  border-radius: 10px;
+  padding: 14px 16px;
+}
+
+.capacitySection h3 {
+  margin: 0 0 12px 0;
+  font-size: 16px;
+  color: #e9d9ff;
+}
+
+.capacityGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+
+.capacityItem {
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 6px;
+  font-size: 14px;
+  color: #cfc3ff;
+}
+
+.capacityItem strong {
+  color: #9fe8ff;
 }
 
 /* Responsive design */

@@ -42,7 +42,13 @@ export default function ClaimPlanetModal({
         <div className={styles.content}>
           <p>Establish a colony in this sector to store and manage resources.</p>
           
-          
+          <div className={styles.costInfo}>
+            <h4>Costs:</h4>
+            <ul>
+              <li>💰 10,000 credits</li>
+              <li>⏱️ 5 turns</li>
+            </ul>
+          </div>
 
           <div className={styles.formGroup}>
             <label htmlFor="planetName">Planet Name:</label>

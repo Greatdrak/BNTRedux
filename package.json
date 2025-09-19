@@ -6,19 +6,26 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "cron": "node scripts/local-cron.js",
+    "cron:test": "node scripts/test-cron.js",
+    "setup:env": "node scripts/setup-env.js",
+    "check:turns": "node scripts/check-turns.js"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.38.0",
+    "dotenv": "^17.2.2",
     "next": "^14.0.0",
+    "node-cron": "^3.0.3",
+    "node-fetch": "^2.7.0",
     "react": "^18.0.0",
     "react-dom": "^18.0.0",
-    "@supabase/supabase-js": "^2.38.0",
     "swr": "^2.2.0"
   },
   "devDependencies": {
-    "typescript": "^5.0.0",
     "@types/node": "^20.0.0",
     "@types/react": "^18.0.0",
-    "@types/react-dom": "^18.0.0"
+    "@types/react-dom": "^18.0.0",
+    "typescript": "^5.0.0"
   }
 }

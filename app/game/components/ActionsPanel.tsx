@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import styles from './ActionsPanel.module.css'
 
 interface ActionsPanelProps {
@@ -23,6 +23,7 @@ interface ActionsPanelProps {
   player?: {
     credits: number
   }
+  shipCredits?: number
   ship?: {
     cargo: number
   }
@@ -39,7 +40,7 @@ interface ActionsPanelProps {
   defaultResource?: 'ore' | 'organics' | 'goods' | 'energy'
 }
 
-export default function ActionsPanel({ port, player, ship, inventory, onTrade, tradeLoading, lockAction, allowedResources, defaultResource }: ActionsPanelProps) {
+export default function ActionsPanel({ port, player, shipCredits, ship, inventory, onTrade, tradeLoading, lockAction, allowedResources, defaultResource }: ActionsPanelProps) {
   const [action, setAction] = useState<'buy' | 'sell'>(lockAction ?? 'buy')
   const [resource, setResource] = useState<'ore' | 'organics' | 'goods' | 'energy'>(defaultResource ?? 'ore')
   const [qty, setQty] = useState(1)
@@ -77,7 +78,7 @@ export default function ActionsPanel({ port, player, ship, inventory, onTrade, t
     // Use dynamic pricing for max buy calculation
     const price = getCurrentPrice()
     const portStock = port.stock[resource]
-    const creditsAffordable = Math.floor(player.credits / price)
+    const creditsAffordable = Math.floor((shipCredits || 0) / price)
     const currentCargo = inventory.ore + inventory.organics + inventory.goods + inventory.energy
     const remainingCargo = Math.max(0, ship.cargo - currentCargo)
     return Math.max(0, Math.min(creditsAffordable, portStock, remainingCargo))
@@ -119,8 +120,8 @@ export default function ActionsPanel({ port, player, ship, inventory, onTrade, t
   const getAfterBalance = () => {
     if (!player) return 0
     return action === 'buy' 
-      ? player.credits - getTotalCost()
-      : player.credits + getTotalCost()
+      ? (shipCredits || 0) - getTotalCost()
+      : (shipCredits || 0) + getTotalCost()
   }
 
   const getValidationError = () => {
@@ -132,28 +133,32 @@ export default function ActionsPanel({ port, player, ship, inventory, onTrade, t
     
     if (action === 'buy') {
       const totalCost = getTotalCost()
-      if (totalCost > player.credits) return `Insufficient credits (need ${totalCost.toLocaleString()}, have ${player.credits.toLocaleString()})`
-      if (qty > port.stock[resource]) return `Insufficient port stock (need ${qty}, port has ${port.stock[resource]})`
+      if (totalCost > (shipCredits || 0)) return `Insufficient credits (need ${totalCost.toLocaleString()}, have ${(shipCredits || 0).toLocaleString()})`
+      if (qty > port.stock[resource]) return `Insufficient port stock (need ${qty.toLocaleString()}, port has ${port.stock[resource].toLocaleString()})`
       // Cargo capacity
       const currentCargo = inventory.ore + inventory.organics + inventory.goods + inventory.energy
       const remainingCargo = Math.max(0, ship.cargo - currentCargo)
-      if (qty > remainingCargo) return `Insufficient cargo (need ${qty}, free ${remainingCargo})`
+      if (qty > remainingCargo) return `Insufficient cargo (need ${qty.toLocaleString()}, free ${remainingCargo.toLocaleString()})`
       return null // Valid
     } else {
-      if (qty > inventory[resource]) return `Insufficient inventory (need ${qty}, have ${inventory[resource]})`
+      if (qty > inventory[resource]) return `Insufficient inventory (need ${qty.toLocaleString()}, have ${inventory[resource].toLocaleString()})`
       return null // Valid
     }
   }
 
-  const isTradeValid = () => {
-    return getValidationError() === null
-  }
+  const validationError = useMemo(() => getValidationError(), [port, player, ship, inventory, qty, action, resource])
+  const isTradeValid = () => validationError === null
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (isTradeValid() && !tradeLoading && !transactionInProgress) {
       setTransactionInProgress(true)
-      onTrade({ action, resource, qty })
+      try {
+        await Promise.resolve(onTrade({ action, resource, qty }))
+      } finally {
+        // allow the SWR refresh to flip tradeLoading; as a safety, clear after short delay
+        setTimeout(() => setTransactionInProgress(false), 300)
+      }
     }
   }
 
@@ -281,9 +286,9 @@ export default function ActionsPanel({ port, player, ship, inventory, onTrade, t
           </div>
 
           {/* Validation Error Display */}
-          {getValidationError() && (
+          {validationError && !(tradeLoading || transactionInProgress) && (
             <div className={styles.validationError}>
-              {getValidationError()}
+              {validationError}
             </div>
           )}
           

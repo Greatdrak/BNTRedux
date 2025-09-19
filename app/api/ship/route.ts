@@ -13,17 +13,39 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const universeId = searchParams.get('universe_id')
 
-    // Get player data - filter by universe if provided
-    let playerQuery = supabaseAdmin
+    // Get universe - either specified or default to first available
+    let universe: any = null
+    
+    if (universeId) {
+      // Get specific universe
+      const { data } = await supabaseAdmin
+        .from('universes')
+        .select('id, name')
+        .eq('id', universeId)
+        .single()
+      universe = data
+    } else {
+      // Get first available universe (fallback for existing players)
+      const { data } = await supabaseAdmin
+        .from('universes')
+        .select('id, name')
+        .order('created_at', { ascending: true })
+        .limit(1)
+        .single()
+      universe = data
+    }
+    
+    if (!universe) {
+      return NextResponse.json({ error: { code: 'not_found', message: 'No universe found' } }, { status: 404 })
+    }
+
+    // Get player data - always filter by universe
+    const { data: player, error: playerError } = await supabaseAdmin
       .from('players')
       .select('id, current_sector')
       .eq('user_id', userId)
-    
-    if (universeId) {
-      playerQuery = playerQuery.eq('universe_id', universeId)
-    }
-    
-    const { data: player, error: playerError } = await playerQuery.single()
+      .eq('universe_id', universe.id)
+      .maybeSingle()
 
     if (playerError || !player) {
       console.error('Player error:', playerError)
@@ -63,9 +85,26 @@ export async function GET(request: NextRequest) {
       engine_lvl: ship.engine_lvl || 1,
       comp_lvl: ship.comp_lvl || 1,
       sensor_lvl: ship.sensor_lvl || 1,
+      power_lvl: ship.power_lvl || 1,
+      beam_lvl: ship.beam_lvl || 0,
+      torp_launcher_lvl: ship.torp_launcher_lvl || 0,
+      cloak_lvl: ship.cloak_lvl || 0,
+      armor: ship.armor || 0,
+      armor_max: ship.armor_max || 0,
       cargo: ship.cargo || 1000,
       fighters: ship.fighters || 0,
       torpedoes: ship.torpedoes || 0,
+      credits: ship.credits || 0,
+      // Device quantities
+      device_space_beacons: ship.device_space_beacons || 0,
+      device_warp_editors: ship.device_warp_editors || 0,
+      device_genesis_torpedoes: ship.device_genesis_torpedoes || 0,
+      device_mine_deflectors: ship.device_mine_deflectors || 0,
+      // Device booleans
+      device_emergency_warp: ship.device_emergency_warp || false,
+      device_escape_pod: ship.device_escape_pod !== false, // default true
+      device_fuel_scoop: ship.device_fuel_scoop || false,
+      device_last_seen: ship.device_last_seen || false,
       atSpecialPort
     })
 

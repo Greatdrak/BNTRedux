@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase-server'
+import { getUniverseSettings } from '@/lib/universe-settings'
 import { verifyBearerToken, createAuthErrorResponse } from '@/lib/auth-helper'
 
 // POST /api/register - Create a new player in a specific universe
@@ -40,6 +41,9 @@ export async function POST(request: NextRequest) {
       .select('id, name')
       .eq('id', universe_id)
       .single()
+
+    // Get universe settings (single source of truth)
+    const universeSettings = await getUniverseSettings(universe_id)
     
     if (!universe) {
       return NextResponse.json({ error: { code: 'universe_not_found', message: 'Universe not found' } }, { status: 404 })
@@ -88,9 +92,8 @@ export async function POST(request: NextRequest) {
         user_id: userId,
         universe_id: universe_id,
         handle: cleanHandle,
-        credits: 1000,
         turns: 60,
-        turn_cap: 120,
+        -- turn_cap removed, now using universe_settings.max_accumulated_turns
         current_sector: sector0.id
       })
       .select()
@@ -116,7 +119,8 @@ export async function POST(request: NextRequest) {
         hull_lvl: 1,
         shield_lvl: 0,
         comp_lvl: 1,
-        sensor_lvl: 1
+        sensor_lvl: 1,
+        credits: 1000
       })
       .select()
       .single()
@@ -126,21 +130,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: { code: 'ship_creation_failed', message: 'Failed to create ship' } }, { status: 500 })
     }
     
-    // Create inventory
-    const { error: inventoryError } = await supabaseAdmin
-      .from('inventories')
-      .insert({
-        player_id: newPlayer.id,
-        ore: 0,
-        organics: 0,
-        goods: 0,
-        energy: 0
-      })
-    
-    if (inventoryError) {
-      console.error('Error creating inventory:', inventoryError)
-      return NextResponse.json({ error: { code: 'inventory_creation_failed', message: 'Failed to create inventory' } }, { status: 500 })
-    }
+    // Inventory data is now stored in ships table (already created above)
+    // No separate inventory table needed
     
     // Return success
     return NextResponse.json({
@@ -150,9 +141,9 @@ export async function POST(request: NextRequest) {
         handle: newPlayer.handle,
         universe_id: newPlayer.universe_id,
         universe_name: universe.name,
-        credits: newPlayer.credits,
+        credits: newShip.credits,
         turns: newPlayer.turns,
-        turn_cap: newPlayer.turn_cap,
+        turn_cap: universeSettings?.max_accumulated_turns || 5000,
         current_sector: newPlayer.current_sector,
         current_sector_number: 0
       },

@@ -11,7 +11,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { toSectorNumber, universe_id } = body || {}
 
-    if (typeof toSectorNumber !== 'number' || toSectorNumber < 1) {
+    if (typeof toSectorNumber !== 'number' || toSectorNumber < 0) {
       return NextResponse.json(
         { error: { code: 'invalid_input', message: 'Invalid target sector number' } },
         { status: 400 }

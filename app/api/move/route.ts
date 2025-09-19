@@ -14,7 +14,10 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { toSectorNumber, universe_id } = body
     
-    if (!toSectorNumber || typeof toSectorNumber !== 'number') {
+    console.log('Move API called with:', { userId, toSectorNumber, universe_id })
+    
+    if (typeof toSectorNumber !== 'number' || toSectorNumber < 0) {
+      console.error('Invalid sector number:', toSectorNumber)
       return NextResponse.json(
         { error: 'Invalid sector number' },
         { status: 400 }
@@ -29,17 +32,30 @@ export async function POST(request: NextRequest) {
     })
     
     if (error) {
-      console.error('RPC error:', error)
+      console.error('RPC error in /api/move:', error)
       return NextResponse.json(
-        { error: 'Move operation failed' },
+        { 
+          error: { 
+            code: 'rpc_error', 
+            message: 'Move operation failed',
+            details: error.message 
+          } 
+        },
         { status: 500 }
       )
     }
     
     // Check if RPC returned an error
-    if (data.error) {
+    if (data?.error) {
+      console.error('Game move RPC returned error:', data.error)
       return NextResponse.json(
-        { error: data.error },
+        { 
+          error: { 
+            code: 'game_move_error', 
+            message: data.error.message || data.error,
+            details: data.error 
+          } 
+        },
         { status: 400 }
       )
     }

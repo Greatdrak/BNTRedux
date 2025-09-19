@@ -62,7 +62,29 @@
   line-height: 1.4;
 }
 
-/* cost preview removed; free claim now */
+.costInfo {
+  background: var(--panelHi);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 12px;
+}
+
+.costInfo h4 {
+  margin: 0 0 8px 0;
+  color: var(--text);
+  font-size: 0.9rem;
+}
+
+.costInfo ul {
+  margin: 0;
+  padding-left: 16px;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.costInfo li {
+  margin-bottom: 4px;
+}
 
 .formGroup {
   display: flex;

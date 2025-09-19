@@ -19,15 +19,10 @@ export async function POST(request: NextRequest) {
       )
     }
     
-    // Add +1 turn to players with turns < turn_cap
+    // DEPRECATED: This endpoint is replaced by the heartbeat system
+    // Use the new regen_turns_for_universe RPC instead
     const { data, error } = await supabaseAdmin
-      .from('players')
-      .update({ 
-        turns: supabaseAdmin.sql`LEAST(turns + 1, turn_cap)`,
-        last_turn_ts: new Date().toISOString()
-      })
-      .lt('turns', supabaseAdmin.sql`turn_cap`)
-      .select('id')
+      .rpc('regen_turns_for_universe', { p_universe_id: null }) // null = all universes
     
     if (error) {
       console.error('Error updating turns:', error)
@@ -48,7 +43,8 @@ export async function POST(request: NextRequest) {
     
     return NextResponse.json({
       ok: true,
-      updatedCount: data?.length || 0,
+      players_updated: data?.players_updated || 0,
+      total_turns_generated: data?.total_turns_generated || 0,
       stockUpdatedCount: stockResult || 0
     })
     

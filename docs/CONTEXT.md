@@ -8,6 +8,8 @@
   - Any env var added
 - Keep this file under one page where possible.
 
+[Docs map] See also: `docs/API_INDEX.md`, `docs/TRADING.md`, `docs/SCHEDULER.md`, `docs/MOVEMENT.md`, `docs/MINES.md`, `docs/ADMIN.md`.
+
 ## Stack & Versions (planned)
 - App: Next.js (App Router) + React + TypeScript
 - Data: Supabase Postgres via supabase-js
@@ -57,14 +59,14 @@
 - **Auth:** Required (Bearer token)
 - **Headers:** `Authorization: Bearer <supabase_access_token>`
 - **Query:** `universe_id` (optional, defaults to first available universe)
-- **Response:** `{ player: { id, handle, credits, turns, turn_cap, last_turn_ts, current_sector, current_sector_number }, ship: { name, hull, hull_max, hull_lvl, shield, shield_max, shield_lvl, cargo, fighters, torpedoes, engine_lvl, comp_lvl, sensor_lvl }, inventory: { ore, organics, goods, energy } }`
+- **Response:** `{ player: { id, handle, credits, turns, turn_cap (from universe_settings.max_accumulated_turns), last_turn_ts, current_sector, current_sector_number }, ship: { name, hull, hull_max, hull_lvl, shield, shield_max, shield_lvl, cargo, fighters, torpedoes, engine_lvl, comp_lvl, sensor_lvl }, inventory: { ore, organics, goods, energy } }`
 - **Behavior:** Creates player at sector #0 (Sol Hub) in specified universe if first time, returns existing player data otherwise
 
 ### POST /api/register
 - **Auth:** Required (Bearer token)
 - **Headers:** `Authorization: Bearer <supabase_access_token>`
 - **Body:** `{ universe_id: string, handle: string }`
-- **Response:** `{ ok: true, player: { id, handle, universe_id, universe_name, credits, turns, turn_cap, current_sector, current_sector_number }, ship: { ... }, inventory: { ... } }` or `{ error: { code, message } }`
+- **Response:** `{ ok: true, player: { id, handle, universe_id, universe_name, credits, turns, turn_cap (from universe_settings.max_accumulated_turns), current_sector, current_sector_number }, ship: { ... }, inventory: { ... } }` or `{ error: { code, message } }`
 - **Behavior:** Creates new player in specified universe with given handle
 
 ### GET /api/sector?number=<int>&universe_id=<uuid>
@@ -134,7 +136,7 @@
 ### POST /api/cron/regen
 - **Auth:** Header `x-cron: CRON_SECRET` OR `x-vercel-cron`
 - **Response:** `{ ok: true, updatedCount: number }`
-- **Behavior:** Adds +1 turn to players with turns < turn_cap
+- **Behavior:** Adds +1 turn to players with turns < max_accumulated_turns (from universe_settings)
 
 ### POST /api/upgrade
 - **Auth:** Required (Bearer token)
@@ -250,8 +252,8 @@ curl -H "Authorization: Bearer <token>" http://localhost:3000/api/me
 - Map API returns visited/scanned flags and port kinds for a numeric band.
 
 ## Gameplay constants (tentative)
-- Turn regen: +1 per minute up to turn_cap
-- turn_cap: 120
+- Turn regen: +1 per minute up to max_accumulated_turns (from universe_settings)
+- max_accumulated_turns: 5000 (default, configurable per universe)
 - Seed parameters: sector_count=501 (0-500), warp_degree=1–3, port_density≈10%, sector 0=Sol Hub with special port
 - Equipment pricing: fighters=50 cr, torpedoes=120 cr
 - Hull repair: 2 cr per point, max hull=100
@@ -364,3 +366,7 @@ curl -H "Authorization: Bearer <token>" http://localhost:3000/api/me
   - Updated: Player creation starts at sector 0 instead of sector 1; all existing players moved to sector 0
   - Updated: API endpoints (/api/sector, /api/map) to handle sector range 0-500
   - Updated: Documentation to reflect new sector numbering and Sol Hub concept
+- [2025‑09‑18] Scheduler/UI consolidation + new docs
+  - Updated: HeaderHUD to use `/api/scheduler/status`; moved TurnCounter to `/admin/cron-status`
+  - Added: `docs/SCHEDULER.md`, `docs/MOVEMENT.md`, `docs/MINES.md`, `docs/ADMIN.md`, `docs/API_INDEX.md`
+  - Cron: local runner reads `.env.local` for `CRON_SECRET`; added universe selector on admin cron page

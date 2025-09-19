@@ -1,6 +1,7 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import useSWR from 'swr'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase-client'
 import styles from './HeaderHUD.module.css'
@@ -48,33 +49,94 @@ export default function HeaderHUD({
   const [loadingPlayers, setLoadingPlayers] = useState(false)
   const router = useRouter()
 
+  // Scheduler-driven countdown (source of truth)
+  interface SchedulerStatus {
+    universe_id: string
+    next_turn_generation: string | null
+    time_until_turn_generation_seconds: number
+  }
+
+  const schedulerFetcher = async (url: string) => {
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session?.access_token) throw new Error('No authentication token')
+    const res = await fetch(url, { headers: { 'Authorization': `Bearer ${session.access_token}` } })
+    if (!res.ok) throw new Error('Failed to fetch scheduler status')
+    return res.json()
+  }
+
+  const schedulerKey = useMemo(() => (
+    currentUniverseId ? `/api/scheduler/status?universe_id=${currentUniverseId}` : null
+  ), [currentUniverseId])
+
+  const { data: schedulerStatus, mutate: mutateScheduler } = useSWR<SchedulerStatus>(
+    schedulerKey,
+    schedulerFetcher,
+    { refreshInterval: 60000, revalidateOnFocus: false, dedupingInterval: 20000 }
+  )
+
+  // Keep a rolling, second-by-second countdown that resyncs to server on updates
+  const serverRemainingRef = useRef<number | null>(null)
+  const windowSecondsRef = useRef<number>(180) // fallback to 3 minutes if we cannot infer
+
+  // When server value changes, reset local countdown and window size heuristic
   useEffect(() => {
+    if (schedulerStatus?.time_until_turn_generation_seconds !== undefined) {
+      const remaining = Math.max(0, Math.floor(schedulerStatus.time_until_turn_generation_seconds))
+      serverRemainingRef.current = remaining
+      // Heuristic window: if remaining appears within a sensible window, use it as window size; else keep default
+      if (remaining > 0) {
+        // Clamp window between 60s and 900s to avoid absurd values
+        windowSecondsRef.current = Math.min(900, Math.max(60, remaining))
+      }
+      setCountdown(remaining)
+      setProgress(((windowSecondsRef.current - remaining) / windowSecondsRef.current) * 100)
+    }
+  }, [schedulerStatus?.time_until_turn_generation_seconds])
+
+  // Local ticking countdown that decrements every second, but will be corrected by server refresh
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCountdown(prev => {
+        const next = Math.max(0, (prev ?? 0) - 1)
+        // Update progress accordingly
+        const windowS = windowSecondsRef.current || 180
+        setProgress(((windowS - next) / windowS) * 100)
+        return next
+      })
+    }, 1000)
+    return () => clearInterval(interval)
+  }, [])
+
+  // Fallback: if scheduler unavailable, keep legacy per-minute timer based on lastTurnTs
+  useEffect(() => {
+    if (schedulerStatus) return // prefer scheduler when available
     if (!lastTurnTs || !turnCap || turns === undefined) return
 
     const updateCountdown = () => {
       const lastTurn = new Date(lastTurnTs).getTime()
       const now = Date.now()
       const timeSinceLastTurn = now - lastTurn
-      const timeUntilNextTurn = 60000 - (timeSinceLastTurn % 60000) // 60 seconds = 1 turn
-      
-      setCountdown(Math.max(0, Math.ceil(timeUntilNextTurn / 1000)))
+      const timeUntilNextTurn = 60000 - (timeSinceLastTurn % 60000)
+      const seconds = Math.max(0, Math.ceil(timeUntilNextTurn / 1000))
+      setCountdown(seconds)
       setProgress((60000 - timeUntilNextTurn) / 60000 * 100)
     }
 
     updateCountdown()
     const interval = setInterval(updateCountdown, 1000)
-
     return () => clearInterval(interval)
-  }, [lastTurnTs, turnCap, turns])
+  }, [schedulerStatus, lastTurnTs, turnCap, turns])
 
+  // Trigger refresh only on transition to 0 to avoid repeated calls
+  const prevCountdownRef = useRef<number>(countdown)
   useEffect(() => {
-    if (countdown === 0 && turns !== undefined && turnCap !== undefined && turns < turnCap) {
-      // Trigger silent refresh when countdown reaches 0
-      setTimeout(() => {
-        onRefresh()
-      }, 1000)
+    const prev = prevCountdownRef.current
+    prevCountdownRef.current = countdown
+    if (prev > 0 && countdown === 0 && turns !== undefined && turnCap !== undefined && turns < turnCap) {
+      try { mutateScheduler(); } catch {}
+      onRefresh()
     }
-  }, [countdown, turns, turnCap, onRefresh])
+  }, [countdown, turns, turnCap, onRefresh, mutateScheduler])
 
   // Fetch players for universe switching
   useEffect(() => {
@@ -126,7 +188,7 @@ export default function HeaderHUD({
   return (
     <header className={styles.header}>
       <div className={styles.title}>
-        <h1>BNT Redux</h1>
+        <h1>Quantum Nova Traders</h1>
         <span className={styles.handle}>{handle || 'Loading...'}</span>
       </div>
       
@@ -147,7 +209,7 @@ export default function HeaderHUD({
           <span className={styles.label}>ENG</span>
           <span className={styles.value}>{engineLvl ?? '--'}</span>
         </div>
-        {turnCap !== undefined && turns !== undefined && turns < turnCap && (
+        {turnCap !== undefined && turns !== undefined && (
           <div className={styles.metric}>
             <span className={styles.label}>Next Turn</span>
             <div className={styles.countdownContainer}>

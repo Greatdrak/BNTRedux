@@ -10,8 +10,13 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(authResult.error, { status: 401 })
     }
 
-    // TODO: Add admin authorization check here
-    // For now, any authenticated user can access admin functions
+    // Admin authorization check (global account admin)
+    const { data: isAdmin } = await supabaseAdmin
+      .rpc('is_user_admin', { p_user_id: authResult.userId })
+
+    if (!isAdmin) {
+      return NextResponse.json({ error: { code: 'forbidden', message: 'Admins only' } }, { status: 403 })
+    }
 
     const { data, error } = await supabaseAdmin.rpc('list_universes')
 
@@ -36,7 +41,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(authResult.error, { status: 401 })
     }
 
-    // TODO: Add admin authorization check here
+    // Admin authorization check (global account admin)
+    const { data: isAdmin } = await supabaseAdmin
+      .rpc('is_user_admin', { p_user_id: authResult.userId })
+
+    if (!isAdmin) {
+      return NextResponse.json({ error: { code: 'forbidden', message: 'Admins only' } }, { status: 403 })
+    }
 
     const body = await request.json()
     const { 

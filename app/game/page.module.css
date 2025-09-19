@@ -102,12 +102,7 @@
   text-shadow: 0 0 10px rgba(99, 230, 190, 0.5);
 }
 
-.viewportControls {
-  display: flex;
-  justify-content: center;
-  gap: var(--space-3);
-  margin: var(--space-3) 0 var(--space-5);
-}
+/* viewportControls removed in center per design */
 
 .warpGate {
   padding: var(--space-2) var(--space-3);
@@ -151,6 +146,29 @@
   grid-template-columns: repeat(2, 1fr);
   gap: var(--space-2);
   font-size: var(--font-size-sm);
+}
+
+/* Clickable port badge styled to match theme, bold and glowy */
+.portBadge {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 6px 10px;
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  background: rgba(99, 230, 190, 0.15);
+  color: #ffffff;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  cursor: pointer;
+  text-transform: capitalize;
+  box-shadow: 0 0 16px rgba(99, 230, 190, 0.3);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+
+.portBadge:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 0 24px rgba(99, 230, 190, 0.45);
+  background: rgba(99, 230, 190, 0.22);
 }
 
 .portResource {
@@ -269,8 +287,48 @@
 
 .routeActions {
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  gap: var(--space-1);
   margin-top: var(--space-1);
+}
+
+.routeSectors {
+  display: flex;
+  gap: var(--space-1);
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.sectorBtn {
+  background: rgba(66, 245, 185, 0.1);
+  border: 1px solid rgba(66, 245, 185, 0.3);
+  color: #42f5b9;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.sectorBtn:hover:not(.currentSector) {
+  background: rgba(66, 245, 185, 0.2);
+  border-color: rgba(66, 245, 185, 0.5);
+  transform: translateY(-1px);
+}
+
+.sectorBtn.currentSector {
+  background: rgba(66, 245, 185, 0.3);
+  border-color: #42f5b9;
+  color: #ffffff;
+  cursor: default;
+}
+
+.moreSectors {
+  color: var(--muted);
+  font-size: var(--font-size-xs);
+  font-style: italic;
+  align-self: center;
 }
 
 .waypointCount {
@@ -316,6 +374,51 @@
   opacity: 0.6;
   cursor: not-allowed;
   transform: none;
+}
+
+/* Navigation styles */
+.navActions {
+  display: flex;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+
+.navBtn {
+  flex: 1;
+  background: linear-gradient(135deg, #42f5b9 0%, #3dd4a3 100%);
+  color: #000;
+  border: none;
+  border-radius: var(--radius);
+  padding: var(--space-2);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(66, 245, 185, 0.3);
+}
+
+.navBtn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(66, 245, 185, 0.4);
+}
+
+.navBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.warpSection {
+  margin-top: var(--space-2);
+}
+
+.warpSection h4 {
+  color: var(--muted);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  margin: 0 0 var(--space-2) 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .warpList {

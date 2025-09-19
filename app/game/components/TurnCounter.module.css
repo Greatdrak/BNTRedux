@@ -1,0 +1,114 @@
+.container {
+  background: rgba(60, 0, 70, 0.35);
+  border: 1px solid rgba(130, 60, 180, 0.5);
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 16px;
+}
+
+.header {
+  margin-bottom: 12px;
+}
+
+.header h4 {
+  color: #42f5b9;
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.events {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.event {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 8px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 6px;
+  border: 1px solid rgba(130, 60, 180, 0.2);
+}
+
+.eventHeader {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.eventIcon {
+  font-size: 12px;
+}
+
+.eventName {
+  color: #cfc3ff;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.eventStatus {
+  font-size: 12px;
+}
+
+.eventTimer {
+  color: #e9d9ff;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: 'Courier New', monospace;
+  min-width: 40px;
+  text-align: right;
+}
+
+.footer {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(130, 60, 180, 0.3);
+  text-align: center;
+}
+
+.footer small {
+  color: #9fe8ff;
+  font-size: 10px;
+  font-style: italic;
+}
+
+.loading {
+  color: #cfc3ff;
+  font-size: 12px;
+  text-align: center;
+  padding: 8px 0;
+}
+
+.error {
+  color: #ff6b6b;
+  font-size: 12px;
+  text-align: center;
+  padding: 8px 0;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .container {
+    padding: 10px;
+  }
+  
+  .event {
+    padding: 4px 6px;
+  }
+  
+  .eventName {
+    font-size: 11px;
+  }
+  
+  .eventTimer {
+    font-size: 11px;
+    min-width: 35px;
+  }
+}
+
+

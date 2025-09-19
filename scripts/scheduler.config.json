@@ -1,0 +1,5 @@
+{
+  "turnGenerationMinutes": 3,
+  "updateEventsMinutes": 1,
+  "cycleEventsMinutes": 2
+}

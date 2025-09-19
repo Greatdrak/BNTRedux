@@ -1,5 +1,10 @@
 # TASKS (Minimal)
 
+## Current Focus
+- Sync UI with cron (done): Header countdown uses scheduler; admin cron page hosts timers.
+- Document key systems (done): SCHEDULER, MOVEMENT, MINES, ADMIN, API_INDEX.
+- Next: Player‑facing read‑only Settings page mirroring classic BNT table (no timers).
+
 ## T01 — Minimal Bootstrap
 - Fresh Next.js (App Router, TS), add @supabase/supabase-js and swr.
 - Pages: /login (magic link), /game (protected), / (redirect).

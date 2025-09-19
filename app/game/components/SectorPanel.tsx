@@ -1,6 +1,8 @@
 'use client'
 
 import styles from './SectorPanel.module.css'
+import MineIndicator from './MineIndicator'
+import MineDeployer from './MineDeployer'
 
 interface SectorPanelProps {
   sectorNumber?: number
@@ -18,6 +20,9 @@ interface SectorPanelProps {
   playerTurns?: number
   onClaimPlanet?: () => void
   onManagePlanet?: () => void
+  universeId?: string
+  playerHullLevel?: number
+  playerTorpedoes?: number
 }
 
 export default function SectorPanel({ 
@@ -31,7 +36,10 @@ export default function SectorPanel({
   playerCredits,
   playerTurns,
   onClaimPlanet,
-  onManagePlanet
+  onManagePlanet,
+  universeId,
+  playerHullLevel,
+  playerTorpedoes
 }: SectorPanelProps) {
   if (loading) {
     return (
@@ -44,6 +52,14 @@ export default function SectorPanel({
   return (
     <div className={styles.panel}>
       <h2>Sector {sectorNumber || '--'}</h2>
+      
+      {sectorNumber && universeId && (
+        <MineIndicator 
+          sectorNumber={sectorNumber}
+          universeId={universeId}
+          playerHullLevel={playerHullLevel}
+        />
+      )}
       
       <div className={styles.warps}>
         <h3>Warp Gates</h3>
@@ -94,6 +110,14 @@ export default function SectorPanel({
             Costs: 10,000 credits + 5 turns
           </p>
         </div>
+      )}
+
+      {sectorNumber && universeId && playerTorpedoes !== undefined && (
+        <MineDeployer 
+          sectorNumber={sectorNumber}
+          universeId={universeId}
+          playerTorpedoes={playerTorpedoes}
+        />
       )}
     </div>
   )

@@ -1,0 +1,18 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/turn-generation",
+      "schedule": "*/3 * * * *"
+    },
+    {
+      "path": "/api/cron/cycle-events", 
+      "schedule": "0 */6 * * *"
+    },
+    {
+      "path": "/api/cron/update-events",
+      "schedule": "*/15 * * * *"
+    }
+  ]
+}
+
+

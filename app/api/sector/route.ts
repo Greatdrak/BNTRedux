@@ -70,15 +70,36 @@ export async function GET(request: NextRequest) {
     const portData = portError && portError.code === 'PGRST116' ? null : port
     
     // Get planet info if it exists (there can be multiple planets per sector)
+    // Filter by universe through the sector relationship
     const { data: planets, error: planetError } = await supabaseAdmin
       .from('planets')
       .select(`
         id,
         name,
+        colonists,
+        colonists_max,
+        ore,
+        organics,
+        goods,
+        energy,
+        fighters,
+        torpedoes,
+        shields,
+        credits,
+        last_production,
+        last_colonist_growth,
+        production_ore_percent,
+        production_organics_percent,
+        production_goods_percent,
+        production_energy_percent,
+        production_fighters_percent,
+        production_torpedoes_percent,
         owner_player_id,
-        players(user_id)
+        players(user_id),
+        sectors!inner(universe_id)
       `)
       .eq('sector_id', sector.id)
+      .eq('sectors.universe_id', sector.universe_id)
     
     const planetData = planetError ? null : planets
     const isOwner = planetData && planetData.some(p => p.players && p.players.user_id === userId)
@@ -120,7 +141,31 @@ export async function GET(request: NextRequest) {
       planets: planetData ? planetData.map(p => ({
         id: p.id,
         name: p.name,
-        owner: p.players && p.players.user_id === userId
+        owner: p.players && p.players.user_id === userId,
+        colonists: p.colonists,
+        colonistsMax: p.colonists_max,
+        stock: {
+          ore: p.ore,
+          organics: p.organics,
+          goods: p.goods,
+          energy: p.energy,
+          credits: p.credits || 0
+        },
+        defenses: {
+          fighters: p.fighters,
+          torpedoes: p.torpedoes,
+          shields: p.shields
+        },
+        lastProduction: p.last_production,
+        lastColonistGrowth: p.last_colonist_growth,
+        productionAllocation: {
+          ore: p.production_ore_percent || 0,
+          organics: p.production_organics_percent || 0,
+          goods: p.production_goods_percent || 0,
+          energy: p.production_energy_percent || 0,
+          fighters: p.production_fighters_percent || 0,
+          torpedoes: p.production_torpedoes_percent || 0
+        }
       })) : []
     })
     

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase-server'
+import { getUniverseSettings } from '@/lib/universe-settings'
 import { verifyBearerToken, createAuthErrorResponse } from '@/lib/auth-helper'
 
 export async function GET(request: NextRequest) {
@@ -43,11 +44,14 @@ export async function GET(request: NextRequest) {
         { status: 404 }
       )
     }
+
+    // Get universe settings (single source of truth)
+    const universeSettings = await getUniverseSettings(universe.id)
     
     // Check if player exists in the selected universe
     const { data: existingPlayer } = await supabaseAdmin
       .from('players')
-      .select('id, handle, credits, turns, turn_cap, last_turn_ts, current_sector')
+      .select('id, handle, turns, last_turn_ts, current_sector')
       .eq('user_id', userId)
       .eq('universe_id', universe.id)
       .maybeSingle()
@@ -60,11 +64,14 @@ export async function GET(request: NextRequest) {
         .eq('player_id', existingPlayer.id)
         .single()
       
-      const { data: inventoryData } = await supabaseAdmin
-        .from('inventories')
-        .select('*')
-        .eq('player_id', existingPlayer.id)
-        .single()
+      // Inventory data is now stored in ships table
+      const inventoryData = {
+        ore: shipData?.ore || 0,
+        organics: shipData?.organics || 0,
+        goods: shipData?.goods || 0,
+        energy: shipData?.energy || 0,
+        colonists: shipData?.colonists || 0
+      }
 
       // Get sector number
       let currentSectorNumber: number | undefined = undefined
@@ -107,9 +114,9 @@ export async function GET(request: NextRequest) {
         player: {
           id: existingPlayer.id,
           handle: existingPlayer.handle,
-          credits: existingPlayer.credits,
+          credits: shipData?.credits || 0,
           turns: existingPlayer.turns,
-          turn_cap: existingPlayer.turn_cap,
+          turn_cap: universeSettings?.max_accumulated_turns || 5000,
           last_turn_ts: existingPlayer.last_turn_ts,
           current_sector: existingPlayer.current_sector,
           current_sector_number: currentSectorNumber,

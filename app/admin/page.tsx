@@ -52,6 +52,7 @@ export default function AdminPage() {
   const [universes, setUniverses] = useState<Universe[]>([])
   const [loading, setLoading] = useState(false)
   const [status, setStatus] = useState('')
+  const [accessDenied, setAccessDenied] = useState(false)
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [settings, setSettings] = useState<UniverseSettings>({
     name: 'Alpha',
@@ -153,6 +154,15 @@ export default function AdminPage() {
     )
   }
 
+  if (universesData?.error?.code === 'forbidden') {
+    return (
+      <div className={styles.container}>
+        <h1>Admin Panel</h1>
+        <div className={styles.error}>Access denied. Admins only.</div>
+      </div>
+    )
+  }
+
   return (
     <div className={styles.container}>
       <h1>Universe Admin Panel</h1>
@@ -169,11 +179,29 @@ export default function AdminPage() {
         >
           {showCreateForm ? '✕ Cancel' : '✨ Create Universe'}
         </button>
+            <a href="/admin/universe-settings" className={styles.settingsButton}>
+              ⚙️ Universe Settings
+            </a>
+            <a href="/admin/cron-logs" className={styles.settingsButton}>
+              📋 Cron Logs
+            </a>
       </div>
 
       {showCreateForm && (
         <div className={styles.createForm}>
           <h2>Create New Universe</h2>
+          
+          <div className={styles.infoBox}>
+            <h3>📊 Base Stock Configuration</h3>
+            <p>New universes will be created with correct base stock amounts matching live BNT:</p>
+            <ul>
+              <li><strong>Ore Ports:</strong> 100M base stock</li>
+              <li><strong>Organics Ports:</strong> 100M base stock</li>
+              <li><strong>Goods Ports:</strong> 100M base stock</li>
+              <li><strong>Energy Ports:</strong> 1B base stock</li>
+            </ul>
+            <p>Base prices: Ore 15.00, Organics 8.00, Goods 22.00, Energy 3.00</p>
+          </div>
           
           <div className={styles.formGroup}>
             <label htmlFor="name">Universe Name:</label>

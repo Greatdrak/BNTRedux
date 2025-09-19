@@ -3,8 +3,8 @@
   --bnt-bg: #0b0c16;
   --bnt-star1: #0f1022;
   --bnt-star2: #0c0d1c;
-  --bnt-panel: #15152b;
-  --bnt-panelHi: #1c1d39;
+  --bnt-panel: rgba(21, 21, 43, 0.45);
+  --bnt-panelHi: rgba(28, 29, 57, 0.55);
   --bnt-line: #2a2c4d;
   --bnt-accent: #57f0d3;
   --bnt-accent2: #a870ff;
@@ -61,24 +61,96 @@ body {
 
 body {
   color: #ffffff;
-  /* Tiled starfields + nebula backdrop */
   background-color: var(--bnt-bg);
-  background-image:
-    /* star layer 1 (dense, small) */
-    radial-gradient(1px 1px at 25px 35px, rgba(255,255,255,0.85) 1px, transparent 1.5px),
-    radial-gradient(1px 1px at 75px 90px, rgba(255,255,255,0.7) 1px, transparent 1.5px),
-    radial-gradient(1px 1px at 130px 40px, rgba(255,255,255,0.75) 1px, transparent 1.5px),
-    radial-gradient(1px 1px at 170px 80px, rgba(255,255,255,0.6) 1px, transparent 1.5px),
-    /* star layer 2 (bigger, sparser) */
-    radial-gradient(1.5px 1.5px at 60px 20px, rgba(255,255,255,0.7) 1.5px, transparent 2px),
-    radial-gradient(1.5px 1.5px at 140px 120px, rgba(255,255,255,0.6) 1.5px, transparent 2px),
-    /* nebulas */
-    radial-gradient(800px 500px at 0% 0%, var(--bnt-star1), transparent 60%),
-    radial-gradient(800px 500px at 100% 20%, var(--bnt-star2), transparent 60%);
-  background-repeat: repeat, repeat, repeat, repeat, repeat, repeat, no-repeat, no-repeat;
-  background-size: 200px 200px, 220px 220px, 260px 260px, 300px 300px, 400px 400px, 500px 500px, auto, auto;
   min-height: 100vh;
+  transition: background-image 0.5s ease-in-out;
+}
+
+/* Default space background - deep space with stars */
+body.background-space {
+  background-image:
+    /* Dark overlay to maintain readability */
+    linear-gradient(rgba(11, 12, 22, 0.85), rgba(11, 12, 22, 0.85)),
+    /* 
+    🌌 SPACE BACKGROUND OPTIONS:
+    
+    🌐 ONLINE OPTIONS:
+    Deep Space Galaxy Field:
+    https://images.unsplash.com/photo-1502134249126-9f3755a50d78?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80
+    
+    Pillars of Creation:
+    https://images.unsplash.com/photo-1462331940025-496dfbfc7564?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80
+    
+    Nebula with Stars:
+    https://images.unsplash.com/photo-1446776877081-d282a0f896e2?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80
+    */
+    url('https://images.unsplash.com/photo-1502134249126-9f3755a50d78?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
   background-attachment: fixed;
+}
+
+/* Port sector backgrounds - unique stations for each port type */
+
+/* Ore Port Station */
+body.background-port-ore {
+  background-image:
+    linear-gradient(rgba(11, 12, 22, 0.75), rgba(11, 12, 22, 0.75)),
+    url('/images/space-station-ore.png'),
+    url('https://images.unsplash.com/photo-1502134249126-9f3755a50d78?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80');
+  background-size: cover, contain, cover;
+  background-position: center, center, center;
+  background-repeat: no-repeat, no-repeat, no-repeat;
+  background-attachment: fixed, fixed, fixed;
+}
+
+/* Organics Port Station */
+body.background-port-organics {
+  background-image:
+    linear-gradient(rgba(11, 12, 22, 0.75), rgba(11, 12, 22, 0.75)),
+    url('/images/space-station-organics.png'),
+    url('https://images.unsplash.com/photo-1502134249126-9f3755a50d78?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80');
+  background-size: cover, contain, cover;
+  background-position: center, center, center;
+  background-repeat: no-repeat, no-repeat, no-repeat;
+  background-attachment: fixed, fixed, fixed;
+}
+
+/* Goods Port Station */
+body.background-port-goods {
+  background-image:
+    linear-gradient(rgba(11, 12, 22, 0.75), rgba(11, 12, 22, 0.75)),
+    url('/images/space-station-goods.png'),
+    url('https://images.unsplash.com/photo-1502134249126-9f3755a50d78?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80');
+  background-size: cover, contain, cover;
+  background-position: center, center, center;
+  background-repeat: no-repeat, no-repeat, no-repeat;
+  background-attachment: fixed, fixed, fixed;
+}
+
+/* Energy Port Station */
+body.background-port-energy {
+  background-image:
+    linear-gradient(rgba(11, 12, 22, 0.75), rgba(11, 12, 22, 0.75)),
+    url('/images/space-station-energy.png'),
+    url('https://images.unsplash.com/photo-1502134249126-9f3755a50d78?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80');
+  background-size: cover, contain, cover;
+  background-position: center, center, center;
+  background-repeat: no-repeat, no-repeat, no-repeat;
+  background-attachment: fixed, fixed, fixed;
+}
+
+/* Special Port Station */
+body.background-port-special {
+  background-image:
+    linear-gradient(rgba(11, 12, 22, 0.75), rgba(11, 12, 22, 0.75)),
+    url('/images/space-station-special.png'),
+    url('https://images.unsplash.com/photo-1502134249126-9f3755a50d78?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80');
+  background-size: cover, contain, cover;
+  background-position: center, center, center;
+  background-repeat: no-repeat, no-repeat, no-repeat;
+  background-attachment: fixed, fixed, fixed;
 }
 
 a {
@@ -96,21 +168,27 @@ a:hover {
   outline-offset: 2px;
 }
 
-/* Card component styles */
+/* Card component styles - Glass cockpit effect */
 .card {
   background: var(--panel);
   border: 1px solid var(--line);
   border-radius: var(--radius);
   padding: var(--space-6);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  box-shadow: 
+    0 2px 8px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
 .card:hover {
   border-color: var(--accent);
-  box-shadow: 0 4px 16px rgba(99, 230, 190, 0.1);
+  box-shadow: 
+    0 4px 16px rgba(99, 230, 190, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
 }
 
-/* Button styles */
+/* Button styles - Glass cockpit effect */
 .btn {
   padding: var(--space-2) var(--space-4);
   border: 1px solid var(--line);
@@ -120,11 +198,17 @@ a:hover {
   font-size: var(--font-size-sm);
   cursor: pointer;
   transition: all 0.2s ease;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 .btn:hover:not(:disabled) {
   border-color: var(--accent);
   background: var(--bgElev);
+  box-shadow: 
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 2px 8px rgba(99, 230, 190, 0.1);
 }
 
 .btn:disabled {

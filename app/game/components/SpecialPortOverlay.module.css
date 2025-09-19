@@ -4,7 +4,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.8);
+  background: rgba(0, 0, 0, 0.9);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -15,11 +15,11 @@
   background: var(--bg-secondary);
   border: 1px solid var(--line);
   border-radius: 12px;
-  padding: var(--space-6);
-  max-width: 600px;
-  width: 90%;
-  max-height: 80vh;
-  overflow-y: auto;
+  padding: 24px;
+  max-width: 1200px;
+  width: 95%;
+  max-height: 90vh;
+  overflow: hidden;
 }
 
 .header {
@@ -55,7 +55,8 @@
 .content {
   display: flex;
   flex-direction: column;
-  gap: var(--space-6);
+  gap: 16px;
+  min-height: 0;
 }
 
 .shipStatus {
@@ -209,4 +210,313 @@
   background: var(--muted);
   cursor: not-allowed;
   opacity: 0.6;
+}
+
+/* Tab Navigation */
+.tabNav {
+  display: flex;
+  gap: 0;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--line);
+}
+
+.tabBtn {
+  background: rgba(99, 230, 190, 0.1);
+  border: 1px solid rgba(99, 230, 190, 0.3);
+  color: var(--accent);
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-weight: 600;
+  border-right: 1px solid rgba(99, 230, 190, 0.3);
+}
+
+.tabBtn:first-child {
+  border-top-left-radius: 4px;
+  border-bottom-left-radius: 4px;
+}
+
+.tabBtn:last-child {
+  border-top-right-radius: 4px;
+  border-bottom-right-radius: 4px;
+  border-right: 1px solid rgba(99, 230, 190, 0.3);
+}
+
+.tabBtn:hover {
+  background: rgba(99, 230, 190, 0.2);
+  color: #fff;
+}
+
+.tabActive {
+  background: rgba(99, 230, 190, 0.3);
+  color: #fff;
+  box-shadow: 0 0 8px rgba(99, 230, 190, 0.4);
+}
+
+/* Special Links */
+.specialLinks {
+  display: flex;
+  gap: 16px;
+  margin-top: 12px;
+}
+
+.specialLink {
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 0.2s ease;
+}
+
+.specialLink:hover {
+  color: #4ade80;
+  text-decoration: underline;
+}
+
+/* Device/Item Tables */
+.devicesSection, .itemsSection {
+  background: var(--bg-tertiary);
+  padding: 16px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  flex: 1;
+  min-height: 0;
+}
+
+.devicesSection h3, .itemsSection h3 {
+  color: var(--accent);
+  margin: 0 0 16px 0;
+  font-size: 18px;
+}
+
+.deviceTable {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 8px;
+}
+
+.deviceTable th {
+  background: rgba(99, 230, 190, 0.1);
+  color: var(--accent);
+  padding: 8px 12px;
+  text-align: left;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid rgba(99, 230, 190, 0.2);
+}
+
+.deviceTable td {
+  padding: 8px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  font-size: 12px;
+}
+
+.deviceTable tr:hover {
+  background: rgba(99, 230, 190, 0.05);
+}
+
+/* Input fields */
+.quantityInput {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  color: var(--text);
+  padding: 4px 8px;
+  width: 60px;
+  text-align: center;
+  font-size: 12px;
+}
+
+.quantityInput:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(99, 230, 190, 0.2);
+}
+
+/* Checkboxes */
+.deviceCheckbox {
+  accent-color: var(--accent);
+}
+
+/* Cost display */
+.cost {
+  color: #fbbf24;
+  font-weight: 600;
+}
+
+.maxValue {
+  color: #4ade80;
+  font-weight: 600;
+}
+
+/* Purchase Section */
+.purchaseSection {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  background: var(--bg-tertiary);
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  margin-top: 16px;
+}
+
+.totalCost {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.totalCostLabel {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.totalCostValue {
+  color: #fbbf24;
+  font-weight: 700;
+  font-size: 18px;
+}
+
+/* Buy Button */
+.buyButton {
+  background: linear-gradient(135deg, var(--accent), rgba(99, 230, 190, 0.8));
+  color: var(--bg-primary);
+  border: none;
+  border-radius: 8px;
+  padding: 12px 24px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 16px;
+}
+
+.buyButton:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(99, 230, 190, 0.3);
+}
+
+.buyButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Bottom Links */
+.bottomLinks {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+
+/* Horizontal Layout for Devices and Items */
+.horizontalLayout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  flex: 1;
+  min-height: 0;
+}
+
+/* Action Buttons */
+.actionButton {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  border: 1px solid var(--line);
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.actionButton:hover {
+  background: var(--bg-secondary);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.buttonIcon {
+  font-size: 16px;
+  line-height: 1;
+}
+
+.returnButton {
+  background: var(--accent);
+  color: var(--bg-primary);
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 80px;
+}
+
+.returnButton:hover {
+  background: #4ade80;
+  transform: translateY(-1px);
+}
+
+/* Max Button */
+.maxBtn {
+  background: var(--accent);
+  color: var(--bg-primary);
+  border: none;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 40px;
+}
+
+.maxBtn:hover {
+  background: #4ade80;
+  transform: translateY(-1px);
+}
+
+.maxBtn:disabled {
+  background: var(--line);
+  color: var(--muted);
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Status Message */
+.statusMessage {
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin: 16px 0;
+  font-weight: 500;
+  text-align: center;
+  border: 1px solid;
+}
+
+.statusMessage.success {
+  background: rgba(34, 197, 94, 0.1);
+  border-color: rgba(34, 197, 94, 0.3);
+  color: #22c55e;
+}
+
+.statusMessage.error {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.3);
+  color: #ef4444;
+}
+
+.statusMessage.info {
+  background: rgba(59, 130, 246, 0.1);
+  border-color: rgba(59, 130, 246, 0.3);
+  color: #3b82f6;
 }

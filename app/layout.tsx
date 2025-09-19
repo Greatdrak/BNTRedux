@@ -1,5 +1,6 @@
 import './globals.css'
 import { Inter } from 'next/font/google'
+import { SWRConfig } from 'swr'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -15,7 +16,11 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={inter.className}>{children}</body>
+      <body className={inter.className}>
+        <SWRConfig value={{ revalidateOnFocus: false, revalidateOnReconnect: false, dedupingInterval: 15000, focusThrottleInterval: 30000 }}>
+          {children}
+        </SWRConfig>
+      </body>
     </html>
   )
 }

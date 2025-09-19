@@ -6,19 +6,23 @@ import useSWR from 'swr'
 import { supabase } from '@/lib/supabase-client'
 import HeaderHUD from './components/HeaderHUD'
 import SectorPanel from './components/SectorPanel'
+import MineIndicator from './components/MineIndicator'
+import MineDeployer from './components/MineDeployer'
 import PortPanel from './components/PortPanel'
 import ActionsPanel from './components/ActionsPanel'
 import InventoryPanel from './components/InventoryPanel'
 import HyperspacePanel from './components/HyperspacePanel'
+import AdminLink from './components/AdminLink'
 import MapOverlay from './components/MapOverlay'
 import WarpScanOverlay from './components/WarpScanOverlay'
 import PortOverlay from './components/PortOverlay'
 import SpecialPortOverlay from './components/SpecialPortOverlay'
 import PlanetOverlay from './components/PlanetOverlay'
-import ClaimPlanetModal from './components/ClaimPlanetModal'
 import LeaderboardOverlay from './components/LeaderboardOverlay'
 import TradeRouteOverlay from './components/TradeRouteOverlay'
+import TravelConfirmationModal from './components/TravelConfirmationModal'
 import StatusBar from './components/StatusBar'
+import { useBackground } from '@/lib/use-background'
 import styles from './page.module.css'
 import './retro-theme.module.css'
 
@@ -67,7 +71,6 @@ export default function Game() {
   const [warpScanOpen, setWarpScanOpen] = useState(false)
   const [warpScanData, setWarpScanData] = useState<any[]>([])
   const [planetOverlayOpen, setPlanetOverlayOpen] = useState(false)
-  const [claimPlanetOpen, setClaimPlanetOpen] = useState(false)
   const [portOverlayOpen, setPortOverlayOpen] = useState(false)
   const [specialPortOverlayOpen, setSpecialPortOverlayOpen] = useState(false)
   const [leaderboardOpen, setLeaderboardOpen] = useState(false)
@@ -75,6 +78,8 @@ export default function Game() {
   const [upgradeLoading, setUpgradeLoading] = useState(false)
   const [authChecked, setAuthChecked] = useState(false)
   const [tradeRoutes, setTradeRoutes] = useState<any[]>([])
+  const [travelModalOpen, setTravelModalOpen] = useState(false)
+  const [travelTarget, setTravelTarget] = useState<{sector: number, type: 'warp' | 'realspace'} | null>(null)
   const router = useRouter()
   const searchParams = useSearchParams()
   
@@ -154,14 +159,50 @@ export default function Game() {
 
   // Build API URLs with universe parameter
   const meUrl = authChecked ? (universeId ? `/api/me?universe_id=${universeId}` : '/api/me') : null
-  const { data: playerData, error: playerError, mutate: mutatePlayer } = useSWR(meUrl, fetcher)
+  const { data: playerData, error: playerError, mutate: mutatePlayer } = useSWR(
+    meUrl,
+    fetcher,
+    { revalidateOnFocus: false, revalidateOnReconnect: false, dedupingInterval: 10000 }
+  )
   const currentSector = playerData?.player?.current_sector_number
   const playerUniverseId = playerData?.player?.universe_id
   const sectorKey = currentSector !== undefined ? `/api/sector?number=${currentSector}&universe_id=${playerUniverseId || universeId || ''}` : null
   const { data: sectorData, error: sectorError, mutate: mutateSector } = useSWR(
-    sectorKey, 
-    fetcher
+    sectorKey,
+    fetcher,
+    { revalidateOnFocus: false, revalidateOnReconnect: false, dedupingInterval: 10000 }
   )
+
+  // Determine background based on sector data
+  const hasPort = sectorData?.port !== null && sectorData?.port !== undefined
+  const portKind = sectorData?.port?.kind
+  
+  let backgroundType: 'space' | 'port-ore' | 'port-organics' | 'port-goods' | 'port-energy' | 'port-special' = 'space'
+  
+  if (hasPort && portKind) {
+    switch (portKind) {
+      case 'ore':
+        backgroundType = 'port-ore'
+        break
+      case 'organics':
+        backgroundType = 'port-organics'
+        break
+      case 'goods':
+        backgroundType = 'port-goods'
+        break
+      case 'energy':
+        backgroundType = 'port-energy'
+        break
+      case 'special':
+        backgroundType = 'port-special'
+        break
+      default:
+        backgroundType = 'space'
+    }
+  }
+  
+  // Apply background
+  useBackground(backgroundType)
 
   // Force refresh data when universe changes
   useEffect(() => {
@@ -233,7 +274,9 @@ export default function Game() {
       if (response) {
         const data = await response.json()
         if (data.error) {
-          setStatusMessage(data.error.message)
+          console.error('Move API error:', data.error)
+          const errorMsg = data.error.message || data.error.details?.message || 'Move failed'
+          setStatusMessage(errorMsg)
           setStatusType('error')
         } else {
           // Revalidate both player and sector data
@@ -336,8 +379,8 @@ export default function Game() {
   const fetchMap = async (center?: number) => {
     const maxCells = Math.max(9, Math.floor((typeof window !== 'undefined' ? window.innerWidth : 720) / 64))
     const radius = Math.min(50, maxCells)
-    const universeId = playerUniverseId || universeId
-    const res = await apiCall(`/api/map?center=${center ?? (player?.current_sector_number||0)}&radius=${radius}&universe_id=${universeId}`)
+    const currentUniverseId = playerUniverseId || universeId
+    const res = await apiCall(`/api/map?center=${center ?? (player?.current_sector_number||0)}&radius=${radius}&universe_id=${currentUniverseId}`)
     if (res) { const j = await res.json(); setMapData(j.sectors||[]) }
   }
   const debouncedFetchMap = (center?: number) => {
@@ -367,12 +410,12 @@ export default function Game() {
         } else {
           mutatePlayer()
           mutateSector()
-          setClaimPlanetOpen(false)
           setStatusMessage(`Claimed planet "${name}"`)
           setStatusType('success')
         }
       }
     } catch (error) {
+      console.error('Planet claim error:', error)
       setStatusMessage('Planet claim failed')
       setStatusType('error')
     }
@@ -511,10 +554,10 @@ export default function Game() {
   }
 
   const scanWarps = async () => {
-    const universeId = playerUniverseId || universeId
+    const currentUniverseId = playerUniverseId || universeId
     const res = await apiCall('/api/scan/warps', { 
       method: 'POST',
-      body: JSON.stringify({ universe_id: universeId })
+      body: JSON.stringify({ universe_id: currentUniverseId })
     })
     if (res) {
       const j = await res.json()
@@ -589,6 +632,30 @@ export default function Game() {
     }
   }
 
+  // Travel confirmation handler
+  const handleTravelConfirmation = async () => {
+    if (!travelTarget) return
+    
+    if (travelTarget.type === 'warp') {
+      await handleMove(travelTarget.sector)
+    } else {
+      // Realspace travel - would need to implement this
+      setStatusMessage('Realspace travel not yet implemented')
+      setStatusType('error')
+    }
+  }
+
+  // Calculate turns required for travel
+  const calculateTurnsRequired = (targetSector: number, travelType: 'warp' | 'realspace') => {
+    if (travelType === 'warp') {
+      return 1 // Warp travel always costs 1 turn
+    } else {
+      // Realspace travel - calculate based on distance
+      const distance = Math.abs(targetSector - (player?.current_sector_number || 0))
+      return Math.max(1, Math.ceil(distance / 10)) // 1 turn per 10 sectors
+    }
+  }
+
   if (loading || !authChecked) {
     return (
       <div className={styles.container}>
@@ -626,7 +693,7 @@ export default function Game() {
       <HeaderHUD
         handle={player?.handle}
         turns={player?.turns}
-        turnCap={player?.turn_cap}
+        turnCap={playerData?.player?.turn_cap}
         lastTurnTs={player?.last_turn_ts}
         credits={player?.credits}
         currentSector={player?.current_sector_number}
@@ -643,12 +710,11 @@ export default function Game() {
           <div className={styles.commandsBox}>
             <h3>Commands</h3>
             <div className={styles.commandList}>
-              <button className={styles.commandItem} onClick={openMap}>🗺️ Map</button>
-              <button className={styles.commandItem} onClick={scanWarps} disabled={!player?.turns}>🔎 Scan Warps (-1)</button>
               <button className={styles.commandItem} onClick={() => router.push('/ship')}>🚀 Ship</button>
               <button className={styles.commandItem} onClick={() => setLeaderboardOpen(true)}>🏆 Leaderboard</button>
-        <button className={styles.commandItem} onClick={() => setTradeRouteOpen(true)}>🚀 Trade Routes</button>
-              <button className={styles.commandItem} onClick={() => router.push('/admin')}>⚙️ Admin</button>
+              <button className={styles.commandItem} onClick={() => setTradeRouteOpen(true)}>🚀 Trade Routes</button>
+              {/* Admin link visible only if user is admin */}
+              <AdminLink />
               <button className={styles.commandItem} onClick={async ()=>{
                 try {
                   const res = await apiCall('/api/favorite', { method:'POST', body: JSON.stringify({ sectorNumber: sector?.number, flag: true })})
@@ -673,6 +739,34 @@ export default function Game() {
                     </div>
                     {route.waypoints && route.waypoints.length > 0 && (
                       <div className={styles.routeActions}>
+                        {/* Show route sectors as clickable */}
+                        <div className={styles.routeSectors}>
+                          {route.waypoints.slice(0, 2).map((waypoint: any, index: number) => (
+                            <button
+                              key={`${route.id}-${waypoint.id}`}
+                              className={`${styles.sectorBtn} ${
+                                waypoint.port_info?.sector_number === sector?.number ? styles.currentSector : ''
+                              }`}
+                              onClick={() => {
+                                if (waypoint.port_info?.sector_number !== sector?.number) {
+                                  setTravelTarget({
+                                    sector: waypoint.port_info?.sector_number,
+                                    type: 'warp'
+                                  })
+                                  setTravelModalOpen(true)
+                                }
+                              }}
+                              title={`Travel to Sector ${waypoint.port_info?.sector_number}`}
+                            >
+                              S{waypoint.port_info?.sector_number}
+                            </button>
+                          ))}
+                          {route.waypoints.length > 2 && (
+                            <span className={styles.moreSectors}>+{route.waypoints.length - 2}</span>
+                          )}
+                        </div>
+                        
+                        {/* Execute button only if in first sector */}
                         {route.waypoints[0]?.port_info?.sector_number === sector?.number && (
                           <button 
                             className={styles.executeBtn}
@@ -702,21 +796,28 @@ export default function Game() {
               <div className={styles.sectorNumber}>
                 {sector?.number ?? '--'}
               </div>
-              <div className={styles.viewportControls}>
-                <button className={styles.warpGate} onClick={openMap}>🗺️ Map</button>
-                <button className={styles.warpGate} onClick={scanWarps} disabled={!player?.turns}>🔎 Scan Warps (-1)</button>
-              </div>
+              {/* Center-pane controls removed per design: no Map/Scan here */}
             </div>
 
             {port ? (
               <div className={styles.portInline}>
-                Trading port: <button className={styles.warpGate} onClick={() => {
-                  if (port.kind === 'special') {
-                    setSpecialPortOverlayOpen(true)
-                  } else {
-                    setPortOverlayOpen(true)
-                  }
-                }}>{port.kind}</button>
+                Trading port:
+                <span
+                  className={styles.portBadge}
+                  onClick={() => {
+                    if (port.kind === 'special') {
+                      setSpecialPortOverlayOpen(true)
+                    } else {
+                      setPortOverlayOpen(true)
+                    }
+                  }}
+                >
+                  {port.kind === 'ore' && '🪨 Ore'}
+                  {port.kind === 'organics' && '🌿 Organics'}
+                  {port.kind === 'goods' && '📦 Goods'}
+                  {port.kind === 'energy' && '⚡ Energy'}
+                  {port.kind === 'special' && '⭐ Special'}
+                </span>
               </div>
             ) : (
               <div className={styles.portInline}>No port available in this sector</div>
@@ -725,18 +826,37 @@ export default function Game() {
             {/* Planets */}
             {planets.length > 0 && (
               <div className={styles.planetBelt}>
-                {planets.map((planet, index) => (
+                {planets.map((planet: any, index: number) => (
                   <div key={planet.id} style={{ marginBottom: index < planets.length - 1 ? '8px' : '0' }}>
                     <div className={styles.planetOrb} />
                     <div className={styles.planetLabel}>{planet.name}</div>
-                    {planet.owner ? (
-                      <button className={styles.planetBtn} onClick={() => setPlanetOverlayOpen(true)}>Manage Planet</button>
-                    ) : (
-                      <button className={styles.planetBtn} onClick={() => setClaimPlanetOpen(true)}>Claim Planet</button>
-                    )}
+                    <button 
+                      className={styles.planetBtn} 
+                      onClick={() => setPlanetOverlayOpen(true)}
+                    >
+                      View Planet
+                    </button>
                   </div>
                 ))}
               </div>
+            )}
+
+            {/* Mine Information */}
+            {sector?.number && (playerUniverseId || universeId) && (
+              <MineIndicator 
+                sectorNumber={sector.number}
+                universeId={playerUniverseId || universeId}
+                playerHullLevel={playerData?.ship?.hull_lvl}
+              />
+            )}
+
+            {/* Mine Deployment */}
+            {sector?.number && (playerUniverseId || universeId) && playerData?.ship?.torpedoes !== undefined && (
+              <MineDeployer 
+                sectorNumber={sector.number}
+                universeId={playerUniverseId || universeId}
+                playerTorpedoes={playerData.ship.torpedoes}
+              />
             )}
 
             {/* Other ships section */}
@@ -749,6 +869,8 @@ export default function Game() {
 
         {/* Right Sidebar: Cargo, Realspace, Warp */}
         <div className={styles.rightPanel}>
+          {/* Scheduler widget moved to Admin panel */}
+          
           <InventoryPanel inventory={playerData?.inventory} loading={!playerData} />
 
           <HyperspacePanel
@@ -761,19 +883,37 @@ export default function Game() {
             loading={hyperLoading}
           />
 
+
           <div className={styles.sideCard}>
-            <h3>Warp to</h3>
-            <div className={styles.warpList}>
-              {sectorData?.warps?.map((warpNumber: number) => (
-                <button
-                  key={warpNumber}
-                  onClick={() => handleMove(warpNumber)}
-                  disabled={moveLoading || !player?.turns}
-                  className={styles.warpLink}
-                >
-                  {moveLoading ? 'Moving...' : `=> ${warpNumber}`}
-                </button>
-              ))}
+            <h3>Navigation</h3>
+            
+            {/* Navigation Actions */}
+            <div className={styles.navActions}>
+              <button className={styles.navBtn} onClick={openMap}>🗺️ Map</button>
+              <button 
+                className={styles.navBtn} 
+                onClick={scanWarps} 
+                disabled={!player?.turns}
+              >
+                🔎 Scan Warps (-1)
+              </button>
+            </div>
+            
+            {/* Warp Gates */}
+            <div className={styles.warpSection}>
+              <h4>Warp Gates</h4>
+              <div className={styles.warpList}>
+                {sectorData?.warps?.map((warpNumber: number) => (
+                  <button
+                    key={warpNumber}
+                    onClick={() => handleMove(warpNumber)}
+                    disabled={moveLoading || !player?.turns}
+                    className={styles.warpLink}
+                  >
+                    {moveLoading ? 'Moving...' : `=> ${warpNumber}`}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
 
@@ -821,14 +961,31 @@ export default function Game() {
         onClose={() => setSpecialPortOverlayOpen(false)}
         shipData={playerData?.ship}
         playerCredits={player?.credits}
+        shipCredits={playerData?.ship?.credits}
         onUpgrade={handleUpgrade}
         upgradeLoading={upgradeLoading}
+        universeId={playerUniverseId || universeId}
+        onStatusMessage={(message, type) => {
+          setStatusMessage(message)
+          setStatusType(type)
+        }}
       />
 
       {planetOverlayOpen && planets[0] && (
         <PlanetOverlay
           planet={planets[0]}
-          player={player}
+          player={{
+            credits: playerData?.ship?.credits || 0,
+            turns: player.turns,
+            inventory: {
+              ore: playerData?.ship?.ore || 0,
+              organics: playerData?.ship?.organics || 0,
+              goods: playerData?.ship?.goods || 0,
+              energy: playerData?.ship?.energy || 0,
+              colonists: playerData?.ship?.colonists || 0,
+              credits: playerData?.ship?.credits || 0
+            }
+          }}
           onClose={() => setPlanetOverlayOpen(false)}
           onClaim={handleClaimPlanet}
           onStore={handleStoreResource}
@@ -837,12 +994,6 @@ export default function Game() {
         />
       )}
 
-      {claimPlanetOpen && (
-        <ClaimPlanetModal
-          onClose={() => setClaimPlanetOpen(false)}
-          onClaim={handleClaimPlanet}
-        />
-      )}
 
       <LeaderboardOverlay
         open={leaderboardOpen}
@@ -859,6 +1010,19 @@ export default function Game() {
             mutateSector()
             fetchTradeRoutes()
           }}
+        />
+
+        <TravelConfirmationModal
+          open={travelModalOpen}
+          onClose={() => {
+            setTravelModalOpen(false)
+            setTravelTarget(null)
+          }}
+          onConfirm={handleTravelConfirmation}
+          targetSector={travelTarget?.sector || 0}
+          currentSector={player?.current_sector_number || 0}
+          turnsRequired={travelTarget ? calculateTurnsRequired(travelTarget.sector, travelTarget.type) : 1}
+          travelType={travelTarget?.type || 'warp'}
         />
 
     </div>

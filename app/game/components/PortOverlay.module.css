@@ -1,7 +1,7 @@
 .backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.6);
+  background: rgba(0,0,0,0.85);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -25,7 +25,8 @@
   margin-bottom: 12px;
 }
 
-.title { color: var(--text); letter-spacing: 0.08em; text-transform: uppercase; font-size: 12px; }
+.title { color: var(--text); letter-spacing: 0.08em; text-transform: uppercase; font-size: 12px; display: flex; align-items: center; gap: 8px; }
+.portBadge { display: inline-block; padding: 4px 8px; border: 1px solid var(--bnt-accent); border-radius: 8px; background: rgba(99, 230, 190, 0.08); color: #fff; font-weight: 700; box-shadow: 0 0 12px rgba(99,230,190,0.2); }
 .close { background: transparent; border: 1px solid var(--line); color: #fff; padding: 4px 8px; border-radius: 6px; cursor: pointer; }
 
 .content { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
@@ -73,4 +74,141 @@
 .res { display: inline-flex; align-items: center; gap: 6px; }
 .resIcon { opacity: 0.9; }
 .resName { text-transform: capitalize; }
+
+/* Special Port Styles */
+.specialPort {
+  background: linear-gradient(135deg, rgba(99, 230, 190, 0.05), rgba(99, 230, 190, 0.02));
+  border: 1px solid rgba(99, 230, 190, 0.3);
+}
+
+.specialPort .panel {
+  background: rgba(26, 26, 26, 0.95);
+  border: 1px solid rgba(99, 230, 190, 0.2);
+  box-shadow: 0 0 20px rgba(99, 230, 190, 0.1);
+}
+
+.specialPort .title {
+  color: var(--bnt-accent);
+  font-weight: 700;
+}
+
+/* Device/Component Tables */
+.deviceTable, .componentTable {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 8px;
+}
+
+.deviceTable th, .componentTable th {
+  background: rgba(99, 230, 190, 0.1);
+  color: var(--bnt-accent);
+  padding: 8px 6px;
+  text-align: left;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid rgba(99, 230, 190, 0.2);
+}
+
+.deviceTable td, .componentTable td {
+  padding: 6px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  font-size: 12px;
+}
+
+.deviceTable tr:hover, .componentTable tr:hover {
+  background: rgba(99, 230, 190, 0.05);
+}
+
+/* Input fields */
+.quantityInput {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  color: #fff;
+  padding: 4px 6px;
+  width: 60px;
+  text-align: center;
+}
+
+.quantityInput:focus {
+  outline: none;
+  border-color: var(--bnt-accent);
+  box-shadow: 0 0 0 2px rgba(99, 230, 190, 0.2);
+}
+
+/* Checkboxes */
+.deviceCheckbox {
+  accent-color: var(--bnt-accent);
+}
+
+/* Cost display */
+.cost {
+  color: #fbbf24;
+  font-weight: 600;
+}
+
+.maxValue {
+  color: #4ade80;
+  font-weight: 600;
+}
+
+/* Special buttons */
+.buyButton {
+  background: linear-gradient(135deg, var(--bnt-accent), rgba(99, 230, 190, 0.8));
+  color: #000;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 20px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.buyButton:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(99, 230, 190, 0.3);
+}
+
+.buyButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Total cost display */
+.totalCost {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 8px 12px;
+  background: rgba(99, 230, 190, 0.1);
+  border-radius: 6px;
+  border: 1px solid rgba(99, 230, 190, 0.2);
+}
+
+.totalCostLabel {
+  color: var(--bnt-accent);
+  font-weight: 600;
+}
+
+.totalCostValue {
+  color: #fbbf24;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+/* Special links */
+.specialLink {
+  color: var(--bnt-accent);
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 0.2s ease;
+}
+
+.specialLink:hover {
+  color: #4ade80;
+  text-decoration: underline;
+}
 
