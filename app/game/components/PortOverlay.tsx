@@ -174,7 +174,7 @@ export default function PortOverlay({ open, onClose, port, player, ship, invento
                   <ActionsPanel
                     port={port}
                     player={player}
-                    shipCredits={playerData?.ship?.credits}
+                    shipCredits={ship?.credits}
                     ship={ship}
                     inventory={inventory}
                     onTrade={(d)=> onTrade && onTrade(d)}
@@ -191,7 +191,7 @@ export default function PortOverlay({ open, onClose, port, player, ship, invento
                   <ActionsPanel
                     port={port}
                     player={player}
-                    shipCredits={playerData?.ship?.credits}
+                    shipCredits={ship?.credits}
                     ship={ship}
                     inventory={inventory}
                     onTrade={(d)=> onTrade && onTrade(d)}
@@ -212,7 +212,7 @@ export default function PortOverlay({ open, onClose, port, player, ship, invento
                     if (!onAutoTrade) return
                     const res = await onAutoTrade()
                     if (res && !res.error) {
-                      const creditsDelta = Number(res.credits) - Number(playerData?.ship?.credits ?? 0)
+                      const creditsDelta = Number(res.credits) - Number(ship?.credits ?? 0)
                       setResult({ ...res, creditsDelta })
                     }
                   }}>Auto Trade</button>
@@ -271,7 +271,7 @@ function SpecialPortContent({
       <div className={styles.pane} style={{gridColumn:'1 / -1'}}>
         <div className={styles.paneTitle}>Credits Available</div>
         <div style={{fontSize: '16px', fontWeight: '600', color: '#fbbf24'}}>
-          You have {Number(playerData?.ship?.credits || 0).toLocaleString()} credits to spend.
+          You have {Number(ship?.credits || 0).toLocaleString()} credits to spend.
         </div>
         <div style={{marginTop: '8px', display: 'flex', gap: '12px'}}>
           <a href="#" className={styles.specialLink}>IGB Banking Terminal</a>
@@ -453,7 +453,7 @@ function SpecialPortContent({
         <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
           <button 
             className={styles.buyButton}
-            disabled={totalCost === 0 || totalCost > (playerData?.ship?.credits || 0)}
+            disabled={totalCost === 0 || totalCost > (ship?.credits || 0)}
           >
             Buy
           </button>

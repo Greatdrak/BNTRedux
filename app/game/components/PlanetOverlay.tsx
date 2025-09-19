@@ -2,35 +2,46 @@ import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase-client'
 import styles from './PlanetOverlay.module.css'
 
-interface PlanetOverlayProps {
-  planet: {
-    id: string
-    name: string
-    owner: boolean
-    colonists?: number
-    colonistsMax?: number
-    stock?: {
-      ore: number
-      organics: number
-      goods: number
-      energy: number
-    }
-    defenses?: {
-      fighters: number
-      torpedoes: number
-      shields: number
-    }
-    lastProduction?: string
-    lastColonistGrowth?: string
-    productionAllocation?: {
-      ore: number
-      organics: number
-      goods: number
-      energy: number
-      fighters: number
-      torpedoes: number
-    }
+interface Planet {
+  id: string
+  name: string
+  owner: boolean
+  ownerName?: string | null
+  colonists?: number
+  colonistsMax?: number
+  stock?: {
+    ore: number
+    organics: number
+    goods: number
+    energy: number
+    credits?: number
   }
+  defenses?: {
+    fighters: number
+    torpedoes: number
+    shields: number
+  }
+  lastProduction?: string
+  lastColonistGrowth?: string
+  productionAllocation?: {
+    ore: number
+    organics: number
+    goods: number
+    energy: number
+    fighters: number
+    torpedoes: number
+  }
+  base?: {
+    built: boolean
+    cost: number
+    colonistsRequired: number
+    resourcesRequired: number
+  }
+}
+
+interface PlanetOverlayProps {
+  planets: Planet[]
+  initialPlanetIndex?: number
   player: {
     credits: number
     turns: number
@@ -39,6 +50,8 @@ interface PlanetOverlayProps {
       organics: number
       goods: number
       energy: number
+      colonists: number
+      credits: number
     }
   }
   onClose: () => void
@@ -49,7 +62,8 @@ interface PlanetOverlayProps {
 }
 
 export default function PlanetOverlay({ 
-  planet, 
+  planets, 
+  initialPlanetIndex = 0,
   player, 
   onClose, 
   onClaim, 
@@ -57,37 +71,83 @@ export default function PlanetOverlay({
   onWithdraw, 
   onRefresh 
 }: PlanetOverlayProps) {
+  const [currentPlanetIndex, setCurrentPlanetIndex] = useState(initialPlanetIndex)
   const [claimName, setClaimName] = useState('Colony')
   const [storeResource, setStoreResource] = useState('ore')
   const [storeQty, setStoreQty] = useState(1)
   const [withdrawResource, setWithdrawResource] = useState('ore')
   const [withdrawQty, setWithdrawQty] = useState(1)
   const [loading, setLoading] = useState(false)
-  const [activeTab, setActiveTab] = useState<'overview' | 'transfer'>('overview')
+  const [activeTab, setActiveTab] = useState<'overview' | 'transfer' | 'production' | 'base'>('overview')
+  const [showRenameForm, setShowRenameForm] = useState(false)
+  const [statusMessage, setStatusMessage] = useState('')
+  
+  // Get current planet from slideshow
+  const currentPlanet = planets[currentPlanetIndex]
+  const [renameName, setRenameName] = useState(currentPlanet?.name || 'Unnamed')
   const [planetStock, setPlanetStock] = useState({
-    ore: planet.stock?.ore || 0,
-    organics: planet.stock?.organics || 0,
-    goods: planet.stock?.goods || 0,
-    energy: planet.stock?.energy || 0
+    ore: currentPlanet?.stock?.ore || 0,
+    organics: currentPlanet?.stock?.organics || 0,
+    goods: currentPlanet?.stock?.goods || 0,
+    energy: currentPlanet?.stock?.energy || 0,
+    credits: currentPlanet?.stock?.credits || 0
   })
   
   const [productionAllocation, setProductionAllocation] = useState({
-    ore: planet.productionAllocation?.ore || 0,
-    organics: planet.productionAllocation?.organics || 0,
-    goods: planet.productionAllocation?.goods || 0,
-    energy: planet.productionAllocation?.energy || 0,
-    fighters: planet.productionAllocation?.fighters || 0,
-    torpedoes: planet.productionAllocation?.torpedoes || 0
+    ore: currentPlanet?.productionAllocation?.ore || 0,
+    organics: currentPlanet?.productionAllocation?.organics || 0,
+    goods: currentPlanet?.productionAllocation?.goods || 0,
+    energy: currentPlanet?.productionAllocation?.energy || 0,
+    fighters: currentPlanet?.productionAllocation?.fighters || 0,
+    torpedoes: currentPlanet?.productionAllocation?.torpedoes || 0
   })
 
   // Transfer state
   const [transferData, setTransferData] = useState<Record<string, { quantity: number, toPlanet: boolean }>>({})
 
+  // Update currentPlanetIndex when initialPlanetIndex changes
+  useEffect(() => {
+    setCurrentPlanetIndex(initialPlanetIndex)
+  }, [initialPlanetIndex])
+
+  // Update state when current planet changes
+  useEffect(() => {
+    if (currentPlanet) {
+      setRenameName(currentPlanet.name || 'Unnamed')
+      setPlanetStock({
+        ore: currentPlanet.stock?.ore || 0,
+        organics: currentPlanet.stock?.organics || 0,
+        goods: currentPlanet.stock?.goods || 0,
+        energy: currentPlanet.stock?.energy || 0,
+        credits: currentPlanet.stock?.credits || 0
+      })
+      setProductionAllocation({
+        ore: currentPlanet.productionAllocation?.ore || 0,
+        organics: currentPlanet.productionAllocation?.organics || 0,
+        goods: currentPlanet.productionAllocation?.goods || 0,
+        energy: currentPlanet.productionAllocation?.energy || 0,
+        fighters: currentPlanet.productionAllocation?.fighters || 0,
+        torpedoes: currentPlanet.productionAllocation?.torpedoes || 0
+      })
+      setTransferData({})
+    }
+  }, [currentPlanetIndex, currentPlanet])
+
+  // Slideshow navigation functions
+  const goToPreviousPlanet = () => {
+    setCurrentPlanetIndex((prev) => (prev > 0 ? prev - 1 : planets.length - 1))
+  }
+
+  const goToNextPlanet = () => {
+    setCurrentPlanetIndex((prev) => (prev < planets.length - 1 ? prev + 1 : 0))
+  }
+
   const resources = [
     { key: 'ore', label: 'Ore', icon: '🪨' },
     { key: 'organics', label: 'Organics', icon: '🌿' },
     { key: 'goods', label: 'Goods', icon: '📦' },
-    { key: 'energy', label: 'Energy', icon: '⚡' }
+    { key: 'energy', label: 'Energy', icon: '⚡' },
+    { key: 'credits', label: 'Credits', icon: '💰' }
   ]
   
   const productionItems = [
@@ -141,18 +201,7 @@ export default function PlanetOverlay({
   }
 
   // Update planet stock when planet data changes
-  useEffect(() => {
-    if (planet.stock) {
-      setPlanetStock(planet.stock)
-    }
-  }, [planet.stock])
-  
-  // Update production allocation when planet data changes
-  useEffect(() => {
-    if (planet.productionAllocation) {
-      setProductionAllocation(planet.productionAllocation)
-    }
-  }, [planet.productionAllocation])
+  // These effects are now handled in the main useEffect above
 
   const handleProductionAllocationUpdate = async () => {
     setLoading(true)
@@ -162,14 +211,14 @@ export default function PlanetOverlay({
         throw new Error('No authentication token')
       }
 
-      const response = await fetch('/api/planet/production-allocation', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`
-        },
-        body: JSON.stringify({
-          planetId: planet.id,
+        const response = await fetch('/api/planet/production-allocation', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`
+          },
+          body: JSON.stringify({
+            planetId: currentPlanet.id,
           orePercent: productionAllocation.ore,
           organicsPercent: productionAllocation.organics,
           goodsPercent: productionAllocation.goods,
@@ -215,14 +264,14 @@ export default function PlanetOverlay({
         return
       }
 
-      const response = await fetch('/api/planet/transfer', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`
-        },
-        body: JSON.stringify({
-          planetId: planet.id,
+        const response = await fetch('/api/planet/transfer', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`
+          },
+          body: JSON.stringify({
+            planetId: currentPlanet.id,
           transfers
         })
       })
@@ -243,12 +292,94 @@ export default function PlanetOverlay({
     }
   }
 
-  if (!planet.owner) {
+  const handleRename = async () => {
+    if (!renameName.trim() || loading) return
+    
+    setLoading(true)
+    setStatusMessage('')
+    
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session?.access_token) {
+        setStatusMessage('Error: Not authenticated')
+        return
+      }
+
+        const response = await fetch('/api/planet/rename', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`
+          },
+          body: JSON.stringify({
+            planetId: currentPlanet.id,
+          newName: renameName.trim()
+        })
+      })
+
+      const result = await response.json()
+
+      if (result.success) {
+        setStatusMessage(`Planet renamed to "${result.newName}"`)
+        setShowRenameForm(false)
+        onRefresh()
+      } else {
+        setStatusMessage(`Error: ${result.error}`)
+      }
+    } catch (error) {
+      console.error('Rename error:', error)
+      setStatusMessage('Error: Failed to rename planet')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleBuildBase = async () => {
+    if (loading) return
+    
+    setLoading(true)
+    setStatusMessage('')
+    
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session?.access_token) {
+        setStatusMessage('Error: Not authenticated')
+        return
+      }
+
+        const response = await fetch('/api/planet/build-base', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`
+          },
+          body: JSON.stringify({
+            planetId: currentPlanet.id
+        })
+      })
+
+      const result = await response.json()
+
+      if (result.success) {
+        setStatusMessage(`Base built successfully! Cost: ${result.baseCost.toLocaleString()} credits, Resources consumed: ${result.resourcesConsumed.toLocaleString()} each`)
+        onRefresh()
+      } else {
+        setStatusMessage(`Error: ${result.error}`)
+      }
+    } catch (error) {
+      console.error('Build base error:', error)
+      setStatusMessage('Error: Failed to build base')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  if (!currentPlanet?.owner) {
     return (
       <div className={styles.overlay} onClick={onClose}>
         <div className={styles.panel} onClick={(e) => e.stopPropagation()}>
           <div className={styles.header}>
-            <h3>🪐 Planet: {planet.name}</h3>
+            <h3>🪐 Planet: {currentPlanet?.name}</h3>
             <button className={styles.closeBtn} onClick={onClose}>×</button>
           </div>
           <div className={styles.content}>
@@ -294,9 +425,31 @@ export default function PlanetOverlay({
     <div className={styles.overlay} onClick={onClose}>
       <div className={styles.panel} onClick={(e) => e.stopPropagation()}>
         <div className={styles.header}>
-          <h3>🪐 Planet: {planet.name}</h3>
+          <h3>🪐 Planet: {currentPlanet?.name}</h3>
           <button className={styles.closeBtn} onClick={onClose}>×</button>
         </div>
+        
+        {planets.length > 1 && (
+          <div className={styles.slideshowNav}>
+            <button 
+              className={styles.slideBtn}
+              onClick={goToPreviousPlanet}
+              disabled={loading}
+            >
+              ←
+            </button>
+            <span className={styles.slideIndicator}>
+              {currentPlanetIndex + 1} / {planets.length}
+            </span>
+            <button 
+              className={styles.slideBtn}
+              onClick={goToNextPlanet}
+              disabled={loading}
+            >
+              →
+            </button>
+          </div>
+        )}
         
         <div className={styles.tabs}>
           <button 
@@ -311,6 +464,18 @@ export default function PlanetOverlay({
           >
             Transfer
           </button>
+          <button 
+            className={`${styles.tab} ${activeTab === 'production' ? styles.active : ''}`}
+            onClick={() => setActiveTab('production')}
+          >
+            Production
+          </button>
+          <button 
+            className={`${styles.tab} ${activeTab === 'base' ? styles.active : ''}`}
+            onClick={() => setActiveTab('base')}
+          >
+            Base
+          </button>
         </div>
         
         <div className={styles.content}>
@@ -321,111 +486,91 @@ export default function PlanetOverlay({
                 <div className={styles.infoGrid}>
                   <div className={styles.infoItem}>
                     <span className={styles.label}>Name:</span>
-                    <span className={styles.value}>{planet.name}</span>
+                    <span className={styles.value}>{currentPlanet?.name}</span>
+                    <button 
+                      className={styles.renameBtn}
+                      onClick={() => setShowRenameForm(!showRenameForm)}
+                    >
+                      Rename
+                    </button>
                   </div>
                   <div className={styles.infoItem}>
                     <span className={styles.label}>Population:</span>
                     <span className={styles.value}>
-                      {planet.colonists?.toLocaleString() || '0'} / {planet.colonistsMax?.toLocaleString() || '100M'} colonists
+                      {currentPlanet?.colonists?.toLocaleString() || '0'} / {currentPlanet?.colonistsMax?.toLocaleString() || '100M'} colonists
                     </span>
                   </div>
                   <div className={styles.infoItem}>
-                    <span className={styles.label}>Defense Level:</span>
+                    <span className={styles.label}>Base Status:</span>
                     <span className={styles.value}>
-                      {planet.defenses ? 
-                        `${planet.defenses.fighters} fighters, ${planet.defenses.torpedoes} torpedoes, ${planet.defenses.shields} shields` : 
-                        'No defenses'
-                      }
+                      {currentPlanet?.base?.built ? '✅ Built (+1 Tech Bonus)' : '❌ Not Built'}
                     </span>
                   </div>
                 </div>
+                
+                {showRenameForm && (
+                  <div className={styles.renameForm}>
+                    <h5>Rename Planet</h5>
+                    <div className={styles.formGroup}>
+                      <input
+                        type="text"
+                        value={renameName}
+                        onChange={(e) => setRenameName(e.target.value)}
+                        placeholder="Enter new planet name"
+                        className={styles.nameInput}
+                        maxLength={50}
+                      />
+                      <button 
+                        className={styles.actionBtn}
+                        onClick={handleRename}
+                        disabled={loading || !renameName.trim()}
+                      >
+                        {loading ? 'Renaming...' : 'Rename'}
+                      </button>
+                      <button 
+                        className={styles.secondaryBtn}
+                        onClick={() => setShowRenameForm(false)}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
               
+              
               <div className={styles.stockSummary}>
-                <h4>Resource Stock</h4>
+                <h4>Planet Resources</h4>
                 <div className={styles.stockGrid}>
                   {resources.map(res => (
                     <div key={res.key} className={styles.stockItem}>
                       <span className={styles.stockIcon}>{res.icon}</span>
-                      <span className={styles.stockLabel}>{res.key}</span>
+                      <span className={styles.stockLabel}>{res.label}</span>
                       <span className={styles.stockValue}>{planetStock[res.key as keyof typeof planetStock].toLocaleString()}</span>
                     </div>
                   ))}
                 </div>
               </div>
 
-              <div className={styles.section}>
-                <h4>Production Allocation</h4>
-                <p className={styles.sectionDescription}>
-                  Allocate colonists to different production types. Remaining colonists generate credits.
-                </p>
-                
-                <div className={styles.productionTable}>
-                  <div className={styles.productionHeader}>
-                    <div className={styles.productionCell}>Resource</div>
-                    <div className={styles.productionCell}>Current %</div>
-                    <div className={styles.productionCell}>New %</div>
+              <div className={styles.defensesSection}>
+                <h4>Defenses</h4>
+                <div className={styles.defensesGrid}>
+                  <div className={styles.defenseItem}>
+                    <span className={styles.defenseIcon}>🛸</span>
+                    <span className={styles.defenseLabel}>Fighters</span>
+                    <span className={styles.defenseValue}>{(currentPlanet?.defenses?.fighters || 0).toLocaleString()}</span>
                   </div>
-                  
-                  {productionItems.map((item) => (
-                    <div key={item.key} className={styles.productionRow}>
-                      <div className={styles.productionCell}>
-                        {item.icon} {item.label}
-                      </div>
-                      <div className={styles.productionCell}>
-                        {productionAllocation[item.key as keyof typeof productionAllocation]}%
-                      </div>
-                      <div className={styles.productionCell}>
-                        <input
-                          type="number"
-                          min="0"
-                          max="100"
-                          value={productionAllocation[item.key as keyof typeof productionAllocation]}
-                          onChange={(e) => {
-                            const value = parseInt(e.target.value) || 0
-                            setProductionAllocation(prev => ({
-                              ...prev,
-                              [item.key]: Math.min(100, Math.max(0, value))
-                            }))
-                          }}
-                          className={styles.percentInput}
-                        />
-                      </div>
-                    </div>
-                  ))}
-                  
-                  <div className={styles.productionRow}>
-                    <div className={styles.productionCell}>
-                      💰 Credits (Remaining)
-                    </div>
-                    <div className={styles.productionCell}>
-                      {100 - (productionAllocation.ore + productionAllocation.organics + productionAllocation.goods + productionAllocation.energy + productionAllocation.fighters + productionAllocation.torpedoes + productionAllocation.fighters + productionAllocation.torpedoes)}%
-                    </div>
-                    <div className={styles.productionCell}>
-                      <span className={styles.creditsPercent}>
-                        {100 - (productionAllocation.ore + productionAllocation.organics + productionAllocation.goods + productionAllocation.energy + productionAllocation.fighters + productionAllocation.torpedoes + productionAllocation.fighters + productionAllocation.torpedoes)}%
-                      </span>
-                    </div>
+                  <div className={styles.defenseItem}>
+                    <span className={styles.defenseIcon}>🚀</span>
+                    <span className={styles.defenseLabel}>Torpedoes</span>
+                    <span className={styles.defenseValue}>{(currentPlanet?.defenses?.torpedoes || 0).toLocaleString()}</span>
                   </div>
                 </div>
-                
-                <div className={styles.allocationSummary}>
-                  <div className={styles.summaryItem}>
-                    <span>Total Allocation:</span>
-                    <span className={productionAllocation.ore + productionAllocation.organics + productionAllocation.goods + productionAllocation.energy + productionAllocation.fighters + productionAllocation.torpedoes > 100 ? styles.error : styles.success}>
-                      {productionAllocation.ore + productionAllocation.organics + productionAllocation.goods + productionAllocation.energy + productionAllocation.fighters + productionAllocation.torpedoes}%
-                    </span>
-                  </div>
+                <div className={styles.defenseNote}>
+                  <p>💡 Shields are calculated dynamically in combat based on your ship's shield level + planet energy</p>
                 </div>
-                
-                <button 
-                  className={styles.actionBtn}
-                  onClick={handleProductionAllocationUpdate}
-                  disabled={loading || (productionAllocation.ore + productionAllocation.organics + productionAllocation.goods + productionAllocation.energy + productionAllocation.fighters + productionAllocation.torpedoes) > 100}
-                >
-                  {loading ? 'Updating...' : 'Update Production Allocation'}
-                </button>
               </div>
+
             </div>
           )}
 
@@ -456,7 +601,9 @@ export default function PlanetOverlay({
                         {planetStock[resource.key as keyof typeof planetStock].toLocaleString()}
                       </div>
                       <div className={styles.transferCell}>
-                        {player.inventory[resource.key as keyof typeof player.inventory].toLocaleString()}
+                        {resource.key === 'credits' 
+                          ? player.credits.toLocaleString() 
+                          : player.inventory[resource.key as keyof typeof player.inventory].toLocaleString()}
                       </div>
                       <div className={styles.transferCell}>
                         <input
@@ -519,7 +666,7 @@ export default function PlanetOverlay({
                       👥 Colonists
                     </div>
                     <div className={styles.transferCell}>
-                      {planet.colonists?.toLocaleString() || '0'}
+                      {currentPlanet?.colonists?.toLocaleString() || '0'}
                     </div>
                     <div className={styles.transferCell}>
                       {player.inventory.colonists?.toLocaleString() || '0'}
@@ -579,70 +726,6 @@ export default function PlanetOverlay({
                     </div>
                   </div>
                   
-                  <div className={styles.transferRow}>
-                    <div className={styles.transferCell}>
-                      💰 Credits
-                    </div>
-                    <div className={styles.transferCell}>
-                      {planetStock.credits?.toLocaleString() || '0'}
-                    </div>
-                    <div className={styles.transferCell}>
-                      {player.inventory.credits?.toLocaleString() || '0'}
-                    </div>
-                    <div className={styles.transferCell}>
-                      <input
-                        type="number"
-                        min="0"
-                        className={styles.transferInput}
-                        placeholder="0"
-                        value={transferData['credits']?.quantity || ''}
-                        onChange={(e) => {
-                          const quantity = parseInt(e.target.value) || 0
-                          setTransferData(prev => ({
-                            ...prev,
-                            credits: {
-                              ...prev.credits,
-                              quantity
-                            }
-                          }))
-                        }}
-                      />
-                    </div>
-                    <div className={styles.transferCell}>
-                      <input 
-                        type="checkbox" 
-                        className={styles.transferCheckbox}
-                        checked={transferData['credits']?.toPlanet || false}
-                        onChange={(e) => {
-                          setTransferData(prev => ({
-                            ...prev,
-                            credits: {
-                              ...prev.credits,
-                              toPlanet: e.target.checked
-                            }
-                          }))
-                        }}
-                      />
-                    </div>
-                    <div className={styles.transferCell}>
-                      <input 
-                        type="checkbox" 
-                        className={styles.transferCheckbox}
-                        checked={transferData['credits']?.quantity > 0 && !transferData['credits']?.toPlanet}
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            setTransferData(prev => ({
-                              ...prev,
-                              credits: {
-                                ...prev.credits,
-                                toPlanet: false
-                              }
-                            }))
-                          }
-                        }}
-                      />
-                    </div>
-                  </div>
                 </div>
                 
                 <div className={styles.transferActions}>
@@ -673,17 +756,17 @@ export default function PlanetOverlay({
                   <div className={styles.defenseItem}>
                     <span className={styles.defenseIcon}>🛸</span>
                     <span className={styles.defenseLabel}>Fighters</span>
-                    <span className={styles.defenseValue}>{planet.defenses?.fighters || 0}</span>
+                    <span className={styles.defenseValue}>{currentPlanet?.defenses?.fighters || 0}</span>
                   </div>
                   <div className={styles.defenseItem}>
                     <span className={styles.defenseIcon}>🚀</span>
                     <span className={styles.defenseLabel}>Torpedoes</span>
-                    <span className={styles.defenseValue}>{planet.defenses?.torpedoes || 0}</span>
+                    <span className={styles.defenseValue}>{currentPlanet?.defenses?.torpedoes || 0}</span>
                   </div>
                   <div className={styles.defenseItem}>
                     <span className={styles.defenseIcon}>🛡️</span>
                     <span className={styles.defenseLabel}>Shields</span>
-                    <span className={styles.defenseValue}>{planet.defenses?.shields || 0}</span>
+                    <span className={styles.defenseValue}>{currentPlanet?.defenses?.shields || 0}</span>
                   </div>
                 </div>
                 <div className={styles.placeholder}>
@@ -708,7 +791,7 @@ export default function PlanetOverlay({
                   <div className={styles.productionItem}>
                     <span className={styles.productionLabel}>Colonists:</span>
                     <span className={styles.productionValue}>
-                      {planet.colonists?.toLocaleString() || '0'} / {planet.colonistsMax?.toLocaleString() || '100M'}
+                      {currentPlanet?.colonists?.toLocaleString() || '0'} / {currentPlanet?.colonistsMax?.toLocaleString() || '100M'}
                     </span>
                   </div>
                   <div className={styles.productionItem}>
@@ -718,8 +801,8 @@ export default function PlanetOverlay({
                   <div className={styles.productionItem}>
                     <span className={styles.productionLabel}>Last Growth:</span>
                     <span className={styles.productionValue}>
-                      {planet.lastColonistGrowth ? 
-                        new Date(planet.lastColonistGrowth).toLocaleString() : 
+                      {currentPlanet?.lastColonistGrowth ? 
+                        new Date(currentPlanet.lastColonistGrowth).toLocaleString() : 
                         'Never'
                       }
                     </span>
@@ -727,8 +810,8 @@ export default function PlanetOverlay({
                   <div className={styles.productionItem}>
                     <span className={styles.productionLabel}>Last Production:</span>
                     <span className={styles.productionValue}>
-                      {planet.lastProduction ? 
-                        new Date(planet.lastProduction).toLocaleString() : 
+                      {currentPlanet?.lastProduction ? 
+                        new Date(currentPlanet.lastProduction).toLocaleString() : 
                         'Never'
                       }
                     </span>
@@ -799,7 +882,98 @@ export default function PlanetOverlay({
               </div>
             </div>
           )}
+
+          {activeTab === 'base' && (
+            <div className={styles.tabContent}>
+              <div className={styles.section}>
+                <h4>Planet Base</h4>
+                
+                {currentPlanet?.base?.built ? (
+                  <div className={styles.baseBuilt}>
+                    <div className={styles.baseStatus}>
+                      <h5>✅ Base Built</h5>
+                      <p>Your planet base is operational and provides +1 tech bonus for torpedoes, shields, and beam weapons in combat.</p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className={styles.baseBuilding}>
+                    <div className={styles.baseInfo}>
+                      <p>Build a base to gain +1 tech bonus for torpedoes, shields, and beam weapons in combat.</p>
+                      
+                      <div className={styles.baseRequirementsGrid}>
+                        <div className={styles.baseRequirements}>
+                          <h5>Requirements:</h5>
+                          <ul>
+                            <li>💰 {currentPlanet?.base?.cost.toLocaleString() || '50,000'} credits</li>
+                            <li>👥 {currentPlanet?.base?.colonistsRequired.toLocaleString() || '10,000'} colonists</li>
+                            <li>🪨 {currentPlanet?.base?.resourcesRequired.toLocaleString() || '10,000'} ore</li>
+                            <li>🌿 {currentPlanet?.base?.resourcesRequired.toLocaleString() || '10,000'} organics</li>
+                            <li>📦 {currentPlanet?.base?.resourcesRequired.toLocaleString() || '10,000'} goods</li>
+                            <li>⚡ {currentPlanet?.base?.resourcesRequired.toLocaleString() || '10,000'} energy</li>
+                          </ul>
+                        </div>
+                        
+                        <div className={styles.baseStatus}>
+                          <h5>Current Status:</h5>
+                          <ul>
+                            <li className={player.credits >= (currentPlanet?.base?.cost || 50000) ? styles.requirementMet : styles.requirementNotMet}>
+                              💰 Ship Credits: {player.credits.toLocaleString()} / {(currentPlanet?.base?.cost || 50000).toLocaleString()}
+                            </li>
+                            <li className={(currentPlanet?.colonists || 0) >= (currentPlanet?.base?.colonistsRequired || 10000) ? styles.requirementMet : styles.requirementNotMet}>
+                              👥 Colonists: {(currentPlanet?.colonists || 0).toLocaleString()} / {(currentPlanet?.base?.colonistsRequired || 10000).toLocaleString()}
+                            </li>
+                            <li className={(planetStock.ore || 0) >= (currentPlanet?.base?.resourcesRequired || 10000) ? styles.requirementMet : styles.requirementNotMet}>
+                              🪨 Planet Ore: {(planetStock.ore || 0).toLocaleString()} / {(currentPlanet?.base?.resourcesRequired || 10000).toLocaleString()}
+                            </li>
+                            <li className={(planetStock.organics || 0) >= (currentPlanet?.base?.resourcesRequired || 10000) ? styles.requirementMet : styles.requirementNotMet}>
+                              🌿 Planet Organics: {(planetStock.organics || 0).toLocaleString()} / {(currentPlanet?.base?.resourcesRequired || 10000).toLocaleString()}
+                            </li>
+                            <li className={(planetStock.goods || 0) >= (currentPlanet?.base?.resourcesRequired || 10000) ? styles.requirementMet : styles.requirementNotMet}>
+                              📦 Planet Goods: {(planetStock.goods || 0).toLocaleString()} / {(currentPlanet?.base?.resourcesRequired || 10000).toLocaleString()}
+                            </li>
+                            <li className={(planetStock.energy || 0) >= (currentPlanet?.base?.resourcesRequired || 10000) ? styles.requirementMet : styles.requirementNotMet}>
+                              ⚡ Planet Energy: {(planetStock.energy || 0).toLocaleString()} / {(currentPlanet?.base?.resourcesRequired || 10000).toLocaleString()}
+                            </li>
+                          </ul>
+                        </div>
+                      </div>
+                      
+                      <button 
+                        className={styles.actionBtn}
+                        onClick={handleBuildBase}
+                        disabled={loading || 
+                          player.credits < (currentPlanet?.base?.cost || 50000) ||
+                          (currentPlanet?.colonists || 0) < (currentPlanet?.base?.colonistsRequired || 10000) ||
+                          (planetStock.ore || 0) < (currentPlanet?.base?.resourcesRequired || 10000) ||
+                          (planetStock.organics || 0) < (currentPlanet?.base?.resourcesRequired || 10000) ||
+                          (planetStock.goods || 0) < (currentPlanet?.base?.resourcesRequired || 10000) ||
+                          (planetStock.energy || 0) < (currentPlanet?.base?.resourcesRequired || 10000)
+                        }
+                      >
+                        {loading ? 'Building...' : 'Build Base'}
+                      </button>
+                      
+                      {(planetStock.ore || 0) < (currentPlanet?.base?.resourcesRequired || 10000) ||
+                       (planetStock.organics || 0) < (currentPlanet?.base?.resourcesRequired || 10000) ||
+                       (planetStock.goods || 0) < (currentPlanet?.base?.resourcesRequired || 10000) ||
+                       (planetStock.energy || 0) < (currentPlanet?.base?.resourcesRequired || 10000) ? (
+                        <div className={styles.warningMessage}>
+                          ⚠️ You need to transfer resources to the planet first using the Transfer tab. This will consume 1 turn per transfer.
+                        </div>
+                      ) : null}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
+        
+        {statusMessage && (
+          <div className={styles.statusMessage}>
+            {statusMessage}
+          </div>
+        )}
       </div>
     </div>
   )

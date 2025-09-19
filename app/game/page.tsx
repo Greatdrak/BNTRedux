@@ -71,6 +71,7 @@ export default function Game() {
   const [warpScanOpen, setWarpScanOpen] = useState(false)
   const [warpScanData, setWarpScanData] = useState<any[]>([])
   const [planetOverlayOpen, setPlanetOverlayOpen] = useState(false)
+  const [selectedPlanetIndex, setSelectedPlanetIndex] = useState(0)
   const [portOverlayOpen, setPortOverlayOpen] = useState(false)
   const [specialPortOverlayOpen, setSpecialPortOverlayOpen] = useState(false)
   const [leaderboardOpen, setLeaderboardOpen] = useState(false)
@@ -412,6 +413,8 @@ export default function Game() {
           mutateSector()
           setStatusMessage(`Claimed planet "${name}"`)
           setStatusType('success')
+          // Close the planet overlay after successful claim
+          setPlanetOverlayOpen(false)
         }
       }
     } catch (error) {
@@ -827,15 +830,20 @@ export default function Game() {
             {planets.length > 0 && (
               <div className={styles.planetBelt}>
                 {planets.map((planet: any, index: number) => (
-                  <div key={planet.id} style={{ marginBottom: index < planets.length - 1 ? '8px' : '0' }}>
+                  <div 
+                    key={planet.id} 
+                    className={styles.planetContainer}
+                    onClick={() => {
+                      setSelectedPlanetIndex(index)
+                      setPlanetOverlayOpen(true)
+                    }}
+                    style={{ cursor: 'pointer' }}
+                  >
                     <div className={styles.planetOrb} />
                     <div className={styles.planetLabel}>{planet.name}</div>
-                    <button 
-                      className={styles.planetBtn} 
-                      onClick={() => setPlanetOverlayOpen(true)}
-                    >
-                      View Planet
-                    </button>
+                    {planet.ownerName && (
+                      <div className={styles.planetOwner}>Owner: {planet.ownerName}</div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -971,9 +979,10 @@ export default function Game() {
         }}
       />
 
-      {planetOverlayOpen && planets[0] && (
+      {planetOverlayOpen && planets.length > 0 && (
         <PlanetOverlay
-          planet={planets[0]}
+          planets={planets}
+          initialPlanetIndex={selectedPlanetIndex}
           player={{
             credits: playerData?.ship?.credits || 0,
             turns: player.turns,

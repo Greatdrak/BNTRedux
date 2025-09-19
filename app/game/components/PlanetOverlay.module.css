@@ -298,6 +298,105 @@
   font-family: monospace;
 }
 
+/* Slideshow navigation styles */
+.slideshowNav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 12px;
+  background: var(--panelHi);
+  border-bottom: 1px solid var(--line);
+}
+
+.slideBtn {
+  background: var(--accent);
+  color: var(--bg);
+  border: none;
+  border-radius: 4px;
+  padding: 8px 12px;
+  font-size: 1.2rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.slideBtn:hover:not(:disabled) {
+  background: var(--accentHover);
+  transform: scale(1.05);
+}
+
+.slideBtn:disabled {
+  background: var(--line);
+  color: var(--textMuted);
+  cursor: not-allowed;
+  transform: none;
+}
+
+.slideIndicator {
+  font-weight: 600;
+  color: var(--accent);
+  font-family: 'Courier New', monospace;
+  font-size: 0.9rem;
+}
+
+/* Defenses section styles */
+.defensesSection {
+  margin-top: 16px;
+  padding: 16px;
+  background: var(--panelHi);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
+
+.defensesGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin: 12px 0;
+}
+
+.defenseItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+}
+
+.defenseIcon {
+  font-size: 1.2rem;
+}
+
+.defenseLabel {
+  flex: 1;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.defenseValue {
+  font-weight: 600;
+  color: var(--accent);
+  font-family: 'Courier New', monospace;
+}
+
+.defenseNote {
+  margin-top: 12px;
+  padding: 8px 12px;
+  background: rgba(0, 255, 255, 0.1);
+  border: 1px solid rgba(0, 255, 255, 0.3);
+  border-radius: 4px;
+}
+
+.defenseNote p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--text);
+  font-style: italic;
+}
+
 /* Placeholder styles */
 .placeholder {
   padding: 20px;
@@ -688,4 +787,151 @@
   background: var(--panelHi);
   color: var(--text);
   border-color: var(--accent);
+}
+
+/* Rename form styles */
+.renameForm {
+  margin-top: 16px;
+  padding: 16px;
+  background: var(--panelHi);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
+
+.renameForm h5 {
+  margin: 0 0 12px 0;
+  color: var(--text);
+  font-size: 1rem;
+}
+
+.formGroup {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.nameInput {
+  flex: 1;
+  padding: 8px 12px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  color: var(--text);
+  font-size: 0.9rem;
+}
+
+.nameInput:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.renameBtn {
+  padding: 4px 8px;
+  background: var(--panelHi);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  color: var(--muted);
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.renameBtn:hover {
+  background: var(--accent);
+  color: var(--bg);
+  border-color: var(--accent);
+}
+
+/* Base building styles */
+.baseBuilding {
+  margin-top: 16px;
+  padding: 16px;
+  background: var(--panelHi);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
+
+.baseBuilt {
+  margin-top: 16px;
+  padding: 16px;
+  background: var(--panelHi);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
+
+.baseRequirementsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin: 16px 0;
+}
+
+.baseBuilding h4 {
+  margin: 0 0 12px 0;
+  color: var(--text);
+  font-size: 1.1rem;
+}
+
+.baseInfo p {
+  margin: 0 0 16px 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.baseRequirements,
+.baseStatus {
+  margin-bottom: 16px;
+}
+
+.baseRequirements h5,
+.baseStatus h5 {
+  margin: 0 0 8px 0;
+  color: var(--text);
+  font-size: 0.95rem;
+}
+
+.baseRequirements ul,
+.baseStatus ul {
+  margin: 0;
+  padding-left: 20px;
+  list-style: none;
+}
+
+.baseRequirements li,
+.baseStatus li {
+  margin: 4px 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.requirementMet {
+  color: var(--success) !important;
+}
+
+.requirementNotMet {
+  color: var(--error) !important;
+}
+
+/* Status message styles */
+.statusMessage {
+  margin-top: 16px;
+  padding: 12px 16px;
+  background: var(--panelHi);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  color: var(--text);
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+/* Warning message styles */
+.warningMessage {
+  margin-top: 12px;
+  padding: 12px 16px;
+  background: rgba(255, 165, 0, 0.1);
+  border: 1px solid rgba(255, 165, 0, 0.3);
+  border-radius: 6px;
+  color: #ffa500;
+  font-size: 0.9rem;
+  text-align: center;
 }

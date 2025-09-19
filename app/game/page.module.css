@@ -187,6 +187,19 @@
   margin: var(--space-5) auto var(--space-6);
 }
 
+.planetContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 120px;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.planetContainer:hover {
+  transform: translateY(-4px);
+  opacity: 0.9;
+}
+
 .planetOrb {
   width: 96px;
   height: 96px;
@@ -200,6 +213,15 @@
   text-align: center;
   margin-top: 8px;
   color: #ffc107;
+}
+
+.planetOwner {
+  text-align: center;
+  margin-top: 2px;
+  font-size: 11px;
+  color: #63e6be;
+  opacity: 0.7;
+  font-weight: 400;
 }
 
 .shipsSection {

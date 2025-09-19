@@ -70,7 +70,6 @@ export async function GET(request: NextRequest) {
     const portData = portError && portError.code === 'PGRST116' ? null : port
     
     // Get planet info if it exists (there can be multiple planets per sector)
-    // Filter by universe through the sector relationship
     const { data: planets, error: planetError } = await supabaseAdmin
       .from('planets')
       .select(`
@@ -95,14 +94,49 @@ export async function GET(request: NextRequest) {
         production_fighters_percent,
         production_torpedoes_percent,
         owner_player_id,
-        players(user_id),
-        sectors!inner(universe_id)
+        base_built,
+        base_cost,
+        base_colonists_required,
+        base_resources_required
       `)
       .eq('sector_id', sector.id)
-      .eq('sectors.universe_id', sector.universe_id)
     
     const planetData = planetError ? null : planets
-    const isOwner = planetData && planetData.some(p => p.players && p.players.user_id === userId)
+    
+    // Get player ID for current user to check ownership
+    let playerId = null
+    const { data: player, error: playerError } = await supabaseAdmin
+      .from('players')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('universe_id', sector.universe_id)
+      .single()
+    
+    if (!playerError && player) {
+      playerId = player.id
+    }
+    
+    // Get owner names for planets
+    let ownerNames: Record<string, string> = {}
+    if (planetData && planetData.length > 0) {
+      const ownerPlayerIds = planetData
+        .map(p => p.owner_player_id)
+        .filter(id => id !== null)
+      
+      if (ownerPlayerIds.length > 0) {
+        const { data: owners, error: ownersError } = await supabaseAdmin
+          .from('players')
+          .select('id, name')
+          .in('id', ownerPlayerIds)
+        
+        if (!ownersError && owners) {
+          ownerNames = owners.reduce((acc, owner) => {
+            acc[owner.id] = owner.name
+            return acc
+          }, {} as Record<string, string>)
+        }
+      }
+    }
     
     // Get sector numbers for warps
     const warpSectorNumbers = []
@@ -119,7 +153,11 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       sector: {
-        number: sector.number
+        number: sector.number,
+        ownerPlayerId: null,
+        controlled: false,
+        ownershipThreshold: 3,
+        name: null
       },
       warps: warpSectorNumbers,
       port: portData ? {
@@ -141,7 +179,8 @@ export async function GET(request: NextRequest) {
       planets: planetData ? planetData.map(p => ({
         id: p.id,
         name: p.name,
-        owner: p.players && p.players.user_id === userId,
+        owner: p.owner_player_id === playerId,
+        ownerName: p.owner_player_id ? ownerNames[p.owner_player_id] || null : null,
         colonists: p.colonists,
         colonistsMax: p.colonists_max,
         stock: {
@@ -165,6 +204,12 @@ export async function GET(request: NextRequest) {
           energy: p.production_energy_percent || 0,
           fighters: p.production_fighters_percent || 0,
           torpedoes: p.production_torpedoes_percent || 0
+        },
+        base: {
+          built: p.base_built || false,
+          cost: p.base_cost || 50000,
+          colonistsRequired: p.base_colonists_required || 10000,
+          resourcesRequired: p.base_resources_required || 10000
         }
       })) : []
     })
