@@ -35,3 +35,19 @@ next-env.d.ts
 .env.local
 .env.local.*
 .env*
+
+# Binary files
+*.exe
+*.dll
+*.so
+*.dylib
+*.bin
+
+# Database backups and dumps
+*.dump
+*.backup
+sql_backups/
+sql_archive/
+
+# Supabase CLI binary
+supabase.exe
