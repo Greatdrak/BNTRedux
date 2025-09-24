@@ -1,3 +1,7 @@
+<div align="center">
+  <img src="public/images/qnt-logo.png" alt="Quantum Nova Traders Logo" width="200" height="200">
+</div>
+
 # Quantum Nova Traders 🚀
 
 A modern space trading game built with Next.js and Supabase. Explore the cosmos, trade resources, build your empire, and conquer the stars in this multiplayer space adventure.
