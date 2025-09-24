@@ -173,24 +173,42 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🏛️ Heritage & Inspiration
 
-**Quantum Nova Traders** is a modern reimagining of the classic **Blacknova Traders** game. We pay homage to the original web-based space trading game that captivated players in the early days of browser gaming.
+**Quantum Nova Traders** is a modern reimagining of the classic **Blacknova Traders** game. While we built our codebase from scratch, our core foundation is deeply rooted in the mathematical formulas, game mechanics, and design principles established by the original Blacknova Traders.
 
 ### About Blacknova Traders
-Blacknova Traders was one of the pioneering browser-based multiplayer games, featuring:
-- Real-time space trading
-- Multiplayer competition
-- Strategic resource management
-- Turn-based gameplay
+Blacknova Traders was one of the pioneering browser-based multiplayer games that defined the space trading genre. It introduced groundbreaking concepts that became industry standards:
+- **Mathematical Trading Formulas** - Sophisticated pricing algorithms and market dynamics
+- **Resource Management Systems** - Complex cargo capacity and ship upgrade mechanics
+- **Multiplayer Competition** - Real-time player vs player trading and strategy
+- **Turn-based Gameplay** - Strategic decision-making with time constraints
+- **Sector Navigation** - Warp gate systems and exploration mechanics
 
-### Our Modern Take
-While inspired by the original, Quantum Nova Traders brings the classic gameplay into the modern era with:
+### Our Foundation
+Quantum Nova Traders builds directly upon Blacknova Traders' core mathematical and conceptual framework:
+
+#### **Mathematical Heritage**
+- **Trading Algorithms** - Our pricing and market dynamics use similar mathematical foundations
+- **Ship Capacity Formulas** - Cargo calculations and upgrade costs follow established patterns
+- **Resource Economics** - Supply/demand mechanics and port regeneration systems
+- **Movement Calculations** - Warp costs, fuel consumption, and navigation mechanics
+
+#### **Core Game Mechanics**
+- **Turn-based Structure** - Players take turns making strategic decisions
+- **Multi-universe Support** - Multiple game instances with isolated economies
+- **Port Trading System** - Buy low, sell high across different sectors
+- **Ship Upgrades** - Progressive ship improvement with capacity and performance gains
+- **Sector Exploration** - Warp gate navigation and sector discovery
+
+### Our Modern Evolution
+While honoring the original's mathematical foundation, Quantum Nova Traders introduces modern enhancements:
 - **Modern Tech Stack** - Built with Next.js, React, and Supabase
-- **Enhanced UI/UX** - Beautiful, responsive interface
-- **Real-time Updates** - Live game state synchronization
+- **Enhanced UI/UX** - Beautiful, responsive interface with real-time updates
 - **Advanced Features** - Combat system, planet management, AI players
 - **Mobile Ready** - Responsive design for all devices
+- **Real-time Synchronization** - Live game state updates and multiplayer interaction
 
-We're grateful to the original Blacknova Traders community and developers for creating such an engaging game that continues to inspire new generations of space trading games.
+### Gratitude & Recognition
+We are deeply grateful to the original Blacknova Traders developers and community. Their mathematical models, game design principles, and innovative approach to browser-based multiplayer gaming created a foundation that continues to inspire and inform modern space trading games. While we've built our own codebase, the core DNA of Blacknova Traders lives on in Quantum Nova Traders' mathematical formulas and gameplay mechanics.
 
 ## 🆘 Support
 
