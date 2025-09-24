@@ -176,7 +176,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 **Quantum Nova Traders** is a modern reimagining of the classic **Blacknova Traders** game. While we built our codebase from scratch, our core foundation is deeply rooted in the mathematical formulas, game mechanics, and design principles established by the original Blacknova Traders.
 
 ### About Blacknova Traders
-Blacknova Traders was one of the pioneering browser-based multiplayer games that defined the space trading genre. It introduced groundbreaking concepts that became industry standards:
+Blacknova Traders was one of the pioneering browser-based multiplayer games that defined the space trading genre. It was hella-fancy for its time.
 - **Mathematical Trading Formulas** - Sophisticated pricing algorithms and market dynamics
 - **Resource Management Systems** - Complex cargo capacity and ship upgrade mechanics
 - **Multiplayer Competition** - Real-time player vs player trading and strategy
@@ -213,8 +213,8 @@ We are deeply grateful to the original Blacknova Traders developers and communit
 ## 🆘 Support
 
 - **Issues** - Report bugs and request features on GitHub
-- **Discord** - Join our community server
-- **Email** - Contact the development team
+- **Discord** - Maybe Someday
+- **Email** - Not yet!
 
 ---
 
