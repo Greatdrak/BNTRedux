@@ -1,6 +1,8 @@
-# BNT Redux 🚀
+# Quantum Nova Traders 🚀
 
 A modern space trading game built with Next.js and Supabase. Explore the cosmos, trade resources, build your empire, and conquer the stars in this multiplayer space adventure.
+
+*Inspired by the classic Blacknova Traders game*
 
 ## 🌟 Features
 
@@ -47,7 +49,7 @@ A modern space trading game built with Next.js and Supabase. Explore the cosmos,
 1. **Clone the repository**
    ```bash
    git clone <repository-url>
-   cd BNTRedux
+   cd QuantumNovaTraders
    ```
 
 2. **Install dependencies**
@@ -84,7 +86,7 @@ A modern space trading game built with Next.js and Supabase. Explore the cosmos,
 ## 📁 Project Structure
 
 ```
-BNTRedux/
+QuantumNovaTraders/
 ├── app/                    # Next.js App Router
 │   ├── api/               # API routes
 │   ├── game/              # Game interface
@@ -165,6 +167,27 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - [ ] Tournament system
 - [ ] Mod support
 
+## 🏛️ Heritage & Inspiration
+
+**Quantum Nova Traders** is a modern reimagining of the classic **Blacknova Traders** game. We pay homage to the original web-based space trading game that captivated players in the early days of browser gaming.
+
+### About Blacknova Traders
+Blacknova Traders was one of the pioneering browser-based multiplayer games, featuring:
+- Real-time space trading
+- Multiplayer competition
+- Strategic resource management
+- Turn-based gameplay
+
+### Our Modern Take
+While inspired by the original, Quantum Nova Traders brings the classic gameplay into the modern era with:
+- **Modern Tech Stack** - Built with Next.js, React, and Supabase
+- **Enhanced UI/UX** - Beautiful, responsive interface
+- **Real-time Updates** - Live game state synchronization
+- **Advanced Features** - Combat system, planet management, AI players
+- **Mobile Ready** - Responsive design for all devices
+
+We're grateful to the original Blacknova Traders community and developers for creating such an engaging game that continues to inspire new generations of space trading games.
+
 ## 🆘 Support
 
 - **Issues** - Report bugs and request features on GitHub
@@ -173,4 +196,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-**BNT Redux** - Where the stars are your playground! 🌌
+**Quantum Nova Traders** - Where the stars are your playground! 🌌
+
+*Inspired by the legendary Blacknova Traders*
