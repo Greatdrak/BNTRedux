@@ -11,7 +11,7 @@ DECLARE
   v_next_level INTEGER;
 BEGIN
   -- Validate attribute (current set; future attrs can be added without changing costs)
-  IF p_attr NOT IN ('engine', 'computer', 'sensors', 'shields', 'hull') THEN
+  IF p_attr NOT IN ('engine', 'computer', 'sensors', 'shields', 'hull', 'power', 'beam', 'torp_launcher', 'armor') THEN
     RETURN jsonb_build_object('error', jsonb_build_object('code', 'invalid_attribute', 'message', 'Invalid upgrade attribute'));
   END IF;
 
@@ -51,6 +51,14 @@ BEGIN
       v_cost := 1000 * POWER(2, v_ship.shield_lvl);
     WHEN 'hull' THEN
       v_cost := 1000 * POWER(2, v_ship.hull_lvl);
+    WHEN 'power' THEN
+      v_cost := 1000 * POWER(2, v_ship.power_lvl);
+    WHEN 'beam' THEN
+      v_cost := 1000 * POWER(2, v_ship.beam_lvl);
+    WHEN 'torp_launcher' THEN
+      v_cost := 1000 * POWER(2, v_ship.torp_launcher_lvl);
+    WHEN 'armor' THEN
+      v_cost := 1000 * POWER(2, v_ship.armor_lvl);
   END CASE;
 
   -- Check if ship has enough credits (FIXED: was checking player credits)
@@ -82,6 +90,14 @@ BEGIN
           ELSE FLOOR(1000 * POWER(hull_lvl + 1, 1.8))
         END
       WHERE player_id = v_player.id;
+    WHEN 'power' THEN 
+      UPDATE ships SET power_lvl = power_lvl + 1, credits = credits - v_cost WHERE player_id = v_player.id;
+    WHEN 'beam' THEN 
+      UPDATE ships SET beam_lvl = beam_lvl + 1, credits = credits - v_cost WHERE player_id = v_player.id;
+    WHEN 'torp_launcher' THEN 
+      UPDATE ships SET torp_launcher_lvl = torp_launcher_lvl + 1, credits = credits - v_cost WHERE player_id = v_player.id;
+    WHEN 'armor' THEN 
+      UPDATE ships SET armor_lvl = armor_lvl + 1, credits = credits - v_cost WHERE player_id = v_player.id;
   END CASE;
 
   -- Get updated ship data for response
@@ -96,6 +112,10 @@ BEGIN
       WHEN 'sensors' THEN v_ship.sensor_lvl
       WHEN 'shields' THEN v_ship.shield_lvl
       WHEN 'hull' THEN v_ship.hull_lvl
+      WHEN 'power' THEN v_ship.power_lvl
+      WHEN 'beam' THEN v_ship.beam_lvl
+      WHEN 'torp_launcher' THEN v_ship.torp_launcher_lvl
+      WHEN 'armor' THEN v_ship.armor_lvl
     END, 
     'cost', v_cost, 
     'credits_after', v_ship.credits
