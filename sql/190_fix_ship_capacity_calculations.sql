@@ -24,7 +24,7 @@ BEGIN
         RETURN jsonb_build_object('error', 'Ship not found');
     END IF;
     
-    -- Calculate capacities using proper BNT formulas
+    -- Calculate capacities using BNT formula: 100 * (1.5^tech_level) for ALL capacities
     result := jsonb_build_object(
         'hull', jsonb_build_object(
             'level', COALESCE(ship_record.hull_lvl, 1),
@@ -33,7 +33,7 @@ BEGIN
         ),
         'computer', jsonb_build_object(
             'level', COALESCE(ship_record.comp_lvl, 1),
-            'capacity', COALESCE(ship_record.comp_lvl, 1) * 10,  -- Fighters: comp_lvl * 10
+            'capacity', public.calculate_bnt_capacity(COALESCE(ship_record.comp_lvl, 1) - 1),
             'description', 'Fighter capacity'
         ),
         'armor', jsonb_build_object(
@@ -48,12 +48,12 @@ BEGIN
         ),
         'power', jsonb_build_object(
             'level', COALESCE(ship_record.power_lvl, 1),
-            'capacity', COALESCE(ship_record.power_lvl, 1) * 100,  -- Energy: power_lvl * 100
+            'capacity', public.calculate_bnt_capacity(COALESCE(ship_record.power_lvl, 1) - 1),
             'description', 'Energy capacity'
         ),
         'torp_launcher', jsonb_build_object(
             'level', COALESCE(ship_record.torp_launcher_lvl, 1),
-            'capacity', COALESCE(ship_record.torp_launcher_lvl, 1) * 10,  -- Torpedoes: torp_lvl * 10
+            'capacity', public.calculate_bnt_capacity(COALESCE(ship_record.torp_launcher_lvl, 1) - 1),
             'description', 'Torpedo capacity'
         )
     );
