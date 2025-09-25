@@ -93,7 +93,7 @@ export async function POST(request: NextRequest) {
         universe_id: universe_id,
         handle: cleanHandle,
         turns: 60,
-        -- turn_cap removed, now using universe_settings.max_accumulated_turns
+        // turn_cap removed, now using universe_settings.max_accumulated_turns
         current_sector: sector0.id
       })
       .select()
