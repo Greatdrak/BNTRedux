@@ -95,17 +95,25 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'Universe ID required' }, { status: 400 })
     }
 
+    // First get AI player IDs
+    const { data: aiPlayers, error: fetchError } = await supabaseAdmin
+      .from('players')
+      .select('id')
+      .eq('universe_id', universeId)
+      .eq('is_ai', true)
+
+    if (fetchError) {
+      console.error('Error fetching AI players:', fetchError)
+      return NextResponse.json({ error: 'Failed to fetch AI players' }, { status: 500 })
+    }
+
+    const aiPlayerIds = aiPlayers?.map(p => p.id) || []
+
     // Delete AI players and their ships
     const { error: deleteError } = await supabaseAdmin
       .from('ships')
       .delete()
-      .in('player_id', 
-        supabaseAdmin
-          .from('players')
-          .select('id')
-          .eq('universe_id', universeId)
-          .eq('is_ai', true)
-      )
+      .in('player_id', aiPlayerIds)
 
     if (deleteError) {
       console.error('Error deleting AI ships:', deleteError)
