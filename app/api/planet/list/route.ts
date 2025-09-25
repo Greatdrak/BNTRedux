@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
     const formattedPlanets = planets?.map(planet => ({
       id: planet.id,
       name: planet.name,
-      sectorNumber: planet.sectors.number,
+      sectorNumber: planet.sectors?.[0]?.number || 0,
       colonists: planet.colonists,
       colonistsMax: planet.colonists_max,
       stock: {
