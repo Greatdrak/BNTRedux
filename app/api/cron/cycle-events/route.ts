@@ -52,7 +52,11 @@ export async function POST(request: NextRequest) {
     // Process each universe
     for (const universe of universes || []) {
       try {
-        const settings = universe.universe_settings
+        const settings = universe.universe_settings?.[0]
+        if (!settings) {
+          console.log(`No settings found for universe: ${universe.name}`)
+          continue
+        }
         console.log(`Processing cycle events for universe: ${universe.name}`)
         
         // Check if it's time for cycle events

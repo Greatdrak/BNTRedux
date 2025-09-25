@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
     // Process each universe
     for (const universe of universes || []) {
       try {
-        const settings = universe.universe_settings || { turn_generation_interval_minutes: 3, turns_per_generation: 12, last_turn_generation: null }
+        const settings = universe.universe_settings?.[0] || { turn_generation_interval_minutes: 3, turns_per_generation: 12, last_turn_generation: null }
         console.log(`Processing turn generation for universe: ${universe.name}`)
         
         // Check if it's time for turn generation
