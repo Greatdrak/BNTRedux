@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
       .eq('id', planetId)
       .single()
     
-    const universeId = planetData?.sectors?.universe_id
+    const universeId = planetData?.sectors?.[0]?.universe_id
     console.log('Planet universe_id:', universeId)
     
     const { data: player, error: playerError } = await supabaseAdmin

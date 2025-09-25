@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
       id: player.id,
       handle: player.handle,
       universe_id: player.universe_id,
-      universe_name: player.universes.name
+      universe_name: player.universes?.[0]?.name
     })) || []
 
     return NextResponse.json({

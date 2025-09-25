@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
       .eq('id', planetId)
       .single()
     
-    const universeId = planetData?.sectors?.universe_id
+    const universeId = planetData?.sectors?.[0]?.universe_id
     if (!universeId) {
       return NextResponse.json({ success: false, error: 'Planet not found' }, { status: 404 })
     }
@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
 
       if (toPlanet) {
         // Transfer from ship to planet
-        const availableAmount = resource === 'credits' ? ship.credits : ship[resource]
+        const availableAmount = resource === 'credits' ? ship.credits : (ship as any)[resource]
         if (availableAmount < quantity) {
           return NextResponse.json({ 
             success: false, 
@@ -87,12 +87,12 @@ export async function POST(request: NextRequest) {
           shipUpdates.credits = (shipUpdates.credits || ship.credits) - quantity
           planetUpdates.credits = (planetUpdates.credits || planet.credits) + quantity
         } else {
-          shipUpdates[resource] = (shipUpdates[resource] || ship[resource]) - quantity
-          planetUpdates[resource] = (planetUpdates[resource] || planet[resource]) + quantity
+          shipUpdates[resource] = (shipUpdates[resource] || (ship as any)[resource]) - quantity
+          planetUpdates[resource] = (planetUpdates[resource] || (planet as any)[resource]) + quantity
         }
       } else {
         // Transfer from planet to ship
-        const availableAmount = resource === 'credits' ? planet.credits : planet[resource]
+        const availableAmount = resource === 'credits' ? planet.credits : (planet as any)[resource]
         if (availableAmount < quantity) {
           return NextResponse.json({ 
             success: false, 
@@ -104,8 +104,8 @@ export async function POST(request: NextRequest) {
           planetUpdates.credits = (planetUpdates.credits || planet.credits) - quantity
           shipUpdates.credits = (shipUpdates.credits || ship.credits) + quantity
         } else {
-          planetUpdates[resource] = (planetUpdates[resource] || planet[resource]) - quantity
-          shipUpdates[resource] = (shipUpdates[resource] || ship[resource]) + quantity
+          planetUpdates[resource] = (planetUpdates[resource] || (planet as any)[resource]) - quantity
+          shipUpdates[resource] = (shipUpdates[resource] || (ship as any)[resource]) + quantity
         }
       }
     }

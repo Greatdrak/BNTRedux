@@ -140,9 +140,9 @@ export async function GET(request: NextRequest) {
       id: ship.id,
       name: ship.name || 'Scout',
       player: {
-        id: ship.players.id,
-        handle: ship.players.handle,
-        is_ai: ship.players.is_ai
+        id: ship.players?.[0]?.id,
+        handle: ship.players?.[0]?.handle,
+        is_ai: ship.players?.[0]?.is_ai
       }
     })) || [])
 
