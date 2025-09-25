@@ -40,8 +40,10 @@ interface EnemyShip {
   player_handle: string
   hull?: number
   hull_max?: number
+  hull_lvl?: number
   shield?: number
   shield_max?: number
+  shield_lvl?: number
   fighters?: number
   torpedoes?: number
   energy?: number

@@ -19,6 +19,23 @@ interface SpecialPortOverlayProps {
     engine_lvl: number
     comp_lvl: number
     sensor_lvl: number
+    power_lvl?: number
+    beam_lvl?: number
+    torp_launcher_lvl?: number
+    armor_lvl?: number
+    armor?: number
+    colonists?: number
+    device_genesis_torpedoes?: number
+    device_space_beacons?: number
+    device_emergency_warp?: boolean
+    device_warp_editors?: number
+    device_escape_pod?: boolean
+    device_fuel_scoop?: boolean
+    device_last_seen?: boolean
+    ore?: number
+    organics?: number
+    goods?: number
+    energy?: number
     cargo: number
     fighters: number
     torpedoes: number
@@ -186,7 +203,7 @@ export default function SpecialPortOverlay({
 
     setPurchaseLoading(true)
     try {
-      const purchases = []
+      const purchases: any[] = []
       
       // Add purchases with security validation
       devices.forEach(device => {

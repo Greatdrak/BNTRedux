@@ -26,6 +26,7 @@ interface ActionsPanelProps {
   shipCredits?: number
   ship?: {
     cargo: number
+    hull_lvl?: number
   }
   inventory?: {
     ore: number

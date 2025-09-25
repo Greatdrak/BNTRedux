@@ -13,6 +13,14 @@ interface CombatStep {
   damage?: number
   target?: 'hull' | 'shield' | 'fighters' | 'torpedoes'
   success?: boolean
+  playerHull?: number
+  playerShield?: number
+  playerFighters?: number
+  playerTorpedoes?: number
+  enemyHull?: number
+  enemyShield?: number
+  enemyFighters?: number
+  enemyTorpedoes?: number
 }
 
 interface CombatResult {

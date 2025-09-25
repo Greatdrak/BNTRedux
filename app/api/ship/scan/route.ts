@@ -104,7 +104,7 @@ export async function POST(request: NextRequest) {
     // TODO: Add sector validation when we have sector data
     
     // Calculate scan success chance
-    const attackerSensorLevel = attackerPlayer.ships.sensor_lvl || 1
+    const attackerSensorLevel = attackerPlayer.ships?.[0]?.sensor_lvl || 1
     const targetCloakLevel = targetShip.cloak_lvl || 0
     
     // Determine scan result with automatic success for 5+ level advantage
@@ -154,7 +154,7 @@ export async function POST(request: NextRequest) {
       scanned_data: {
         id: targetShip.id,
         name: targetShip.name,
-        player_handle: targetShip.players.handle,
+        player_handle: targetShip.players?.[0]?.handle,
         hull: targetShip.hull,
         hull_max: targetShip.hull_max,
         shield: targetShip.shield,

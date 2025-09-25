@@ -748,40 +748,6 @@ export default function PlanetOverlay({
             </div>
           )}
 
-          {activeTab === 'defenses' && (
-            <div className={styles.tabContent}>
-              <div className={styles.section}>
-                <h4>Defense Systems</h4>
-                <div className={styles.defenseGrid}>
-                  <div className={styles.defenseItem}>
-                    <span className={styles.defenseIcon}>🛸</span>
-                    <span className={styles.defenseLabel}>Fighters</span>
-                    <span className={styles.defenseValue}>{currentPlanet?.defenses?.fighters || 0}</span>
-                  </div>
-                  <div className={styles.defenseItem}>
-                    <span className={styles.defenseIcon}>🚀</span>
-                    <span className={styles.defenseLabel}>Torpedoes</span>
-                    <span className={styles.defenseValue}>{currentPlanet?.defenses?.torpedoes || 0}</span>
-                  </div>
-                  <div className={styles.defenseItem}>
-                    <span className={styles.defenseIcon}>🛡️</span>
-                    <span className={styles.defenseLabel}>Shields</span>
-                    <span className={styles.defenseValue}>{currentPlanet?.defenses?.shields || 0}</span>
-                  </div>
-                </div>
-                <div className={styles.placeholder}>
-                  <p>🛡️ Defense management coming soon!</p>
-                  <p>Future features will include:</p>
-                  <ul>
-                    <li>Deploy fighters from ship</li>
-                    <li>Build torpedo launchers</li>
-                    <li>Install shield generators</li>
-                    <li>Defense upgrades</li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-          )}
 
           {activeTab === 'production' && (
             <div className={styles.tabContent}>

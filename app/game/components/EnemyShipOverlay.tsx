@@ -101,11 +101,11 @@ export default function EnemyShipOverlay({
     }
 
     // Check if we have data for this specific key
-    const hasData = scanData && scanData[key] !== undefined && scanData[key] !== null
+    const hasData = scanData && (scanData as any)[key] !== undefined && (scanData as any)[key] !== null
     
     if (hasData) {
       // Show the actual scanned data
-      const displayValue = typeof value === 'number' ? value.toLocaleString() : value
+      const displayValue = typeof value === 'number' ? value.toLocaleString() : (scanData as any)[key]
       return <div className={styles.dataItem}><span>{label}</span><span className={styles.success}>{displayValue}</span></div>
     } else {
       // No data available for this key

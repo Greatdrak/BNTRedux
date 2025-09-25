@@ -20,7 +20,6 @@ export default function InventoryPanel({ inventory, loading }: InventoryPanelPro
     { key: 'organics', icon: '🌿', name: 'Organics' },
     { key: 'goods', icon: '📦', name: 'Goods' },
     { key: 'energy', icon: '⚡', name: 'Energy' },
-    // @ts-expect-error colonists may be added later
     { key: 'colonists', icon: '👩‍🚀', name: 'Colonists' }
   ] as const
 

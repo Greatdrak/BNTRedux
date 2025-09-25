@@ -449,7 +449,7 @@ export default function TradeRouteOverlay({ open, onClose, universeId, onRouteCh
         }
       } catch (fetchError) {
         clearTimeout(timeoutId)
-        if (fetchError.name === 'AbortError') {
+        if ((fetchError as any)?.name === 'AbortError') {
           console.error('Trade route execution timed out')
           setError('Trade route execution timed out after 30 seconds')
         } else {

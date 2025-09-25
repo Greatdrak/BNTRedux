@@ -9,13 +9,7 @@ const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
 export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey)
 
 // Client for reading session from cookies
-export const supabaseServer = createClient(supabaseUrl, supabaseAnonKey, {
-  cookies: {
-    get(name: string) {
-      return cookies().get(name)?.value
-    },
-  },
-})
+export const supabaseServer = createClient(supabaseUrl, supabaseAnonKey)
 
 // Get current user from session
 export async function getCurrentUser() {
