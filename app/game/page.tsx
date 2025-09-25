@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import useSWR from 'swr'
 import { supabase } from '@/lib/supabase-client'
@@ -61,7 +61,7 @@ async function fetcher(endpoint: string) {
   return await response.json()
 }
 
-export default function Game() {
+function GameContent() {
   const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [moveLoading, setMoveLoading] = useState(false)
@@ -1063,5 +1063,13 @@ export default function Game() {
           />
 
     </div>
+  )
+}
+
+export default function Game() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <GameContent />
+    </Suspense>
   )
 }
