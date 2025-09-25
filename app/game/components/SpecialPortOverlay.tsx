@@ -144,15 +144,15 @@ export default function SpecialPortOverlay({
   }, [capacityData, shipData])
 
   const upgradeCosts = {
-    engine: 500 * ((shipData?.engine_lvl || 1) + 1),
-    computer: 400 * ((shipData?.comp_lvl || 1) + 1),
-    sensors: 400 * ((shipData?.sensor_lvl || 1) + 1),
-    shields: 300 * ((shipData?.shield_lvl || 1) + 1),
-    hull: 2000 * ((shipData?.hull_lvl || 1) + 1),
-    power: 1000 * Math.pow(2, (shipData?.power_lvl || 1) - 1), // Keep exponential for power/beam/torp/armor
-    beam: 1000 * Math.pow(2, (shipData?.beam_lvl || 1) - 1),
-    torp_launcher: 1000 * Math.pow(2, (shipData?.torp_launcher_lvl || 1) - 1),
-    armor: 1000 * Math.pow(2, (shipData?.armor_lvl || 1) - 1)
+    engine: 1000 * Math.pow(2, (shipData?.engine_lvl || 1)),
+    computer: 1000 * Math.pow(2, (shipData?.comp_lvl || 1)),
+    sensors: 1000 * Math.pow(2, (shipData?.sensor_lvl || 1)),
+    shields: 1000 * Math.pow(2, (shipData?.shield_lvl || 1)),
+    hull: 1000 * Math.pow(2, (shipData?.hull_lvl || 1)),
+    power: 1000 * Math.pow(2, (shipData?.power_lvl || 1)),
+    beam: 1000 * Math.pow(2, (shipData?.beam_lvl || 1)),
+    torp_launcher: 1000 * Math.pow(2, (shipData?.torp_launcher_lvl || 1)),
+    armor: 1000 * Math.pow(2, (shipData?.armor_lvl || 1))
   }
 
   // Calculate total cost for devices and items

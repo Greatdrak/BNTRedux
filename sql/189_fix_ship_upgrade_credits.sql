@@ -39,18 +39,18 @@ BEGIN
     RETURN jsonb_build_object('error', jsonb_build_object('code', 'wrong_port', 'message', 'Must be at a Special port to upgrade'));
   END IF;
 
-  -- Calculate cost based on attribute (matching the original BNT formulas)
+  -- Calculate cost based on attribute (original BNT doubling formula: 1000 * 2^(level-1))
   CASE p_attr
     WHEN 'engine' THEN
-      v_cost := 500 * (v_ship.engine_lvl + 1);
+      v_cost := 1000 * POWER(2, v_ship.engine_lvl);
     WHEN 'computer' THEN
-      v_cost := 400 * (v_ship.comp_lvl + 1);
+      v_cost := 1000 * POWER(2, v_ship.comp_lvl);
     WHEN 'sensors' THEN
-      v_cost := 400 * (v_ship.sensor_lvl + 1);
+      v_cost := 1000 * POWER(2, v_ship.sensor_lvl);
     WHEN 'shields' THEN
-      v_cost := 300 * (v_ship.shield_lvl + 1);
+      v_cost := 1000 * POWER(2, v_ship.shield_lvl);
     WHEN 'hull' THEN
-      v_cost := 2000 * (v_ship.hull_lvl + 1);
+      v_cost := 1000 * POWER(2, v_ship.hull_lvl);
   END CASE;
 
   -- Check if ship has enough credits (FIXED: was checking player credits)
