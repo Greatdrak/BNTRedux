@@ -9,7 +9,7 @@ export async function POST(request: NextRequest) {
     if ('error' in authResult) {
       return NextResponse.json(
         { error: { code: authResult.error.code, message: authResult.error.message } },
-        { status: authResult.status }
+        { status: 401 }
       )
     }
     
