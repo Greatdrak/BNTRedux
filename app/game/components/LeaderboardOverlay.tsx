@@ -6,14 +6,16 @@ import styles from './LeaderboardOverlay.module.css'
 
 interface LeaderboardEntry {
   rank: number
-  name: string
-  total_score: number
-  economic_score: number
-  territorial_score: number
-  military_score: number
-  exploration_score: number
-  type: 'player' | 'ai'
+  player_id: string
+  player_name: string
+  handle: string
+  score: number
+  turns_spent: number
+  last_login: string | null
+  is_online: boolean
+  is_ai: boolean
 }
+
 
 interface LeaderboardOverlayProps {
   open: boolean
@@ -22,10 +24,10 @@ interface LeaderboardOverlayProps {
 }
 
 export default function LeaderboardOverlay({ open, onClose, universeId }: LeaderboardOverlayProps) {
-  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([])
+  const [humanPlayers, setHumanPlayers] = useState<LeaderboardEntry[]>([])
+  const [aiPlayers, setAiPlayers] = useState<LeaderboardEntry[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [selectedCategory, setSelectedCategory] = useState<'overall' | 'economic' | 'territorial' | 'military' | 'exploration'>('overall')
 
   useEffect(() => {
     if (open && universeId) {
@@ -51,14 +53,10 @@ export default function LeaderboardOverlay({ open, onClose, universeId }: Leader
         throw new Error('Failed to fetch leaderboard')
       }
 
-      const data = await response.json()
-      console.log('Leaderboard API response:', data)
-      if (data.ok) {
-        console.log('Leaderboard data:', data.leaderboard)
-        setLeaderboard(data.leaderboard || [])
-      } else {
-        throw new Error(data.error?.message || 'Failed to load leaderboard')
-      }
+          const data = await response.json()
+          console.log('Leaderboard API response:', data)
+          setHumanPlayers(data.humanPlayers || [])
+          setAiPlayers(data.aiPlayers || [])
     } catch (err) {
       console.error('Error fetching leaderboard:', err)
       setError(err instanceof Error ? err.message : 'Failed to load leaderboard')
@@ -75,8 +73,6 @@ export default function LeaderboardOverlay({ open, onClose, universeId }: Leader
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) return
 
-      console.log('Calculating rankings for universe:', universeId)
-      
       const response = await fetch('/api/rankings', {
         method: 'POST',
         headers: {
@@ -107,47 +103,26 @@ export default function LeaderboardOverlay({ open, onClose, universeId }: Leader
     }
   }
 
-  const getSortedLeaderboard = () => {
-    if (!leaderboard.length) return []
-    
-    const sorted = [...leaderboard].sort((a, b) => {
-      switch (selectedCategory) {
-        case 'economic':
-          return b.economic_score - a.economic_score
-        case 'territorial':
-          return b.territorial_score - a.territorial_score
-        case 'military':
-          return b.military_score - a.military_score
-        case 'exploration':
-          return b.exploration_score - a.exploration_score
-        default:
-          return b.total_score - a.total_score
-      }
-    })
-    
-    return sorted.map((entry, index) => ({
-      ...entry,
-      rank: index + 1
-    }))
+  const formatCredits = (credits: number) => {
+    return new Intl.NumberFormat('en-US').format(credits)
   }
 
-  const getScoreForCategory = (entry: LeaderboardEntry) => {
-    switch (selectedCategory) {
-      case 'economic':
-        return entry.economic_score
-      case 'territorial':
-        return entry.territorial_score
-      case 'military':
-        return entry.military_score
-      case 'exploration':
-        return entry.exploration_score
-      default:
-        return entry.total_score
+  const formatLastLogin = (lastLogin: string) => {
+    const date = new Date(lastLogin)
+    const now = new Date()
+    const diffMs = now.getTime() - date.getTime()
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60))
+    const diffDays = Math.floor(diffHours / 24)
+
+    if (diffHours < 1) {
+      return 'Just now'
+    } else if (diffHours < 24) {
+      return `${diffHours}h ago`
+    } else if (diffDays < 7) {
+      return `${diffDays}d ago`
+    } else {
+      return date.toLocaleDateString()
     }
-  }
-
-  const formatScore = (score: number) => {
-    return new Intl.NumberFormat('en-US').format(score)
   }
 
   const getRankIcon = (rank: number) => {
@@ -155,6 +130,69 @@ export default function LeaderboardOverlay({ open, onClose, universeId }: Leader
     if (rank === 2) return '🥈'
     if (rank === 3) return '🥉'
     return `#${rank}`
+  }
+
+  const renderPlayerList = (players: LeaderboardEntry[], title: string, isAi: boolean) => {
+    if (players.length === 0) {
+      return (
+        <div className={styles.section}>
+          <h3 className={styles.sectionTitle}>
+            {title} {isAi && '🤖'}
+          </h3>
+          <div className={styles.emptyMessage}>
+            {isAi ? 'No AI players yet' : 'No human players yet'}
+          </div>
+        </div>
+      )
+    }
+
+    return (
+      <div className={styles.section}>
+        <h3 className={styles.sectionTitle}>
+          {title} {isAi && '🤖'}
+        </h3>
+        <div className={styles.table}>
+          <div className={styles.tableHeader}>
+            <div className={styles.rankCol}>Rank</div>
+            <div className={styles.scoreCol}>Score</div>
+            <div className={styles.nameCol}>Player</div>
+            <div className={styles.turnsCol}>Turns Used</div>
+            <div className={styles.lastLoginCol}>Last Login</div>
+            <div className={styles.onlineCol}>Online</div>
+            <div className={styles.alignmentCol}>Alignment</div>
+          </div>
+          {players.map((player) => (
+            <div key={`${player.player_name}-${player.rank}`} className={styles.tableRow}>
+              <div className={styles.rankCol}>
+                {getRankIcon(player.rank)}
+              </div>
+              <div className={styles.scoreCol}>
+                {formatCredits(player.score)}
+              </div>
+              <div className={styles.nameCol}>
+                <span className={isAi ? styles.aiPlayerName : styles.humanPlayerName}>
+                  {player.player_name}
+                </span>
+              </div>
+              <div className={styles.turnsCol}>
+                {player.turns_spent.toLocaleString()}
+              </div>
+              <div className={styles.lastLoginCol}>
+                {player.last_login ? formatLastLogin(player.last_login) : 'Never'}
+              </div>
+              <div className={styles.onlineCol}>
+                <span className={player.is_online ? styles.onlineStatus : styles.offlineStatus}>
+                  {player.is_online ? '🟢' : '🔴'}
+                </span>
+              </div>
+              <div className={styles.alignmentCol}>
+                <span className={styles.placeholder}>—</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    )
   }
 
   if (!open) return null
@@ -169,108 +207,33 @@ export default function LeaderboardOverlay({ open, onClose, universeId }: Leader
           </button>
         </div>
 
-        <div className={styles.categories}>
-          <button 
-            className={`${styles.categoryBtn} ${selectedCategory === 'overall' ? styles.active : ''}`}
-            onClick={() => setSelectedCategory('overall')}
-          >
-            Overall
-          </button>
-          <button 
-            className={`${styles.categoryBtn} ${selectedCategory === 'economic' ? styles.active : ''}`}
-            onClick={() => setSelectedCategory('economic')}
-          >
-            Economic
-          </button>
-          <button 
-            className={`${styles.categoryBtn} ${selectedCategory === 'territorial' ? styles.active : ''}`}
-            onClick={() => setSelectedCategory('territorial')}
-          >
-            Territorial
-          </button>
-          <button 
-            className={`${styles.categoryBtn} ${selectedCategory === 'military' ? styles.active : ''}`}
-            onClick={() => setSelectedCategory('military')}
-          >
-            Military
-          </button>
-          <button 
-            className={`${styles.categoryBtn} ${selectedCategory === 'exploration' ? styles.active : ''}`}
-            onClick={() => setSelectedCategory('exploration')}
-          >
-            Exploration
-          </button>
-        </div>
-
-        {loading && (
-          <div className={styles.loading}>
-            <div className={styles.spinner}></div>
-            <p>Loading leaderboard...</p>
+        {error && (
+          <div className={styles.error}>
+            {error}
           </div>
         )}
 
-        {error && (
-          <div className={styles.error}>
-            <p>{error}</p>
-            <button className={styles.retryBtn} onClick={fetchLeaderboard}>
-              Retry
-            </button>
+        {loading && (
+          <div className={styles.loading}>
+            Loading leaderboard...
           </div>
         )}
 
         {!loading && !error && (
-          <div className={styles.leaderboard}>
-            {leaderboard.length === 0 && (
-              <div className={styles.emptyState}>
-                <p>No rankings data available</p>
-                <button className={styles.calculateBtn} onClick={calculateRankings}>
-                  Calculate Rankings
-                </button>
-              </div>
-            )}
-            
-            {leaderboard.length > 0 && (
-              <>
-                <div className={styles.tableHeader}>
-                  <div className={styles.rankCol}>Rank</div>
-                  <div className={styles.nameCol}>Player</div>
-                  <div className={styles.scoreCol}>Score</div>
-                  <div className={styles.typeCol}>Type</div>
-                </div>
-            
-                <div className={styles.tableBody}>
-                  {getSortedLeaderboard().map((entry) => (
-                    <div key={`${entry.type}-${entry.name}`} className={styles.tableRow}>
-                      <div className={styles.rankCol}>
-                        <span className={styles.rankIcon}>
-                          {getRankIcon(entry.rank)}
-                        </span>
-                      </div>
-                      <div className={styles.nameCol}>
-                        <span className={entry.type === 'ai' ? styles.aiName : styles.playerName}>
-                          {entry.name}
-                        </span>
-                      </div>
-                      <div className={styles.scoreCol}>
-                        {formatScore(getScoreForCategory(entry))}
-                      </div>
-                      <div className={styles.typeCol}>
-                        <span className={`${styles.typeBadge} ${styles[entry.type]}`}>
-                          {entry.type.toUpperCase()}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </>
-            )}
+          <div className={styles.content}>
+            {renderPlayerList(humanPlayers, 'Human Players', false)}
+            {renderPlayerList(aiPlayers, 'AI Players', true)}
           </div>
         )}
 
         <div className={styles.footer}>
-          <p className={styles.lastUpdated}>
-            Rankings update every 5 minutes
-          </p>
+          <button 
+            className={styles.refreshBtn}
+            onClick={calculateRankings}
+            disabled={loading}
+          >
+            {loading ? '⏳ Calculating...' : '🔄 Refresh Rankings'}
+          </button>
         </div>
       </div>
     </div>

@@ -182,6 +182,9 @@ export default function AdminPage() {
             <a href="/admin/universe-settings" className={styles.settingsButton}>
               ⚙️ Universe Settings
             </a>
+            <a href="/admin/ai-players" className={styles.settingsButton}>
+              🤖 AI Players
+            </a>
             <a href="/admin/cron-logs" className={styles.settingsButton}>
               📋 Cron Logs
             </a>

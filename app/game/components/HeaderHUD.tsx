@@ -21,6 +21,7 @@ interface Player {
 interface HeaderHUDProps {
   handle?: string
   turns?: number
+  turnsSpent?: number
   turnCap?: number
   lastTurnTs?: string
   credits?: number
@@ -34,6 +35,7 @@ interface HeaderHUDProps {
 export default function HeaderHUD({ 
   handle, 
   turns, 
+  turnsSpent,
   turnCap,
   lastTurnTs,
   credits, 
@@ -200,6 +202,10 @@ export default function HeaderHUD({
         <div className={styles.metric}>
           <span className={styles.label}>Turns</span>
           <span className={styles.value}>{turns || '--'}</span>
+        </div>
+        <div className={styles.metric}>
+          <span className={styles.label}>Used</span>
+          <span className={styles.value}>{turnsSpent || '--'}</span>
         </div>
         <div className={styles.metric}>
           <span className={styles.label}>Credits</span>

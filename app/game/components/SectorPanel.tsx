@@ -1,8 +1,6 @@
 'use client'
 
 import styles from './SectorPanel.module.css'
-import MineIndicator from './MineIndicator'
-import MineDeployer from './MineDeployer'
 
 interface SectorPanelProps {
   sectorNumber?: number
@@ -21,8 +19,15 @@ interface SectorPanelProps {
   onClaimPlanet?: () => void
   onManagePlanet?: () => void
   universeId?: string
-  playerHullLevel?: number
-  playerTorpedoes?: number
+  ships?: Array<{
+    id: string
+    name: string
+    player: {
+      id: string
+      handle: string
+      is_ai: boolean
+    }
+  }>
 }
 
 export default function SectorPanel({ 
@@ -38,8 +43,7 @@ export default function SectorPanel({
   onClaimPlanet,
   onManagePlanet,
   universeId,
-  playerHullLevel,
-  playerTorpedoes
+  ships
 }: SectorPanelProps) {
   if (loading) {
     return (
@@ -53,13 +57,6 @@ export default function SectorPanel({
     <div className={styles.panel}>
       <h2>Sector {sectorNumber || '--'}</h2>
       
-      {sectorNumber && universeId && (
-        <MineIndicator 
-          sectorNumber={sectorNumber}
-          universeId={universeId}
-          playerHullLevel={playerHullLevel}
-        />
-      )}
       
       <div className={styles.warps}>
         <h3>Warp Gates</h3>
@@ -77,6 +74,25 @@ export default function SectorPanel({
         </div>
         {(!warps || warps.length === 0) && (
           <p className={styles.noWarps}>No warp gates available</p>
+        )}
+      </div>
+
+      <div className={styles.ships}>
+        <h3>🚀 Ships in Sector ({ships?.length || 0})</h3>
+        {ships && ships.length > 0 ? (
+          <div className={styles.shipList}>
+            {ships.map((ship) => (
+              <div key={ship.id} className={styles.shipItem}>
+                <span className={styles.shipName}>{ship.name}</span>
+                <span className={`${styles.playerName} ${ship.player.is_ai ? styles.aiPlayer : styles.humanPlayer}`}>
+                  {ship.player.handle}
+                  {ship.player.is_ai && <span className={styles.aiTag}>[AI]</span>}
+                </span>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className={styles.noShips}>No other ships detected</p>
         )}
       </div>
 
@@ -112,13 +128,6 @@ export default function SectorPanel({
         </div>
       )}
 
-      {sectorNumber && universeId && playerTorpedoes !== undefined && (
-        <MineDeployer 
-          sectorNumber={sectorNumber}
-          universeId={universeId}
-          playerTorpedoes={playerTorpedoes}
-        />
-      )}
     </div>
   )
 }

@@ -78,11 +78,12 @@ export async function POST(request: NextRequest) {
       })
 
     if (purchaseError) {
-      console.error('Purchase error:', purchaseError)
+      console.error('Purchase RPC error:', purchaseError)
       return NextResponse.json({ error: { code: 'purchase_failed', message: 'Purchase failed' } }, { status: 500 })
     }
 
     if (!result.success) {
+      console.error('Purchase failed:', result.error)
       return NextResponse.json({ error: { code: 'purchase_failed', message: result.error } }, { status: 400 })
     }
 

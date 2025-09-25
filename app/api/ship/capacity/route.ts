@@ -62,9 +62,9 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: { code: 'not_found', message: 'Ship not found' } }, { status: 404 })
     }
 
-    // Get capacity data using RPC function
+    // Get capacity data using BNT formula RPC function
     const { data: capacityData, error: capacityError } = await supabaseAdmin
-      .rpc('get_ship_capacity_data', {
+      .rpc('get_ship_capacity', {
         p_ship_id: ship.id
       })
 

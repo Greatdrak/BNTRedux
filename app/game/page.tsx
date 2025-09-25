@@ -4,20 +4,22 @@ import { useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import useSWR from 'swr'
 import { supabase } from '@/lib/supabase-client'
-import HeaderHUD from './components/HeaderHUD'
-import SectorPanel from './components/SectorPanel'
-import MineIndicator from './components/MineIndicator'
-import MineDeployer from './components/MineDeployer'
-import PortPanel from './components/PortPanel'
-import ActionsPanel from './components/ActionsPanel'
-import InventoryPanel from './components/InventoryPanel'
-import HyperspacePanel from './components/HyperspacePanel'
+import GameLayout from './components/GameLayout'
+import GameHeader from './components/GameHeader'
+import LeftCommandsPanel from './components/LeftCommandsPanel'
+import CenterViewport from './components/CenterViewport'
+import RightPanels from './components/RightPanels'
+import ShipsFooter from './components/ShipsFooter'
+import EnemyShipOverlay from './components/EnemyShipOverlay'
+import CombatComparisonOverlay from './components/CombatComparisonOverlay'
+import CombatOverlay from './components/CombatOverlay'
 import AdminLink from './components/AdminLink'
 import MapOverlay from './components/MapOverlay'
 import WarpScanOverlay from './components/WarpScanOverlay'
 import PortOverlay from './components/PortOverlay'
 import SpecialPortOverlay from './components/SpecialPortOverlay'
 import PlanetOverlay from './components/PlanetOverlay'
+import PlanetsOverlay from './components/PlanetsOverlay'
 import LeaderboardOverlay from './components/LeaderboardOverlay'
 import TradeRouteOverlay from './components/TradeRouteOverlay'
 import TravelConfirmationModal from './components/TravelConfirmationModal'
@@ -76,17 +78,24 @@ export default function Game() {
   const [specialPortOverlayOpen, setSpecialPortOverlayOpen] = useState(false)
   const [leaderboardOpen, setLeaderboardOpen] = useState(false)
   const [tradeRouteOpen, setTradeRouteOpen] = useState(false)
+  const [planetsOpen, setPlanetsOpen] = useState(false)
   const [upgradeLoading, setUpgradeLoading] = useState(false)
   const [authChecked, setAuthChecked] = useState(false)
   const [tradeRoutes, setTradeRoutes] = useState<any[]>([])
   const [travelModalOpen, setTravelModalOpen] = useState(false)
   const [travelTarget, setTravelTarget] = useState<{sector: number, type: 'warp' | 'realspace'} | null>(null)
+  const [enemyShipOverlayOpen, setEnemyShipOverlayOpen] = useState(false)
+  const [selectedEnemyShip, setSelectedEnemyShip] = useState<any>(null)
+  const [combatComparisonOpen, setCombatComparisonOpen] = useState(false)
+  const [combatOverlayOpen, setCombatOverlayOpen] = useState(false)
+  const [combatResult, setCombatResult] = useState<any>(null)
+  const [combatSteps, setCombatSteps] = useState<any[]>([])
+  const [isCombatComplete, setIsCombatComplete] = useState(false)
   const router = useRouter()
   const searchParams = useSearchParams()
   
   // Get universe_id from URL params
   const universeId = searchParams.get('universe_id')
-  console.log('Current universeId from URL:', universeId)
 
   // Check for authentication session
   useEffect(() => {
@@ -688,249 +697,214 @@ export default function Game() {
     }
   }
 
-  // moved above
+  // Helper functions for header
+  const universeName = "Alpha"
+  const handleUniverseChange = (newUniverseId: string) => {
+    // TODO: Implement universe switching
+    console.log('Switch to universe:', newUniverseId)
+  }
+  const handleLogout = async () => {
+    await supabase.auth.signOut()
+    router.push('/login')
+  }
+
+  // Enemy ship scan handler
+  const handleScanShip = async (shipId: string) => {
+    const finalUniverseId = playerUniverseId || universeId
+    
+    if (!finalUniverseId) {
+      return { success: false, error: 'No universe ID available' }
+    }
+    
+    try {
+      const response = await apiCall('/api/ship/scan', {
+        method: 'POST',
+        body: JSON.stringify({
+          target_ship_id: shipId,
+          universe_id: finalUniverseId
+        })
+      })
+      
+      const result = await response?.json()
+      
+      if (result.error) {
+        return { success: false, error: result.error.message }
+      }
+      
+      return { success: true, data: result }
+    } catch (error) {
+      console.error('Scan ship error:', error)
+      return { success: false, error: 'Failed to scan ship' }
+    }
+  }
+
+  // Enemy ship attack handler
+  const handleAttackShip = (shipId: string, scannedData?: any) => {
+    // Close enemy ship overlay and open combat comparison
+    setEnemyShipOverlayOpen(false)
+    setCombatComparisonOpen(true)
+    
+    // Update selected enemy ship with scanned data if available
+    if (scannedData && selectedEnemyShip) {
+      setSelectedEnemyShip({
+        ...selectedEnemyShip,
+        ...scannedData
+      })
+    }
+  }
+
+  // Confirm attack handler
+  const handleConfirmAttack = async () => {
+    const finalUniverseId = playerUniverseId || universeId
+    
+    if (!finalUniverseId || !selectedEnemyShip) {
+      return
+    }
+    
+    try {
+      // Close comparison overlay and open combat overlay
+      setCombatComparisonOpen(false)
+      setCombatOverlayOpen(true)
+      setIsCombatComplete(false)
+      
+      // Call combat API
+      const response = await apiCall('/api/combat/initiate', {
+        method: 'POST',
+        body: JSON.stringify({
+          target_ship_id: selectedEnemyShip.id,
+          universe_id: finalUniverseId
+        })
+      })
+      
+      const result = await response?.json()
+      
+      if (result.error) {
+        console.error('Combat error:', result.error)
+        setCombatOverlayOpen(false)
+        return
+      }
+      
+      // Set combat data
+      setCombatResult(result.combat_result)
+      setCombatSteps(result.combat_result.combat_steps)
+      setIsCombatComplete(true)
+      
+      // Refresh player data to show updated turns
+      mutatePlayer()
+      
+    } catch (error) {
+      console.error('Combat initiation error:', error)
+      setCombatOverlayOpen(false)
+    }
+  }
 
   return (
     <div className={styles.container}>
-      {/* Header HUD */}
-      <HeaderHUD
-        handle={player?.handle}
-        turns={player?.turns}
-        turnCap={playerData?.player?.turn_cap}
-        lastTurnTs={player?.last_turn_ts}
-        credits={player?.credits}
-        currentSector={player?.current_sector_number}
-        engineLvl={playerData?.ship?.engine_lvl}
-        onRefresh={refreshData}
-        loading={!playerData}
-        currentUniverseId={playerUniverseId || universeId}
-      />
+      <GameLayout>
+        {{
+          header: (
+            <GameHeader
+              playerName={player?.handle || 'Loading...'}
+              currentSector={player?.current_sector_number || 0}
+              turns={player?.turns || 0}
+              turnsUsed={player?.turns_spent || 0}
+              credits={player?.credits || 0}
+              engineLevel={playerData?.ship?.engine_lvl || 0}
+              lastTurnTs={player?.last_turn_ts}
+              turnCap={playerData?.player?.turn_cap}
+              universeName={universeName}
+              universeId={playerUniverseId || universeId}
+              onUniverseChange={handleUniverseChange}
+              onRefresh={refreshData}
+              onLogout={handleLogout}
+            />
+          ),
 
-      {/* Main Layout */}
-      <div className={styles.mainLayout}>
-        {/* Left Commands */}
-        <div className={styles.leftPanel}>
-          <div className={styles.commandsBox}>
-            <h3>Commands</h3>
-            <div className={styles.commandList}>
-              <button className={styles.commandItem} onClick={() => router.push('/ship')}>🚀 Ship</button>
-              <button className={styles.commandItem} onClick={() => setLeaderboardOpen(true)}>🏆 Leaderboard</button>
-              <button className={styles.commandItem} onClick={() => setTradeRouteOpen(true)}>🚀 Trade Routes</button>
-              {/* Admin link visible only if user is admin */}
-              <AdminLink />
-              <button className={styles.commandItem} onClick={async ()=>{
-                try {
-                  const res = await apiCall('/api/favorite', { method:'POST', body: JSON.stringify({ sectorNumber: sector?.number, flag: true })})
-                  if (res) { await res.json(); setStatusMessage('Favorited'); setStatusType('success') }
-                } catch {}
-              }}>⭐ Favorite Sector</button>
-            </div>
-          </div>
+          leftPanel: (
+            <LeftCommandsPanel
+              tradeRoutes={tradeRoutes}
+              onCommandClick={(command) => {
+                switch(command) {
+                  case 'ship': router.push('/ship'); break;
+                  case 'leaderboard': setLeaderboardOpen(true); break;
+                  case 'trade-routes': setTradeRouteOpen(true); break;
+                  case 'planets': setPlanetsOpen(true); break;
+                  case 'admin': router.push('/admin'); break;
+                  case 'favorite-sector': 
+                    apiCall('/api/favorite', { method:'POST', body: JSON.stringify({ sectorNumber: sector?.number, flag: true })})
+                      .then(res => res?.json())
+                      .then(() => { setStatusMessage('Favorited'); setStatusType('success') })
+                      .catch(() => {});
+                    break;
+                }
+              }}
+              onTradeRouteClick={(routeId) => setTradeRouteOpen(true)}
+              onTradeRouteExecute={executeTradeRoute}
+              currentSector={sector?.number || 0}
+              playerTurns={player?.turns || 0}
+              onTravelToSector={(sectorNum, type) => {
+                setTravelTarget({ sector: sectorNum, type })
+                setTravelModalOpen(true)
+              }}
+            />
+          ),
 
-          <div className={styles.sideCard}>
-            <h3>Trade Routes</h3>
-            {tradeRoutes.length === 0 ? (
-              <p className={styles.subtleNote}>None</p>
-            ) : (
-              <div className={styles.tradeRoutesList}>
-                {tradeRoutes.slice(0, 5).map((route) => (
-                  <div key={route.id} className={styles.tradeRouteItem}>
-                    <div className={styles.routeName}>{route.name}</div>
-                    <div className={styles.routeStats}>
-                      <span className={styles.waypointCount}>{route.waypoint_count || 0} waypoints</span>
-                      {route.is_active && <span className={styles.activeBadge}>Active</span>}
-                    </div>
-                    {route.waypoints && route.waypoints.length > 0 && (
-                      <div className={styles.routeActions}>
-                        {/* Show route sectors as clickable */}
-                        <div className={styles.routeSectors}>
-                          {route.waypoints.slice(0, 2).map((waypoint: any, index: number) => (
-                            <button
-                              key={`${route.id}-${waypoint.id}`}
-                              className={`${styles.sectorBtn} ${
-                                waypoint.port_info?.sector_number === sector?.number ? styles.currentSector : ''
-                              }`}
-                              onClick={() => {
-                                if (waypoint.port_info?.sector_number !== sector?.number) {
-                                  setTravelTarget({
-                                    sector: waypoint.port_info?.sector_number,
-                                    type: 'warp'
-                                  })
-                                  setTravelModalOpen(true)
-                                }
-                              }}
-                              title={`Travel to Sector ${waypoint.port_info?.sector_number}`}
-                            >
-                              S{waypoint.port_info?.sector_number}
-                            </button>
-                          ))}
-                          {route.waypoints.length > 2 && (
-                            <span className={styles.moreSectors}>+{route.waypoints.length - 2}</span>
-                          )}
-                        </div>
-                        
-                        {/* Execute button only if in first sector */}
-                        {route.waypoints[0]?.port_info?.sector_number === sector?.number && (
-                          <button 
-                            className={styles.executeBtn}
-                            onClick={() => executeTradeRoute(route.id)}
-                            disabled={!player?.turns}
-                          >
-                            ▶️ Execute
-                          </button>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                ))}
-                {tradeRoutes.length > 5 && (
-                  <p className={styles.moreRoutes}>+{tradeRoutes.length - 5} more</p>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Center Space Viewport */}
-        <div className={styles.centerArea}>
-          <div className={styles.spaceViewport}>
-            <div className={styles.viewportHeader}>
-              <div className={styles.sectorTitle}>SECTOR</div>
-              <div className={styles.sectorNumber}>
-                {sector?.number ?? '--'}
-              </div>
-              {/* Center-pane controls removed per design: no Map/Scan here */}
-            </div>
-
-            {port ? (
-              <div className={styles.portInline}>
-                Trading port:
-                <span
-                  className={styles.portBadge}
-                  onClick={() => {
-                    if (port.kind === 'special') {
-                      setSpecialPortOverlayOpen(true)
-                    } else {
-                      setPortOverlayOpen(true)
-                    }
+          centerPanel: (
+            <>
+              <CenterViewport
+                sector={sector}
+                planets={planets}
+                port={port}
+                onPlanetClick={(index) => {
+                  setSelectedPlanetIndex(index)
+                  setPlanetOverlayOpen(true)
+                }}
+                onPortClick={() => {
+                  if (port?.kind === 'special') {
+                    setSpecialPortOverlayOpen(true)
+                  } else {
+                    setPortOverlayOpen(true)
+                  }
+                }}
+              />
+              {/* Ships section - part of center, not footer */}
+              {sectorData?.ships && sectorData.ships.filter((ship: any) => ship.id !== playerData?.ship?.id).length > 0 && (
+                <ShipsFooter
+                  sectorNumber={sector?.number || 0}
+                  ships={sectorData.ships}
+                  currentPlayerShipId={playerData?.ship?.id}
+                  onShipClick={(ship) => {
+                    setSelectedEnemyShip(ship)
+                    setEnemyShipOverlayOpen(true)
                   }}
-                >
-                  {port.kind === 'ore' && '🪨 Ore'}
-                  {port.kind === 'organics' && '🌿 Organics'}
-                  {port.kind === 'goods' && '📦 Goods'}
-                  {port.kind === 'energy' && '⚡ Energy'}
-                  {port.kind === 'special' && '⭐ Special'}
-                </span>
-              </div>
-            ) : (
-              <div className={styles.portInline}>No port available in this sector</div>
-            )}
+                />
+              )}
+            </>
+          ),
 
-            {/* Planets */}
-            {planets.length > 0 && (
-              <div className={styles.planetBelt}>
-                {planets.map((planet: any, index: number) => (
-                  <div 
-                    key={planet.id} 
-                    className={styles.planetContainer}
-                    onClick={() => {
-                      setSelectedPlanetIndex(index)
-                      setPlanetOverlayOpen(true)
-                    }}
-                    style={{ cursor: 'pointer' }}
-                  >
-                    <div className={styles.planetOrb} />
-                    <div className={styles.planetLabel}>{planet.name}</div>
-                    {planet.ownerName && (
-                      <div className={styles.planetOwner}>Owner: {planet.ownerName}</div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
+          rightPanel: (
+            <RightPanels
+              inventory={playerData?.inventory}
+              inventoryLoading={!playerData}
+              engineLevel={playerData?.ship?.engine_lvl}
+              currentSector={player?.current_sector_number}
+              turns={player?.turns}
+              targetSector={targetSector}
+              onTargetSectorChange={setTargetSector}
+              onHyperspaceJump={handleHyperspace}
+              hyperLoading={hyperLoading}
+              onMapClick={openMap}
+              onScanWarps={scanWarps}
+              warps={sectorData?.warps || []}
+              onWarpClick={handleMove}
+              moveLoading={moveLoading}
+              playerTurns={player?.turns}
+            />
+          )
+        }}
+      </GameLayout>
 
-            {/* Mine Information */}
-            {sector?.number && (playerUniverseId || universeId) && (
-              <MineIndicator 
-                sectorNumber={sector.number}
-                universeId={playerUniverseId || universeId}
-                playerHullLevel={playerData?.ship?.hull_lvl}
-              />
-            )}
-
-            {/* Mine Deployment */}
-            {sector?.number && (playerUniverseId || universeId) && playerData?.ship?.torpedoes !== undefined && (
-              <MineDeployer 
-                sectorNumber={sector.number}
-                universeId={playerUniverseId || universeId}
-                playerTorpedoes={playerData.ship.torpedoes}
-              />
-            )}
-
-            {/* Other ships section */}
-            <div className={styles.shipsSection}>
-              <h3>Other ships in sector {sector?.number || '--'}</h3>
-              <p className={styles.subtleNote}>None</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Right Sidebar: Cargo, Realspace, Warp */}
-        <div className={styles.rightPanel}>
-          {/* Scheduler widget moved to Admin panel */}
-          
-          <InventoryPanel inventory={playerData?.inventory} loading={!playerData} />
-
-          <HyperspacePanel
-            engineLvl={playerData?.ship?.engine_lvl}
-            currentSector={player?.current_sector_number}
-            turns={player?.turns}
-            target={targetSector}
-            onChangeTarget={setTargetSector}
-            onJump={handleHyperspace}
-            loading={hyperLoading}
-          />
-
-
-          <div className={styles.sideCard}>
-            <h3>Navigation</h3>
-            
-            {/* Navigation Actions */}
-            <div className={styles.navActions}>
-              <button className={styles.navBtn} onClick={openMap}>🗺️ Map</button>
-              <button 
-                className={styles.navBtn} 
-                onClick={scanWarps} 
-                disabled={!player?.turns}
-              >
-                🔎 Scan Warps (-1)
-              </button>
-            </div>
-            
-            {/* Warp Gates */}
-            <div className={styles.warpSection}>
-              <h4>Warp Gates</h4>
-              <div className={styles.warpList}>
-                {sectorData?.warps?.map((warpNumber: number) => (
-                  <button
-                    key={warpNumber}
-                    onClick={() => handleMove(warpNumber)}
-                    disabled={moveLoading || !player?.turns}
-                    className={styles.warpLink}
-                  >
-                    {moveLoading ? 'Moving...' : `=> ${warpNumber}`}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Trading actions are launched from the Port (modal) – removed from sidebar */}
-          {/* Equipment & Repair moved to special ports for future ship upgrades */}
-        </div>
-      </div>
-
-      {/* Status Bar */}
+      {/* Status Bar - Fixed positioning */}
       <StatusBar
         message={statusMessage ?? undefined}
         type={statusType}
@@ -977,6 +951,10 @@ export default function Game() {
           setStatusMessage(message)
           setStatusType(type)
         }}
+        onPurchaseComplete={() => {
+          // Refresh player data to get updated ship credits
+          mutatePlayer()
+        }}
       />
 
       {planetOverlayOpen && planets.length > 0 && (
@@ -1021,6 +999,20 @@ export default function Game() {
           }}
         />
 
+        <PlanetsOverlay
+          open={planetsOpen}
+          onClose={() => setPlanetsOpen(false)}
+          universeId={playerUniverseId || universeId}
+          onTravelToSector={(sector) => {
+            setTravelTarget({ sector, type: 'warp' })
+            setTravelModalOpen(true)
+          }}
+          onStatusMessage={(message, type) => {
+            setStatusMessage(message)
+            setStatusType(type)
+          }}
+        />
+
         <TravelConfirmationModal
           open={travelModalOpen}
           onClose={() => {
@@ -1033,6 +1025,42 @@ export default function Game() {
           turnsRequired={travelTarget ? calculateTurnsRequired(travelTarget.sector, travelTarget.type) : 1}
           travelType={travelTarget?.type || 'warp'}
         />
+
+          <EnemyShipOverlay
+            open={enemyShipOverlayOpen}
+            onClose={() => {
+              setEnemyShipOverlayOpen(false)
+              setSelectedEnemyShip(null)
+            }}
+            enemyShip={selectedEnemyShip}
+            currentPlayerTurns={player?.turns || 0}
+            onScanShip={handleScanShip}
+            onAttackShip={handleAttackShip}
+          />
+
+          <CombatComparisonOverlay
+            open={combatComparisonOpen}
+            onClose={() => setCombatComparisonOpen(false)}
+            playerShip={playerData?.ship}
+            enemyShip={selectedEnemyShip}
+            onConfirmAttack={handleConfirmAttack}
+          />
+
+          <CombatOverlay
+            open={combatOverlayOpen}
+            onClose={() => {
+              setCombatOverlayOpen(false)
+              setSelectedEnemyShip(null)
+              setCombatResult(null)
+              setCombatSteps([])
+              setIsCombatComplete(false)
+            }}
+            playerShip={playerData?.ship}
+            enemyShip={selectedEnemyShip}
+            combatResult={combatResult}
+            combatSteps={combatSteps}
+            isCombatComplete={isCombatComplete}
+          />
 
     </div>
   )

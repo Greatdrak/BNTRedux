@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase-server'
 import { getUniverseSettings } from '@/lib/universe-settings'
+import AIPlayerManager from '@/lib/ai-player'
 
 export async function POST(request: NextRequest) {
   try {
@@ -23,7 +24,23 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to fetch universes' }, { status: 500 })
     }
 
-    const results = { universesProcessed: 0, tasksRun: 0, errors: [] as string[] }
+    const results = { 
+      universesProcessed: 0, 
+      tasksRun: 0, 
+      errors: [] as string[],
+      eventLogs: [] as Array<{
+        universeId: string;
+        universeName: string;
+        eventKey: string;
+        name: string;
+        status: string;
+        message: string;
+        due: boolean;
+        intervalMinutes: number | null;
+        executionTimeMs: number;
+        metadata: any;
+      }>
+    }
 
     // Helper: seconds until ISO time
     const secondsUntil = (iso: string | null) => {
@@ -138,6 +155,14 @@ export async function POST(request: NextRequest) {
             interval: s.planet_production_interval_minutes
           },
           { 
+            key: 'ai_player_actions', 
+            name: 'AI Player Actions', 
+            due: isDue(s.ai_player_actions_interval_minutes || 5, s.last_ai_player_actions_event), 
+            rpc: 'run_ai_player_actions', 
+            args: {},
+            interval: s.ai_player_actions_interval_minutes || 5
+          },
+          { 
             key: 'ships_tow_fed', 
             name: 'Ships Tow from Fed', 
             due: isDue(s.ships_tow_from_fed_sectors_interval_minutes, s.last_ships_tow_from_fed_sectors_event), 
@@ -234,6 +259,20 @@ export async function POST(request: NextRequest) {
               due: event.due,
               ...metadata 
             }
+          })
+
+          // Collect details for API response
+          results.eventLogs.push({
+            universeId: u.id,
+            universeName: u.name,
+            eventKey: event.key,
+            name: event.name,
+            status,
+            message,
+            due: !!event.due,
+            intervalMinutes: event.interval ?? null,
+            executionTimeMs: executionTime,
+            metadata
           })
         }
 

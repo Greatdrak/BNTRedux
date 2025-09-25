@@ -38,23 +38,39 @@ export async function GET(request: NextRequest) {
       )
     }
     
-    // Get leaderboard
-    console.log('Fetching leaderboard for universe:', universeId)
-    const { data, error } = await supabaseAdmin.rpc('get_leaderboard', {
+    // Get human player leaderboard
+    const { data: humanData, error: humanError } = await supabaseAdmin.rpc('get_leaderboard', {
       p_universe_id: universeId,
-      p_limit: limit
+      p_limit: limit,
+      p_ai_only: false
     })
     
-    if (error) {
-      console.error('Error getting leaderboard:', error)
+    if (humanError) {
+      console.error('Error getting human leaderboard:', humanError)
       return NextResponse.json(
         { error: { code: 'server_error', message: 'Failed to get leaderboard' } },
         { status: 500 }
       )
     }
     
-    console.log('Leaderboard RPC response:', data)
-    return NextResponse.json(data)
+    // Get AI player leaderboard
+    const { data: aiData, error: aiError } = await supabaseAdmin.rpc('get_leaderboard', {
+      p_universe_id: universeId,
+      p_limit: limit,
+      p_ai_only: true
+    })
+    
+    if (aiError) {
+      console.error('Error getting AI leaderboard:', aiError)
+      return NextResponse.json(
+        { error: { code: 'server_error', message: 'Failed to get AI leaderboard' } },
+        { status: 500 }
+      )
+    }
+    return NextResponse.json({
+      humanPlayers: humanData,
+      aiPlayers: aiData
+    })
     
   } catch (error) {
     console.error('Error in /api/rankings:', error)
@@ -101,7 +117,6 @@ export async function POST(request: NextRequest) {
     }
     
     // Update rankings
-    console.log('Updating rankings for universe:', universe_id)
     const { data, error } = await supabaseAdmin.rpc('update_universe_rankings', {
       p_universe_id: universe_id
     })
@@ -113,8 +128,6 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       )
     }
-    
-    console.log('Ranking update response:', data)
     return NextResponse.json(data)
     
   } catch (error) {

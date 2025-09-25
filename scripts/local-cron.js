@@ -7,7 +7,7 @@ const path = require('path')
 
 // Configuration
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
-const CRON_SECRET = process.env.CRON_SECRET || 'local-dev-secret'
+const CRON_SECRET = process.env.CRON_SECRET || 'poofthemagicdragonsuperlong420stringdotcomokaybigdad'
 
 // Colors for console output
 const colors = {

@@ -1,0 +1,304 @@
+/* Enemy Ship Overlay */
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal {
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  width: 90%;
+  max-width: 800px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  border-bottom: 1px solid var(--line);
+  background: var(--bgElev);
+  border-radius: 12px 12px 0 0;
+}
+
+.header h2 {
+  margin: 0;
+  color: var(--accent);
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.closeBtn {
+  background: none;
+  border: none;
+  color: var(--text);
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.closeBtn:hover {
+  background: var(--bgElev);
+  color: var(--accent);
+}
+
+.content {
+  padding: 1.5rem;
+}
+
+.shipInfo {
+  text-align: center;
+  margin-bottom: 2rem;
+  padding: 1rem;
+  background: var(--bgElev);
+  border-radius: 8px;
+  border: 1px solid var(--line);
+}
+
+.shipInfo h3 {
+  margin: 0 0 0.5rem 0;
+  color: var(--accent);
+  font-size: 1.3rem;
+  font-weight: 600;
+}
+
+.playerName {
+  margin: 0;
+  color: var(--muted);
+  font-size: 1rem;
+}
+
+.scanPrompt {
+  text-align: center;
+  padding: 2rem;
+  background: var(--bgElev);
+  border-radius: 8px;
+  border: 1px solid var(--line);
+}
+
+.scanPrompt p {
+  margin: 0 0 1.5rem 0;
+  color: var(--text);
+  font-size: 1rem;
+}
+
+.scanBtn {
+  background: var(--accent);
+  color: var(--bg);
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.scanBtn:hover:not(:disabled) {
+  background: var(--accentHover);
+  transform: translateY(-1px);
+}
+
+.scanBtn:disabled {
+  background: var(--muted);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.noTurns {
+  margin: 1rem 0 0 0;
+  color: var(--error);
+  font-size: 0.9rem;
+}
+
+.scanResults {
+  margin-top: 1rem;
+}
+
+.scanStatus {
+  margin-bottom: 2rem;
+  padding: 1rem;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+}
+
+.statusFailure {
+  background: rgba(220, 53, 69, 0.1);
+  border-color: var(--error);
+}
+
+.statusPartial {
+  background: rgba(255, 193, 7, 0.1);
+  border-color: #ffc107;
+}
+
+.statusSuccess {
+  background: rgba(40, 167, 69, 0.1);
+  border-color: #28a745;
+}
+
+.scanStatus h4 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.scanStatus p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.actionSection {
+  margin-top: 1.5rem;
+  text-align: center;
+  padding-top: 1rem;
+  border-top: 1px solid var(--line);
+}
+
+.buttonRow {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  align-items: center;
+}
+
+.rescanBtn {
+  background: var(--accent);
+  color: var(--bg);
+  border: none;
+  padding: 0.6rem 1.2rem;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.rescanBtn:hover:not(:disabled) {
+  background: var(--accentHover);
+  transform: translateY(-1px);
+}
+
+.rescanBtn:disabled {
+  background: var(--muted);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.attackBtn {
+  background: var(--error);
+  color: white;
+  border: none;
+  padding: 0.6rem 1.2rem;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.attackBtn:hover:not(:disabled) {
+  background: #dc2626;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+}
+
+.attackBtn:disabled {
+  background: var(--muted);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.shipData {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+.section {
+  background: var(--bgElev);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.section h4 {
+  margin: 0 0 1rem 0;
+  color: var(--accent);
+  font-size: 1rem;
+  font-weight: 600;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 0.5rem;
+}
+
+.dataItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.dataItem:last-child {
+  border-bottom: none;
+}
+
+.dataItem span:first-child {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.dataItem span:last-child {
+  font-family: monospace;
+  font-weight: 600;
+}
+
+.unknown {
+  color: var(--muted);
+  font-style: italic;
+}
+
+.success {
+  color: var(--accent);
+}
+
+.failed {
+  color: var(--error);
+  font-size: 0.8rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .modal {
+    width: 95%;
+    margin: 1rem;
+  }
+  
+  .shipData {
+    grid-template-columns: 1fr;
+  }
+  
+  .header {
+    padding: 1rem;
+  }
+  
+  .content {
+    padding: 1rem;
+  }
+}

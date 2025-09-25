@@ -51,10 +51,17 @@ export async function GET(request: NextRequest) {
     // Check if player exists in the selected universe
     const { data: existingPlayer } = await supabaseAdmin
       .from('players')
-      .select('id, handle, turns, last_turn_ts, current_sector')
+      .select('id, handle, turns, turns_spent, last_turn_ts, current_sector')
       .eq('user_id', userId)
       .eq('universe_id', universe.id)
       .maybeSingle()
+    
+    // Update last_login when player accesses the game
+    if (existingPlayer) {
+      await supabaseAdmin.rpc('update_player_last_login', {
+        p_player_id: existingPlayer.id
+      })
+    }
     
     if (existingPlayer) {
       // Fetch ship and inventory separately
@@ -116,6 +123,7 @@ export async function GET(request: NextRequest) {
           handle: existingPlayer.handle,
           credits: shipData?.credits || 0,
           turns: existingPlayer.turns,
+          turns_spent: existingPlayer.turns_spent || 0,
           turn_cap: universeSettings?.max_accumulated_turns || 5000,
           last_turn_ts: existingPlayer.last_turn_ts,
           current_sector: existingPlayer.current_sector,

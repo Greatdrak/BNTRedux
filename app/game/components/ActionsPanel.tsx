@@ -80,7 +80,9 @@ export default function ActionsPanel({ port, player, shipCredits, ship, inventor
     const portStock = port.stock[resource]
     const creditsAffordable = Math.floor((shipCredits || 0) / price)
     const currentCargo = inventory.ore + inventory.organics + inventory.goods + inventory.energy
-    const remainingCargo = Math.max(0, ship.cargo - currentCargo)
+    // Use BNT formula for cargo capacity: 100 * (1.5^hull_level)
+    const shipCargoCapacity = Math.floor(100 * Math.pow(1.5, ship.hull_lvl || 1))
+    const remainingCargo = Math.max(0, shipCargoCapacity - currentCargo)
     return Math.max(0, Math.min(creditsAffordable, portStock, remainingCargo))
   }
 

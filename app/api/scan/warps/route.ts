@@ -32,6 +32,12 @@ export async function POST(request: NextRequest) {
 
     const destIds = (warps||[]).map(w => w.to_sector)
     if (destIds.length === 0) {
+      // Track turn spent and decrement turns atomically
+      await supabaseAdmin.rpc('track_turn_spent', { 
+        p_player_id: player.id, 
+        p_turns_spent: 1, 
+        p_action_type: 'warp_scan_no_warps' 
+      })
       await supabaseAdmin.from('players').update({ turns: player.turns - 1 }).eq('id', player.id)
       return NextResponse.json({ ok:true, sectors: [] })
     }
@@ -49,8 +55,15 @@ export async function POST(request: NextRequest) {
       planetCountBySector.set(p.sector_id, (planetCountBySector.get(p.sector_id) || 0) + 1)
     })
 
-    // Consume 1 turn and mark scans for these sectors
+    // Track turn spent and decrement turns atomically
+    await supabaseAdmin.rpc('track_turn_spent', { 
+      p_player_id: player.id, 
+      p_turns_spent: 1, 
+      p_action_type: 'warp_scan' 
+    })
     await supabaseAdmin.from('players').update({ turns: player.turns - 1 }).eq('id', player.id)
+    
+    // Mark scans for these sectors
     for (const s of (sectors||[])) {
       await supabaseAdmin.from('scans').upsert({ player_id: player.id, sector_id: s.id, mode: 'single' })
     }

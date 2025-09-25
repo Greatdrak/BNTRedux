@@ -1,160 +1,48 @@
-.container {
-  max-width: 980px;
-  margin: 0 auto;
-  padding: 24px 16px 80px;
-}
-
-.header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 16px;
-}
-
-.header h1 {
-  color: #42f5b9;
-  font-size: 34px;
-  line-height: 1.2;
-  margin: 0;
-}
-
-.renameBtn {
-  background: transparent;
-  border: 1px solid #42f5b9;
-  color: #42f5b9;
-  padding: 6px 10px;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-.topBar {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 12px;
-  background: rgba(66, 245, 185, 0.06);
-  border: 1px solid rgba(66, 245, 185, 0.25);
-  padding: 10px 12px;
-  border-radius: 8px;
-  margin-bottom: 14px;
-}
-
-.reportGrid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
-}
-
-.leftCol, .rightCol {
-  background: rgba(60, 0, 70, 0.35);
-  border: 1px solid rgba(130, 60, 180, 0.5);
-  border-radius: 10px;
-  padding: 14px 16px;
-}
-
-.leftCol h3 {
-  margin: 0 0 10px 0;
-  font-size: 16px;
-  color: #e9d9ff;
-}
-
-.sectionHeader {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-weight: 700;
-  color: #e9d9ff;
-  margin-bottom: 8px;
-}
-
-.subHeader {
-  margin-top: 14px;
-  margin-bottom: 6px;
-  font-weight: 700;
-  color: #e9d9ff;
-}
-
-.row {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  padding: 6px 8px;
-  border-radius: 6px;
-}
-
-.row:nth-child(odd) {
-  background: rgba(255, 255, 255, 0.03);
-}
-
-.row span:first-child {
-  color: #cfc3ff;
-}
-
-.row i {
-  color: #9fe8ff;
-  font-style: italic;
-}
-
-.status {
-  margin-top: 14px;
-  color: #ffd479;
-}
-
-.loading {
-  text-align: center;
-  padding: 40px 0;
-  color: #cfc3ff;
-}
-
-.error {
-  max-width: 600px;
-  margin: 40px auto;
-  padding: 18px 16px;
-  border: 1px solid #ff6b6b;
-  border-radius: 8px;
-  background: rgba(255, 40, 40, 0.06);
-}
-
-.backBtn {
-  margin-top: 18px;
-  background: transparent;
-  border: 1px solid #cfc3ff;
-  color: #cfc3ff;
-  padding: 8px 12px;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
+/* Modern Ship Page - Matching Overlay Style */
 .container {
   min-height: 100vh;
   background: var(--bg);
   color: var(--text);
-  padding: 2rem;
+  padding: 1rem;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 2rem;
+  gap: 1rem;
 }
 
+/* Header */
 .header {
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  gap: 1rem;
-  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--line);
+  flex-shrink: 0;
 }
 
-.header h1 {
+.headerLeft h1 {
   margin: 0;
   color: var(--accent);
-  font-size: 2rem;
+  font-size: 1.5rem;
   font-weight: 600;
 }
 
-.renameBtn {
+.playerInfo {
+  margin: 0.25rem 0 0 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.headerRight {
+  display: flex;
+  gap: 1rem;
+}
+
+.renameBtn, .backBtn {
   background: none;
   border: 1px solid var(--accent);
   color: var(--accent);
   padding: 0.5rem 1rem;
-  border-radius: 4px;
+  border-radius: 6px;
   cursor: pointer;
   font-size: 0.9rem;
   transition: all 0.2s;
@@ -165,206 +53,296 @@
   color: var(--bg);
 }
 
+.backBtn {
+  border-color: var(--line);
+  color: var(--text);
+}
+
+.backBtn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
 .renameBtn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
-.shipArt {
-  margin: 1rem 0;
-  opacity: 0.9;
+/* Main Content Layout */
+.mainContent {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  flex: 1;
+  min-height: 0;
 }
 
-.statsGrid {
-  display: grid;
-  grid-template-columns: 1fr;
+/* Left Panel - Ship Info & Tech Levels */
+.leftPanel {
+  display: flex;
+  flex-direction: column;
   gap: 1rem;
-  width: 100%;
-  max-width: 600px;
+  min-height: 0;
+}
+
+.shipInfo {
   background: var(--panel);
   border: 1px solid var(--line);
   border-radius: 8px;
-  padding: 1.5rem;
+  padding: 1rem;
+  text-align: center;
+  flex-shrink: 0;
 }
 
-.statRow {
+.shipInfo h2 {
+  margin: 0 0 0.5rem 0;
+  color: var(--accent);
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.shipImage {
+  margin: 0.5rem 0;
+}
+
+.shipImg {
+  width: 80px;
+  height: 80px;
+  object-fit: contain;
+  filter: drop-shadow(0 0 10px rgba(99, 230, 190, 0.3));
+}
+
+.credits {
   display: flex;
-  align-items: center;
   justify-content: space-between;
-  padding: 0.5rem 0;
-  border-bottom: 1px solid var(--line);
+  align-items: center;
+  padding: 0.75rem;
+  background: var(--bgElev);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  margin-top: 0.5rem;
 }
 
-.statRow:last-child {
-  border-bottom: none;
-}
-
-.label {
+.creditsLabel {
   color: var(--muted);
   font-size: 0.9rem;
-  font-weight: 500;
-  min-width: 120px;
 }
 
-.value {
-  color: var(--text);
-  font-size: 0.9rem;
-  font-weight: 500;
+.creditsValue {
+  color: var(--accent);
+  font-size: 1.1rem;
+  font-weight: 600;
   font-family: monospace;
 }
 
-.meterContainer {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  flex: 1;
-}
-
-.meter {
-  flex: 1;
-  height: 8px;
-  background: var(--bg);
-  border: 1px solid var(--line);
-  border-radius: 4px;
-  overflow: hidden;
-  position: relative;
-}
-
-.meterFill {
-  height: 100%;
-  background: var(--accent);
-  transition: width 0.3s ease;
-  border-radius: 3px;
-}
-
-.upgradePanel {
-  width: 100%;
-  max-width: 600px;
+.techLevels {
   background: var(--panel);
   border: 1px solid var(--line);
   border-radius: 8px;
-  padding: 1.5rem;
+  padding: 1rem;
+  flex: 1;
 }
 
-.upgradePanel h3 {
+.techLevels h3 {
   margin: 0 0 1rem 0;
   color: var(--accent);
   font-size: 1.1rem;
   font-weight: 600;
 }
 
-.warning {
-  color: var(--accent);
-  font-size: 0.9rem;
-  margin: 0 0 1rem 0;
-  padding: 0.5rem;
-  background: var(--bgElev);
-  border: 1px solid var(--accent);
-  border-radius: 4px;
-}
-
-.upgradeGrid {
+.techGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1rem;
-}
-
-.upgradeItem {
-  display: flex;
-  flex-direction: column;
+  grid-template-columns: 1fr 1fr;
   gap: 0.5rem;
-  padding: 1rem;
-  background: var(--bgElev);
-  border: 1px solid var(--line);
-  border-radius: 6px;
+  margin-bottom: 1rem;
 }
 
-.upgradeInfo {
+.techItem {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  padding: 0.5rem;
+  background: var(--bgElev);
+  border: 1px solid var(--line);
+  border-radius: 4px;
 }
 
-.upgradeName {
+.techLabel {
   color: var(--text);
   font-size: 0.9rem;
   font-weight: 500;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
 }
 
-.upgradeDesc {
-  color: var(--muted);
-  font-size: 0.7rem;
-  font-weight: 400;
-}
-
-.upgradeCost {
+.techValue {
   color: var(--accent);
-  font-size: 0.8rem;
+  font-size: 0.9rem;
+  font-weight: 600;
   font-family: monospace;
 }
 
-.upgradeBtn {
-  background: var(--accent);
-  border: none;
-  color: var(--bg);
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 0.9rem;
-  font-weight: 500;
-  transition: background-color 0.2s;
+.avgTech {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  background: var(--bgElev);
+  border: 1px solid var(--accent);
+  border-radius: 6px;
 }
 
-.upgradeBtn:hover:not(:disabled) {
-  background: #52d4a8;
+.avgTechLabel {
+  color: var(--accent);
+  font-size: 1rem;
+  font-weight: 600;
 }
 
-.upgradeBtn:disabled {
-  background: var(--line);
-  color: var(--muted);
-  cursor: not-allowed;
+.avgTechValue {
+  color: var(--accent);
+  font-size: 1.2rem;
+  font-weight: 700;
+  font-family: monospace;
 }
 
-.status {
-  padding: 0.75rem 1rem;
+/* Right Panel - Holds, Armor & Weapons */
+.rightPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.holdsSection, .weaponsSection, .devicesSection {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.holdsSection h3, .weaponsSection h3, .devicesSection h3 {
+  margin: 0 0 1rem 0;
+  color: var(--accent);
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.holdsGrid, .weaponsGrid, .devicesGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.holdItem, .weaponItem, .deviceItem {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
   background: var(--bgElev);
   border: 1px solid var(--line);
-  border-radius: 4px;
-  color: var(--text);
-  font-size: 0.9rem;
-  text-align: center;
-  max-width: 600px;
-}
-
-.footer {
-  margin-top: auto;
-}
-
-.backBtn {
-  background: none;
-  border: 1px solid var(--line);
-  color: var(--text);
-  padding: 0.75rem 1.5rem;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 0.9rem;
+  border-radius: 6px;
   transition: all 0.2s;
 }
 
-.backBtn:hover {
-  background: var(--bgElev);
+.holdItem:hover, .weaponItem:hover, .deviceItem:hover {
   border-color: var(--accent);
+  background: rgba(99, 230, 190, 0.05);
+}
+
+.holdIcon, .weaponIcon, .deviceIcon {
+  font-size: 1rem;
+  width: 20px;
+  text-align: center;
+}
+
+.holdLabel, .weaponLabel, .deviceLabel {
+  flex: 1;
+  color: var(--text);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.holdValue, .weaponValue, .deviceValue {
+  color: var(--accent);
+  font-size: 0.9rem;
+  font-weight: 600;
+  font-family: monospace;
+}
+
+/* Capacity Section - Collapsible */
+.capacitySection {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.capacityToggle {
+  width: 100%;
+  background: none;
+  border: none;
+  color: var(--text);
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 600;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all 0.2s;
+}
+
+.capacityToggle:hover {
+  background: var(--bgElev);
   color: var(--accent);
 }
 
+.toggleIcon {
+  color: var(--accent);
+  font-size: 0.8rem;
+}
+
+.capacityContent {
+  padding: 0 1rem 1rem 1rem;
+  border-top: 1px solid var(--line);
+}
+
+.capacityGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.capacityItem {
+  padding: 0.75rem;
+  background: var(--bgElev);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  font-size: 0.85rem;
+  color: var(--text);
+}
+
+.capacityItem strong {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* Status Message */
+.status {
+  padding: 1rem 2rem;
+  background: var(--bgElev);
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  color: var(--accent);
+  font-size: 0.9rem;
+  text-align: center;
+  margin-top: auto;
+}
+
+/* Loading & Error States */
 .loading {
   color: var(--muted);
   font-size: 1.1rem;
   text-align: center;
-  padding: 2rem;
+  padding: 4rem 0;
 }
 
 .error {
@@ -372,8 +350,9 @@
   padding: 2rem;
   background: var(--panel);
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: 12px;
   max-width: 500px;
+  margin: 2rem auto;
 }
 
 .error h2 {
@@ -386,60 +365,40 @@
   margin: 0 0 1.5rem 0;
 }
 
-/* Capacity Information Section */
-.capacitySection {
-  margin-top: 20px;
-  background: rgba(60, 0, 70, 0.35);
-  border: 1px solid rgba(130, 60, 180, 0.5);
-  border-radius: 10px;
-  padding: 14px 16px;
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .mainContent {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+  
+  .header {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+  
+  .headerRight {
+    width: 100%;
+    justify-content: flex-end;
+  }
 }
 
-.capacitySection h3 {
-  margin: 0 0 12px 0;
-  font-size: 16px;
-  color: #e9d9ff;
-}
-
-.capacityGrid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 8px;
-}
-
-.capacityItem {
-  padding: 8px 12px;
-  background: rgba(255, 255, 255, 0.03);
-  border-radius: 6px;
-  font-size: 14px;
-  color: #cfc3ff;
-}
-
-.capacityItem strong {
-  color: #9fe8ff;
-}
-
-/* Responsive design */
 @media (max-width: 768px) {
   .container {
     padding: 1rem;
   }
   
-  .header h1 {
-    font-size: 1.5rem;
-  }
-  
-  .upgradeGrid {
+  .techGrid {
     grid-template-columns: 1fr;
   }
   
-  .meterContainer {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.5rem;
+  .shipImg {
+    width: 100px;
+    height: 100px;
   }
   
-  .meter {
-    width: 100%;
+  .headerLeft h1 {
+    font-size: 1.5rem;
   }
 }

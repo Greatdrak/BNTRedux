@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { attr, universe_id } = body
 
-    if (!attr || !['engine', 'computer', 'sensors', 'shields', 'hull'].includes(attr)) {
+    if (!attr || !['engine', 'computer', 'sensors', 'shields', 'hull', 'power', 'beam', 'torp_launcher', 'armor'].includes(attr)) {
       return NextResponse.json({ error: { code: 'invalid_attribute', message: 'Invalid upgrade attribute' } }, { status: 400 })
     }
 

@@ -1,10 +1,7 @@
 .container {
   min-height: 100vh;
-  padding: var(--space-4);
   max-width: 1600px;
   margin: 0 auto;
-  display: flex;
-  flex-direction: column;
   overflow: hidden;
 }
 
@@ -28,6 +25,173 @@
   font-size: var(--font-size-lg);
 }
 
+/* New Game Layout Structure */
+.gameContainer {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+  background: transparent; /* Force new layout */
+}
+
+.gameHeader {
+  flex-shrink: 0;
+  background: var(--bg);
+  border-bottom: 1px solid var(--line);
+  padding: var(--space-4);
+}
+
+.gameMain {
+  display: grid;
+  grid-template-columns: 260px 1fr 300px;
+  grid-template-rows: 1fr;
+  gap: var(--space-4);
+  flex: 1;
+  min-height: 0;
+  padding: var(--space-4);
+}
+
+.gameFooter {
+  flex-shrink: 0;
+  position: relative;
+  min-height: 120px; /* Minimum height for ships section */
+  max-height: 200px; /* Maximum height to prevent overflow */
+  overflow-y: auto;
+}
+
+/* Header Styles */
+.headerContent {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.headerLeft {
+  flex-shrink: 0;
+}
+
+.gameTitle {
+  font-size: var(--font-size-xl);
+  font-weight: bold;
+  color: var(--accent);
+  margin: 0;
+  line-height: 1;
+}
+
+.playerName {
+  font-size: var(--font-size-sm);
+  color: var(--muted);
+  margin: 4px 0 0 0;
+}
+
+.headerStats {
+  display: flex;
+  gap: var(--space-4);
+  flex: 1;
+  justify-content: center;
+}
+
+.statItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.statLabel {
+  font-size: var(--font-size-xs);
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 2px;
+}
+
+.statValue {
+  font-size: var(--font-size-lg);
+  font-weight: bold;
+  color: var(--text);
+  line-height: 1;
+}
+
+.headerControls {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-shrink: 0;
+}
+
+.universeSelector {
+  position: relative;
+}
+
+.universeButton {
+  background: var(--bgElev);
+  border: 1px solid var(--line);
+  color: var(--text);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-size: var(--font-size-sm);
+}
+
+.universeDropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: var(--bgElev);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: var(--space-2);
+  z-index: 100;
+}
+
+.refreshButton {
+  background: var(--accent);
+  color: #000;
+  border: none;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+}
+
+.logoutButton {
+  background: var(--danger);
+  color: #fff;
+  border: none;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-size: var(--font-size-sm);
+}
+
+/* Panel Classes for New Layout */
+.leftPanel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  max-height: 100%;
+  overflow: hidden;
+}
+
+.centerPanel {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.rightPanel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  max-height: 100%;
+  overflow: hidden;
+}
+
+/* Legacy mainLayout for backwards compatibility */
 .mainLayout {
   display: grid;
   grid-template-columns: 260px 1fr 300px;
@@ -37,34 +201,19 @@
   min-height: 0;
 }
 
-.leftPanel {
-  grid-column: 1;
-  grid-row: 1 / -1;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-}
+/* Legacy leftPanel styles moved to mainLayout selector above */
 
 .centerArea {
-  grid-column: 2;
-  grid-row: 1 / -1;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
   position: relative;
   padding: var(--space-6);
+  flex: 1;
 }
 
-.rightPanel {
-  grid-column: 3;
-  grid-row: 1 / -1;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-  max-height: 100vh;
-  overflow: hidden;
-}
+/* Legacy rightPanel styles moved to mainLayout selector above */
 
 /* Space viewport — reduce heavy boxes; suggest a window into space */
 .spaceViewport {
@@ -129,10 +278,12 @@
   transform: none;
 }
 
-.portInline {
-  text-align: center;
-  color: var(--accent);
-  margin-bottom: var(--space-4);
+/* Trading Port - Top Right */
+.portTopRight {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  z-index: 10;
 }
 
 .portTitle {
@@ -229,6 +380,200 @@
   max-width: 900px;
   margin: var(--space-4) auto 0;
   text-align: center;
+}
+
+.shipsSection h3 {
+  color: var(--accent);
+  margin-bottom: var(--space-3);
+  font-size: var(--font-size-lg);
+}
+
+.shipCards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+  max-width: 100%;
+  justify-items: center;
+}
+
+.shipCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--space-3);
+  background: rgba(99, 230, 190, 0.05);
+  border: 1px solid rgba(99, 230, 190, 0.2);
+  border-radius: var(--radius);
+  transition: all 0.2s ease;
+  min-height: 100px;
+  width: 140px;
+}
+
+.shipCard:hover {
+  background: rgba(99, 230, 190, 0.1);
+  border-color: rgba(99, 230, 190, 0.4);
+  transform: translateY(-2px);
+}
+
+.shipCard.clickable {
+  cursor: pointer;
+}
+
+.shipCard.clickable:hover {
+  background: rgba(99, 230, 190, 0.15);
+  border-color: rgba(99, 230, 190, 0.6);
+  transform: translateY(-3px);
+  box-shadow: 0 4px 12px rgba(99, 230, 190, 0.2);
+}
+
+.shipGraphic {
+  margin-bottom: var(--space-2);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.shipImageContainer {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.shipImage {
+  width: 60px;
+  height: 60px;
+  filter: drop-shadow(0 0 4px rgba(99, 230, 190, 0.3));
+  transition: all 0.2s ease;
+}
+
+.shipCard:hover .shipImage {
+  filter: drop-shadow(0 0 8px rgba(99, 230, 190, 0.5));
+  transform: scale(1.05);
+}
+
+.aiIndicator {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background: #ffa500;
+  color: #000;
+  font-size: 10px;
+  font-weight: bold;
+  padding: 3px 5px;
+  border-radius: 4px;
+  opacity: 0.9;
+}
+
+.shipInfo {
+  text-align: center;
+  width: 100%;
+}
+
+.shipName {
+  color: var(--text);
+  font-weight: 600;
+  font-size: var(--font-size-sm);
+  margin-bottom: var(--space-1);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.playerName {
+  color: var(--muted);
+  font-size: var(--font-size-xs);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.humanPlayer {
+  color: var(--accent);
+}
+
+.aiPlayer {
+  color: #ffa500;
+}
+
+.aiTag {
+  margin-left: var(--space-1);
+  font-size: var(--font-size-xs);
+  color: #ffa500;
+  font-weight: bold;
+}
+
+.showAllShips {
+  margin-top: var(--space-4);
+  text-align: center;
+}
+
+.showAllBtn {
+  padding: var(--space-2) var(--space-4);
+  background: rgba(99, 230, 190, 0.1);
+  border: 1px solid rgba(99, 230, 190, 0.3);
+  border-radius: var(--radius);
+  color: var(--accent);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.showAllBtn:hover {
+  background: rgba(99, 230, 190, 0.2);
+  border-color: rgba(99, 230, 190, 0.5);
+  transform: translateY(-1px);
+}
+
+/* Ships Section - Center Panel */
+.shipsSectionBottom {
+  margin-top: var(--space-3);
+}
+
+.shipsSectionBottom h3 {
+  color: var(--accent);
+  margin-bottom: var(--space-3);
+  font-size: var(--font-size-md);
+  text-align: center;
+}
+
+.shipsSectionBottom .shipCards {
+  display: flex;
+  gap: var(--space-2);
+  justify-content: center;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+}
+
+.shipsSectionBottom .shipCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--space-2);
+  background: rgba(99, 230, 190, 0.05);
+  border: 1px solid rgba(99, 230, 190, 0.2);
+  border-radius: var(--radius);
+  transition: all 0.2s ease;
+  min-width: 120px;
+  flex-shrink: 0;
+}
+
+.shipsSectionBottom .shipCard:hover {
+  background: rgba(99, 230, 190, 0.1);
+  border-color: rgba(99, 230, 190, 0.4);
+  transform: translateY(-2px);
+}
+
+.shipsSectionBottom .shipCard.clickable {
+  cursor: pointer;
+}
+
+.shipsSectionBottom .shipCard.clickable:hover {
+  background: rgba(99, 230, 190, 0.15);
+  border-color: rgba(99, 230, 190, 0.6);
+  transform: translateY(-3px);
+  box-shadow: 0 4px 12px rgba(99, 230, 190, 0.2);
 }
 
 /* Left commands column */

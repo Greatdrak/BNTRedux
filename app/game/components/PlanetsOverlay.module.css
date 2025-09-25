@@ -1,0 +1,349 @@
+.backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.panel {
+  background: rgba(15, 23, 42, 0.95);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  border-radius: 12px;
+  width: 95vw;
+  max-width: 1400px;
+  height: 90vh;
+  max-height: 800px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+.title {
+  font-size: 24px;
+  font-weight: 600;
+  color: #fbbf24;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.count {
+  font-size: 16px;
+  color: #94a3b8;
+  font-weight: 400;
+}
+
+.close {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  font-size: 24px;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.close:hover {
+  color: #fbbf24;
+  background: rgba(251, 191, 36, 0.1);
+}
+
+.content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 24px;
+  overflow: hidden;
+}
+
+.controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  gap: 20px;
+}
+
+.searchContainer {
+  flex: 1;
+  max-width: 400px;
+}
+
+.searchInput {
+  width: 100%;
+  padding: 12px 16px;
+  background: rgba(30, 41, 59, 0.8);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  border-radius: 8px;
+  color: #f1f5f9;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.searchInput:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.searchInput::placeholder {
+  color: #64748b;
+}
+
+.actionButtons {
+  display: flex;
+  gap: 12px;
+}
+
+.collectButton {
+  padding: 12px 20px;
+  background: linear-gradient(135deg, #10b981, #059669);
+  border: none;
+  border-radius: 8px;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.collectButton:hover:not(:disabled) {
+  background: linear-gradient(135deg, #059669, #047857);
+  transform: translateY(-1px);
+}
+
+.collectButton:disabled {
+  background: #64748b;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.tableContainer {
+  flex: 1;
+  overflow: auto;
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  border-radius: 8px;
+  background: rgba(15, 23, 42, 0.5);
+}
+
+.planetsTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.planetsTable thead {
+  background: rgba(30, 41, 59, 0.8);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.planetsTable th {
+  padding: 12px 8px;
+  text-align: left;
+  font-weight: 600;
+  color: #fbbf24;
+  border-bottom: 1px solid rgba(59, 130, 246, 0.2);
+  white-space: nowrap;
+}
+
+.planetsTable td {
+  padding: 10px 8px;
+  color: #f1f5f9;
+  border-bottom: 1px solid rgba(59, 130, 246, 0.1);
+  white-space: nowrap;
+}
+
+.sortable {
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.2s;
+}
+
+.sortable:hover {
+  background: rgba(59, 130, 246, 0.1);
+}
+
+.sorted {
+  background: rgba(59, 130, 246, 0.2);
+}
+
+.checkboxCol {
+  width: 40px;
+  text-align: center;
+}
+
+.sectorCol {
+  width: 80px;
+}
+
+.nameCol {
+  width: 120px;
+  min-width: 120px;
+}
+
+.numberCol {
+  width: 100px;
+  text-align: right;
+  font-family: 'Courier New', monospace;
+}
+
+.baseCol {
+  width: 60px;
+  text-align: center;
+}
+
+.actionsCol {
+  width: 80px;
+  text-align: center;
+}
+
+.planetRow {
+  transition: all 0.2s;
+}
+
+.planetRow:hover {
+  background: rgba(59, 130, 246, 0.05);
+}
+
+.sectorLink {
+  background: none;
+  border: none;
+  color: #3b82f6;
+  cursor: pointer;
+  text-decoration: underline;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.sectorLink:hover {
+  color: #60a5fa;
+  text-decoration: none;
+}
+
+.unnamed {
+  color: #64748b;
+  font-style: italic;
+}
+
+.maxIndicator {
+  color: #64748b;
+  font-size: 12px;
+  margin-left: 4px;
+}
+
+.hasBase {
+  color: #10b981;
+  font-weight: 600;
+}
+
+.noBase {
+  color: #64748b;
+}
+
+.actionButton {
+  padding: 6px 12px;
+  background: rgba(59, 130, 246, 0.2);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  border-radius: 4px;
+  color: #60a5fa;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.actionButton:hover {
+  background: rgba(59, 130, 246, 0.3);
+  border-color: #3b82f6;
+  color: #93c5fd;
+}
+
+.totalsRow {
+  background: rgba(30, 41, 59, 0.6);
+  font-weight: 600;
+}
+
+.totalsRow td {
+  color: #fbbf24;
+  border-top: 2px solid rgba(59, 130, 246, 0.3);
+}
+
+.error {
+  padding: 16px;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 8px;
+  color: #fca5a5;
+  text-align: center;
+  margin-top: 20px;
+}
+
+/* Scrollbar styling */
+.tableContainer::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.tableContainer::-webkit-scrollbar-track {
+  background: rgba(30, 41, 59, 0.3);
+  border-radius: 4px;
+}
+
+.tableContainer::-webkit-scrollbar-thumb {
+  background: rgba(59, 130, 246, 0.5);
+  border-radius: 4px;
+}
+
+.tableContainer::-webkit-scrollbar-thumb:hover {
+  background: rgba(59, 130, 246, 0.7);
+}
+
+/* Responsive design */
+@media (max-width: 1200px) {
+  .panel {
+    width: 98vw;
+    height: 95vh;
+  }
+  
+  .planetsTable {
+    font-size: 12px;
+  }
+  
+  .planetsTable th,
+  .planetsTable td {
+    padding: 8px 6px;
+  }
+}
+
+@media (max-width: 768px) {
+  .controls {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+  
+  .searchContainer {
+    max-width: none;
+  }
+  
+  .actionButtons {
+    justify-content: center;
+  }
+}

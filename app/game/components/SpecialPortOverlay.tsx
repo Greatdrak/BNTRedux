@@ -29,19 +29,23 @@ interface SpecialPortOverlayProps {
   upgradeLoading?: boolean
   universeId?: string
   onStatusMessage?: (message: string, type: 'success' | 'error' | 'info') => void
+  onPurchaseComplete?: () => void
 }
 
 interface CapacityData {
-  fighters: { current: number; max: number; level: number }
-  torpedoes: { current: number; max: number; level: number }
-  armor: { current: number; max: number; level: number }
-  colonists: { current: number; max: number; level: number }
-  energy: { current: number; max: number; level: number }
-  devices: {
+  hull: { level: number; capacity: number; description: string }
+  computer: { level: number; capacity: number; description: string }
+  armor: { level: number; capacity: number; description: string }
+  shield: { level: number; capacity: number; description: string }
+  // Legacy structure for compatibility (will be populated from ship data)
+  fighters?: { current: number; max: number; level: number }
+  torpedoes?: { current: number; max: number; level: number }
+  colonists?: { current: number; max: number; level: number }
+  energy?: { current: number; max: number; level: number }
+  devices?: {
     space_beacons: { current: number; max: number; cost: number }
     warp_editors: { current: number; max: number; cost: number }
     genesis_torpedoes: { current: number; max: number; cost: number }
-    mine_deflectors: { current: number; max: number; cost: number }
     emergency_warp: { current: boolean; max: number; cost: number }
     escape_pod: { current: boolean; max: number; cost: number }
     fuel_scoop: { current: boolean; max: number; cost: number }
@@ -58,7 +62,8 @@ export default function SpecialPortOverlay({
   onUpgrade,
   upgradeLoading = false,
   universeId,
-  onStatusMessage
+  onStatusMessage,
+  onPurchaseComplete
 }: SpecialPortOverlayProps) {
   // State for classic BNT Special Port features
   const [activeTab, setActiveTab] = useState<'upgrades' | 'devices'>('upgrades')
@@ -99,35 +104,38 @@ export default function SpecialPortOverlay({
     }
   }, [shipData?.comp_lvl, shipData?.torp_launcher_lvl, shipData?.hull_lvl, shipData?.power_lvl, mutateCapacity, universeId])
 
-  // Combined devices and items - using real capacity data (memoized to prevent React reconciliation issues)
+  // Combined devices and items - using BNT capacity data and ship data (memoized to prevent React reconciliation issues)
   const devices = useMemo(() => {
-    if (!capacityData) return []
+    if (!capacityData || !shipData) return []
     
     return [
-      // Ship Items
-      { name: 'Fighters', cost: 50, current: capacityData.fighters.current, max: capacityData.fighters.max, type: 'quantity', category: 'item' },
-      { name: 'Armor Points', cost: 5, current: capacityData.armor.current, max: capacityData.armor.max, type: 'quantity', category: 'item' },
-      { name: 'Torpedoes', cost: 25, current: capacityData.torpedoes.current, max: capacityData.torpedoes.max, type: 'quantity', category: 'item' },
-      { name: 'Colonists', cost: 500, current: capacityData.colonists.current, max: capacityData.colonists.max, type: 'quantity', category: 'item' },
-      { name: 'Energy', cost: 1, current: capacityData.energy.current, max: capacityData.energy.max, type: 'quantity', category: 'item' },
-      // Special Devices
-      { name: 'Genesis Torpedoes', cost: 1000000, current: capacityData.devices.genesis_torpedoes.current, max: capacityData.devices.genesis_torpedoes.max, type: 'quantity', category: 'device' },
-      { name: 'Space Beacons', cost: 1000000, current: capacityData.devices.space_beacons.current, max: capacityData.devices.space_beacons.max, type: 'quantity', category: 'device' },
-      { name: 'Emergency Warp Device', cost: 1000000, current: capacityData.devices.emergency_warp.current ? 1 : 0, max: 1, type: 'checkbox', category: 'device' },
-      { name: 'Warp Editors', cost: 1000000, current: capacityData.devices.warp_editors.current, max: capacityData.devices.warp_editors.max, type: 'quantity', category: 'device' },
-      { name: 'Mine Deflectors', cost: 1000, current: capacityData.devices.mine_deflectors.current, max: -1, type: 'quantity', category: 'device' },
-      { name: 'Escape Pod', cost: 1000000, current: capacityData.devices.escape_pod.current ? 1 : 0, max: 1, type: 'checkbox', category: 'device' },
-      { name: 'Fuel Scoop', cost: 100000, current: capacityData.devices.fuel_scoop.current ? 1 : 0, max: 1, type: 'checkbox', category: 'device' },
-      { name: 'Last Ship Seen Device', cost: 10000000, current: capacityData.devices.last_seen.current ? 1 : 0, max: 1, type: 'checkbox', category: 'device' }
+      // Ship Items - using BNT formula capacities
+      { name: 'Fighters', cost: 50, current: shipData.fighters || 0, max: capacityData.computer.capacity, type: 'quantity', category: 'item' },
+      { name: 'Armor Points', cost: 5, current: shipData.armor || 0, max: Math.floor(100 * Math.pow(1.5, shipData?.armor_lvl || 1)), type: 'quantity', category: 'item' },
+      { name: 'Torpedoes', cost: 25, current: shipData.torpedoes || 0, max: 1000, type: 'quantity', category: 'item' }, // Placeholder until we have torpedo launcher level
+      { name: 'Colonists', cost: 500, current: shipData.colonists || 0, max: capacityData.hull.capacity, type: 'quantity', category: 'item' },
+      
+      // Special Devices - using ship data for current values
+      { name: 'Genesis Torpedoes', cost: 1000000, current: shipData.device_genesis_torpedoes || 0, max: 5, type: 'quantity', category: 'device' },
+      { name: 'Space Beacons', cost: 1000000, current: shipData.device_space_beacons || 0, max: 5, type: 'quantity', category: 'device' },
+      { name: 'Emergency Warp Device', cost: 1000000, current: shipData.device_emergency_warp ? 1 : 0, max: 1, type: 'checkbox', category: 'device' },
+      { name: 'Warp Editors', cost: 1000000, current: shipData.device_warp_editors || 0, max: 5, type: 'quantity', category: 'device' },
+      { name: 'Escape Pod', cost: 1000000, current: shipData.device_escape_pod ? 1 : 0, max: 1, type: 'checkbox', category: 'device' },
+      { name: 'Fuel Scoop', cost: 100000, current: shipData.device_fuel_scoop ? 1 : 0, max: 1, type: 'checkbox', category: 'device' },
+      { name: 'Last Ship Seen Device', cost: 10000000, current: shipData.device_last_seen ? 1 : 0, max: 1, type: 'checkbox', category: 'device' }
     ]
-  }, [capacityData])
+  }, [capacityData, shipData])
 
   const upgradeCosts = {
-    engine: 500 * (shipData?.engine_lvl || 1),
-    computer: 400 * (shipData?.comp_lvl || 1),
-    sensors: 400 * (shipData?.sensor_lvl || 1),
-    shields: 300 * (shipData?.shield_lvl || 1),
-    hull: 2000 * (shipData?.hull_lvl || 1)
+    engine: 1000 * Math.pow(2, (shipData?.engine_lvl || 1) - 1),
+    computer: 1000 * Math.pow(2, (shipData?.comp_lvl || 1) - 1),
+    sensors: 1000 * Math.pow(2, (shipData?.sensor_lvl || 1) - 1),
+    shields: 1000 * Math.pow(2, (shipData?.shield_lvl || 1) - 1),
+    hull: 1000 * Math.pow(2, (shipData?.hull_lvl || 1) - 1),
+    power: 1000 * Math.pow(2, (shipData?.power_lvl || 1) - 1),
+    beam: 1000 * Math.pow(2, (shipData?.beam_lvl || 1) - 1),
+    torp_launcher: 1000 * Math.pow(2, (shipData?.torp_launcher_lvl || 1) - 1),
+    armor: 1000 * Math.pow(2, (shipData?.armor_lvl || 1) - 1)
   }
 
   // Calculate total cost for devices and items
@@ -155,7 +163,16 @@ export default function SpecialPortOverlay({
     const device = devices.find(d => d.name === deviceName)
     if (!device) return
     
-    const maxPurchaseable = device.max - device.current
+    let maxPurchaseable = device.max - device.current
+    
+    // For colonists, check available cargo space
+    if (deviceName === 'Colonists' && shipData) {
+      const totalCargoCapacity = capacityData?.hull?.capacity || 0
+      const currentCargo = (shipData.ore || 0) + (shipData.organics || 0) + (shipData.goods || 0) + (shipData.energy || 0)
+      const availableCargoSpace = totalCargoCapacity - currentCargo
+      maxPurchaseable = Math.min(maxPurchaseable, availableCargoSpace)
+    }
+    
     if (maxPurchaseable > 0) {
       setDeviceQuantities(prev => ({
         ...prev,
@@ -181,7 +198,7 @@ export default function SpecialPortOverlay({
           
           if (actualQty > 0) {
             purchases.push({
-              type: device.category === 'device' ? 'device' : device.name.toLowerCase(),
+              type: device.category === 'device' ? 'device' : 'item',
               name: device.name,
               quantity: actualQty,
               cost: device.cost
@@ -216,10 +233,13 @@ export default function SpecialPortOverlay({
 
       const result = await response.json()
       
-      // Create detailed success message
+      // Create detailed success message with credits spent
       const purchasedItems = purchases.map(p => `${p.quantity} ${p.name}`).join(', ')
+      const creditsSpent = result.total_cost || 0
+      const remainingCredits = result.remaining_credits || 0
+      
       setStatusMessage({
-        message: `Purchase successful! Bought: ${purchasedItems}. Total cost: ${result.total_cost.toLocaleString()} credits. Remaining credits: ${result.remaining_credits.toLocaleString()}`,
+        message: `Purchase successful! Bought: ${purchasedItems}. Credits spent: ${creditsSpent.toLocaleString()}. Remaining credits: ${remainingCredits.toLocaleString()}`,
         type: 'success'
       })
       
@@ -229,6 +249,9 @@ export default function SpecialPortOverlay({
       
       // Refresh capacity data
       mutateCapacity()
+      
+      // Refresh parent component data (ship credits, etc.)
+      onPurchaseComplete?.()
       
     } catch (error) {
       console.error('Purchase error:', error)
@@ -290,16 +313,14 @@ export default function SpecialPortOverlay({
                   <div className={styles.attrItem}>
                     <div className={styles.attrLabel}>Hull</div>
                     <div className={styles.attrValue}>
-                      {shipData?.hull || 0} / {shipData?.hull_max || 0}
-                      <span className={styles.level}>Lv.{shipData?.hull_lvl || 1}</span>
+                      Level {shipData?.hull_lvl || 1}
                     </div>
                   </div>
                   
                   <div className={styles.attrItem}>
                     <div className={styles.attrLabel}>Shields</div>
                     <div className={styles.attrValue}>
-                      {shipData?.shield || 0} / {shipData?.shield_max || 0}
-                      <span className={styles.level}>Lv.{shipData?.shield_lvl || 0}</span>
+                      Level {shipData?.shield_lvl || 1}
                     </div>
                   </div>
                   
@@ -325,9 +346,37 @@ export default function SpecialPortOverlay({
                   </div>
                   
                   <div className={styles.attrItem}>
+                    <div className={styles.attrLabel}>Power</div>
+                    <div className={styles.attrValue}>
+                      Level {shipData?.power_lvl || 1}
+                    </div>
+                  </div>
+                  
+                  <div className={styles.attrItem}>
+                    <div className={styles.attrLabel}>Beam Weapons</div>
+                    <div className={styles.attrValue}>
+                      Level {shipData?.beam_lvl || 1}
+                    </div>
+                  </div>
+                  
+                  <div className={styles.attrItem}>
+                    <div className={styles.attrLabel}>Torpedo Launchers</div>
+                    <div className={styles.attrValue}>
+                      Level {shipData?.torp_launcher_lvl || 1}
+                    </div>
+                  </div>
+                  
+                  <div className={styles.attrItem}>
+                    <div className={styles.attrLabel}>Armor</div>
+                    <div className={styles.attrValue}>
+                      Level {shipData?.armor_lvl || 1}
+                    </div>
+                  </div>
+                  
+                  <div className={styles.attrItem}>
                     <div className={styles.attrLabel}>Cargo</div>
                     <div className={styles.attrValue}>
-                      {shipData?.cargo || 0} units
+                      {capacityData?.hull?.capacity?.toLocaleString() || '0'} units
                     </div>
                   </div>
                 </div>
@@ -341,7 +390,9 @@ export default function SpecialPortOverlay({
                     <div key={attr} className={styles.upgradeItem}>
                       <div className={styles.upgradeInfo}>
                         <div className={styles.upgradeName}>
-                          {attr.charAt(0).toUpperCase() + attr.slice(1)}
+                          {attr === 'torp_launcher' ? 'Torpedo Launchers' : 
+                           attr === 'beam' ? 'Beam Weapons' :
+                           attr.charAt(0).toUpperCase() + attr.slice(1)}
                         </div>
                         <div className={styles.upgradeCost}>
                           {cost.toLocaleString()} cr
@@ -428,6 +479,8 @@ export default function SpecialPortOverlay({
                               className={styles.maxBtn}
                               onClick={() => handleMaxPurchase(device.name)}
                               title={`Buy maximum (${device.max - device.current})`}
+                              disabled={device.name === 'Colonists' && shipData && 
+                                ((shipData.ore || 0) + (shipData.organics || 0) + (shipData.goods || 0) + (shipData.energy || 0)) >= (capacityData?.hull?.capacity || 0)}
                             >
                               Max
                             </button>
@@ -488,6 +541,8 @@ export default function SpecialPortOverlay({
                               className={styles.maxBtn}
                               onClick={() => handleMaxPurchase(device.name)}
                               title={`Buy maximum (${device.max - device.current})`}
+                              disabled={device.name === 'Colonists' && shipData && 
+                                ((shipData.ore || 0) + (shipData.organics || 0) + (shipData.goods || 0) + (shipData.energy || 0)) >= (capacityData?.hull?.capacity || 0)}
                             >
                               Max
                             </button>

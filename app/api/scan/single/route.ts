@@ -35,6 +35,13 @@ export async function POST(request: NextRequest) {
     if (!sector) return NextResponse.json({ error: { code:'invalid_sector', message:'Sector not found' } }, { status:400 })
 
     await supabaseAdmin.from('scans').upsert({ player_id: player.id, sector_id: sector.id, mode: 'single' })
+    
+    // Track turn spent and decrement turns atomically
+    await supabaseAdmin.rpc('track_turn_spent', { 
+      p_player_id: player.id, 
+      p_turns_spent: 1, 
+      p_action_type: 'single_scan' 
+    })
     await supabaseAdmin.from('players').update({ turns: player.turns - 1 }).eq('id', player.id)
 
     const { data: port } = await supabaseAdmin.from('ports').select('kind').eq('sector_id', sector.id).single()
@@ -46,12 +53,41 @@ export async function POST(request: NextRequest) {
       .eq('sector_id', sector.id)
     const planetCount = planets?.length || 0
     
+    // Get ship count and ship details for scanned sector
+    const { data: ships } = await supabaseAdmin
+      .from('ships')
+      .select(`
+        id,
+        name,
+        players!inner(
+          id,
+          handle,
+          is_ai,
+          current_sector
+        )
+      `)
+      .eq('players.current_sector', sector.id)
+      .eq('players.universe_id', player.universe_id)
+    
+    const shipCount = ships?.length || 0
+    const shipDetails = ships?.map(ship => ({
+      id: ship.id,
+      name: ship.name || 'Scout',
+      player: {
+        id: ship.players.id,
+        handle: ship.players.handle,
+        is_ai: ship.players.is_ai
+      }
+    })) || []
+    
     return NextResponse.json({ 
       ok:true, 
       sector: { 
         number: sector.number, 
         port: port ? { kind: port.kind } : null,
-        planetCount: planetCount
+        planetCount: planetCount,
+        shipCount: shipCount,
+        ships: shipDetails
       } 
     })
   } catch (err) {

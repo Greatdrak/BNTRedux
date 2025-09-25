@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: { code: 'resource_not_allowed', message: "Can only buy the port's native commodity" } }, { status: 400 })
       }
       if (action === 'sell' && resource === portData.kind) {
-        return NextResponse.json({ error: { code: 'resource_not_allowed', message: "Cannot sell the port's native commodity here" } }, { status: 400 })
+        return NextResponse.json({ error: { code: 'resource_not_allowed', message: `Cannot sell ${resource} back to a ${portData.kind} port` } }, { status: 400 })
       }
     }
 

@@ -116,6 +116,32 @@ export async function GET(request: NextRequest) {
       playerId = player.id
     }
     
+    // Get ships in this sector
+    const { data: ships, error: shipsError } = await supabaseAdmin
+      .from('ships')
+      .select(`
+        id,
+        name,
+        players!inner(
+          id,
+          handle,
+          is_ai,
+          current_sector
+        )
+      `)
+      .eq('players.current_sector', sector.id)
+      .eq('players.universe_id', sector.universe_id)
+    
+    const shipData = shipsError ? [] : (ships?.map(ship => ({
+      id: ship.id,
+      name: ship.name || 'Scout',
+      player: {
+        id: ship.players.id,
+        handle: ship.players.handle,
+        is_ai: ship.players.is_ai
+      }
+    })) || [])
+
     // Get owner names for planets
     let ownerNames: Record<string, string> = {}
     if (planetData && planetData.length > 0) {
@@ -126,12 +152,12 @@ export async function GET(request: NextRequest) {
       if (ownerPlayerIds.length > 0) {
         const { data: owners, error: ownersError } = await supabaseAdmin
           .from('players')
-          .select('id, name')
+          .select('id, handle')
           .in('id', ownerPlayerIds)
         
         if (!ownersError && owners) {
           ownerNames = owners.reduce((acc, owner) => {
-            acc[owner.id] = owner.name
+            acc[owner.id] = owner.handle
             return acc
           }, {} as Record<string, string>)
         }
@@ -160,6 +186,7 @@ export async function GET(request: NextRequest) {
         name: null
       },
       warps: warpSectorNumbers,
+      ships: shipData,
       port: portData ? {
         id: portData.id,
         kind: portData.kind,

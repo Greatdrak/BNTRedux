@@ -99,7 +99,6 @@ export async function GET(request: NextRequest) {
       device_space_beacons: ship.device_space_beacons || 0,
       device_warp_editors: ship.device_warp_editors || 0,
       device_genesis_torpedoes: ship.device_genesis_torpedoes || 0,
-      device_mine_deflectors: ship.device_mine_deflectors || 0,
       // Device booleans
       device_emergency_warp: ship.device_emergency_warp || false,
       device_escape_pod: ship.device_escape_pod !== false, // default true
