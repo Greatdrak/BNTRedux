@@ -4,7 +4,11 @@ import { verifyBearerToken } from '@/lib/auth-helper'
 
 export async function POST(request: NextRequest) {
   try {
-    const { userId } = await verifyBearerToken(request)
+    const authResult = await verifyBearerToken(request)
+    if ('error' in authResult) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+    const { userId } = authResult
     const { sectorNumber, name, universe_id } = await request.json()
 
     if (!sectorNumber || typeof sectorNumber !== 'number') {

@@ -4,7 +4,11 @@ import { verifyBearerToken } from '@/lib/auth-helper'
 
 export async function GET(request: NextRequest) {
   try {
-    const { userId } = await verifyBearerToken(request)
+    const authResult = await verifyBearerToken(request)
+    if ('error' in authResult) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+    const { userId } = authResult
     const { searchParams } = new URL(request.url)
     const sectorNumber = parseInt(searchParams.get('number') || '0')
     const universeId = searchParams.get('universe_id')

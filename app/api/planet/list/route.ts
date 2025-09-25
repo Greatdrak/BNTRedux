@@ -4,7 +4,11 @@ import { verifyBearerToken } from '@/lib/auth-helper'
 
 export async function GET(request: NextRequest) {
   try {
-    const { userId } = await verifyBearerToken(request)
+    const authResult = await verifyBearerToken(request)
+    if ('error' in authResult) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+    const { userId } = authResult
 
     // Get player's planets with sector numbers and all planet data
     const { data: planets, error } = await supabaseAdmin
