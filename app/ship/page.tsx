@@ -305,14 +305,14 @@ function ShipPageContent() {
                 <span className={styles.weaponIcon}>✈️</span>
                 <span className={styles.weaponLabel}>Fighters</span>
                 <span className={styles.weaponValue}>
-                  {shipData.fighters} / {capacityData?.fighters?.max || Math.round(100 * Math.pow(1.5, shipData.comp_lvl || 1))}
+                  {shipData.fighters} / {capacityData?.computer?.capacity || Math.round(100 * Math.pow(1.5, (shipData.comp_lvl || 1) - 1))}
                 </span>
               </div>
               <div className={styles.weaponItem}>
                 <span className={styles.weaponIcon}>🚀</span>
                 <span className={styles.weaponLabel}>Torpedoes</span>
                 <span className={styles.weaponValue}>
-                  {shipData.torpedoes} / {capacityData?.torpedoes?.max || Math.round(100 * Math.pow(1.5, shipData.torp_launcher_lvl || 1))}
+                  {shipData.torpedoes} / {capacityData?.torp_launcher?.capacity || Math.round(100 * Math.pow(1.5, (shipData.torp_launcher_lvl || 1) - 1))}
                 </span>
               </div>
             </div>
@@ -383,7 +383,7 @@ function ShipPageContent() {
                 <strong>Fighters:</strong> Limited by Computer Level ({shipData.comp_lvl}) = {capacityData.computer?.capacity?.toLocaleString() || 'N/A'} max
               </div>
               <div className={styles.capacityItem}>
-                <strong>Torpedoes:</strong> Limited by Torpedo Launcher Level ({shipData.torp_launcher_lvl}) = {capacityData.torpedoes?.max?.toLocaleString() || 'N/A'} max
+                <strong>Torpedoes:</strong> Limited by Torpedo Launcher Level ({shipData.torp_launcher_lvl}) = {capacityData.torp_launcher?.capacity?.toLocaleString() || 'N/A'} max
               </div>
               <div className={styles.capacityItem}>
                 <strong>Armor:</strong> Limited by Armor Level = {capacityData.armor?.capacity?.toLocaleString() || 'N/A'} max

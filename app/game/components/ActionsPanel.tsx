@@ -80,7 +80,7 @@ export default function ActionsPanel({ port, player, shipCredits, ship, inventor
     const price = getCurrentPrice()
     const portStock = port.stock[resource]
     const creditsAffordable = Math.floor((shipCredits || 0) / price)
-    const currentCargo = inventory.ore + inventory.organics + inventory.goods + inventory.energy
+    const currentCargo = inventory.ore + inventory.organics + inventory.goods
     // Use BNT formula for cargo capacity: 100 * (1.5^hull_level)
     const shipCargoCapacity = Math.floor(100 * Math.pow(1.5, ship.hull_lvl || 1))
     const remainingCargo = Math.max(0, shipCargoCapacity - currentCargo)
@@ -139,7 +139,7 @@ export default function ActionsPanel({ port, player, shipCredits, ship, inventor
       if (totalCost > (shipCredits || 0)) return `Insufficient credits (need ${totalCost.toLocaleString()}, have ${(shipCredits || 0).toLocaleString()})`
       if (qty > port.stock[resource]) return `Insufficient port stock (need ${qty.toLocaleString()}, port has ${port.stock[resource].toLocaleString()})`
       // Cargo capacity
-      const currentCargo = inventory.ore + inventory.organics + inventory.goods + inventory.energy
+      const currentCargo = inventory.ore + inventory.organics + inventory.goods
       const remainingCargo = Math.max(0, ship.cargo - currentCargo)
       if (qty > remainingCargo) return `Insufficient cargo (need ${qty.toLocaleString()}, free ${remainingCargo.toLocaleString()})`
       return null // Valid

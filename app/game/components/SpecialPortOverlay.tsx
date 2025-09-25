@@ -128,8 +128,8 @@ export default function SpecialPortOverlay({
     return [
       // Ship Items - using BNT formula capacities
       { name: 'Fighters', cost: 50, current: shipData.fighters || 0, max: capacityData.computer.capacity, type: 'quantity', category: 'item' },
-      { name: 'Armor Points', cost: 5, current: shipData.armor || 0, max: Math.floor(100 * Math.pow(1.5, shipData?.armor_lvl || 1)), type: 'quantity', category: 'item' },
-      { name: 'Torpedoes', cost: 25, current: shipData.torpedoes || 0, max: 1000, type: 'quantity', category: 'item' }, // Placeholder until we have torpedo launcher level
+      { name: 'Armor Points', cost: 5, current: shipData.armor || 0, max: capacityData.armor.capacity, type: 'quantity', category: 'item' },
+      { name: 'Torpedoes', cost: 25, current: shipData.torpedoes || 0, max: capacityData.torp_launcher.capacity, type: 'quantity', category: 'item' },
       { name: 'Colonists', cost: 500, current: shipData.colonists || 0, max: capacityData.hull.capacity, type: 'quantity', category: 'item' },
       
       // Special Devices - using ship data for current values
