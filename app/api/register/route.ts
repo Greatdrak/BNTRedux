@@ -153,7 +153,6 @@ export async function POST(request: NextRequest) {
         hull_max: newShip.hull_max,
         hull_lvl: newShip.hull_lvl,
         shield: newShip.shield,
-        shield_max: newShip.shield_max,
         shield_lvl: newShip.shield_lvl,
         engine_lvl: newShip.engine_lvl,
         comp_lvl: newShip.comp_lvl,

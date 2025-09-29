@@ -174,6 +174,57 @@ function GameContent() {
     fetcher,
     { revalidateOnFocus: false, revalidateOnReconnect: false, dedupingInterval: 10000 }
   )
+
+  // Handle universe deletion errors and character creation
+  useEffect(() => {
+    
+    // Check for errors in the data response (since we return 200 with error objects)
+    if (playerData?.error?.code === 'universe_not_found') {
+      const redirectUniverse = playerData.error.redirect_universe
+      const redirectUniverseName = playerData.error.redirect_universe_name
+      
+      if (redirectUniverse) {
+        setStatusMessage(`The universe you were in no longer exists. Redirecting to "${redirectUniverseName}"...`)
+        setStatusType('info')
+        
+        // Redirect to the available universe
+        setTimeout(() => {
+          router.push(`/game?universe_id=${redirectUniverse}`)
+        }, 2000)
+      }
+    } else if (playerData?.error?.code === 'no_universes') {
+      setStatusMessage('No universes are available. Please contact an administrator.')
+      setStatusType('error')
+    } else if (playerData?.error?.code === 'player_not_found') {
+      // No character exists in this universe - redirect to login/registration
+      setStatusMessage('No character found in this universe. Redirecting to character creation...')
+      setStatusType('info')
+      
+      setTimeout(() => {
+        const loginUrl = universeId ? `/login?universe_id=${universeId}` : '/login'
+        router.push(loginUrl)
+      }, 2000)
+    }
+    
+    // Also check for network errors (original error handling)
+    if (playerError?.error?.code === 'universe_not_found') {
+      const redirectUniverse = playerError.error.redirect_universe
+      const redirectUniverseName = playerError.error.redirect_universe_name
+      
+      if (redirectUniverse) {
+        setStatusMessage(`The universe you were in no longer exists. Redirecting to "${redirectUniverseName}"...`)
+        setStatusType('info')
+        
+        // Redirect to the available universe
+        setTimeout(() => {
+          router.push(`/game?universe_id=${redirectUniverse}`)
+        }, 2000)
+      }
+    } else if (playerError?.error?.code === 'no_universes') {
+      setStatusMessage('No universes are available. Please contact an administrator.')
+      setStatusType('error')
+    }
+  }, [playerError, playerData, router, universeId])
   const currentSector = playerData?.player?.current_sector_number
   const playerUniverseId = playerData?.player?.universe_id
   const sectorKey = currentSector !== undefined ? `/api/sector?number=${currentSector}&universe_id=${playerUniverseId || universeId || ''}` : null
@@ -182,6 +233,15 @@ function GameContent() {
     fetcher,
     { revalidateOnFocus: false, revalidateOnReconnect: false, dedupingInterval: 10000 }
   )
+
+  // Handle sector errors (might indicate universe issues)
+  useEffect(() => {
+    if (sectorError && !playerError) {
+      console.error('Sector error:', sectorError)
+      setStatusMessage('Unable to load sector data. The universe may have been deleted.')
+      setStatusType('error')
+    }
+  }, [sectorError, playerError])
 
   // Determine background based on sector data
   const hasPort = sectorData?.port !== null && sectorData?.port !== undefined
@@ -217,7 +277,6 @@ function GameContent() {
   // Force refresh data when universe changes
   useEffect(() => {
     if (universeId && authChecked) {
-      console.log('Universe changed, refreshing data for:', universeId)
       mutatePlayer()
       mutateSector()
       fetchTradeRoutes()
@@ -333,6 +392,9 @@ function GameContent() {
           mutateSector()
           setStatusMessage(`${data.action === 'buy' ? 'Bought' : 'Sold'} ${data.qty} ${data.resource}`)
           setStatusType('success')
+          
+          // Reset quantity to 1 after successful trade to avoid validation errors
+          // This will be handled by the ActionsPanel component
         }
       }
     } catch (error) {

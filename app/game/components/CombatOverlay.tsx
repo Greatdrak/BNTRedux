@@ -29,7 +29,6 @@ interface CombatResult {
     hull: number
     hull_max: number
     shield: number
-    shield_max: number
     fighters: number
     torpedoes: number
     energy: number
@@ -44,7 +43,6 @@ interface CombatResult {
     hull: number
     hull_max: number
     shield: number
-    shield_max: number
     fighters: number
     torpedoes: number
     energy: number
@@ -157,7 +155,7 @@ export default function CombatOverlay({
                 </div>
                 <div className={styles.statRow}>
                   <span>Shield:</span>
-                  <span>{currentStep?.playerShield || playerShip?.shield || 0} / {playerShip?.shield_max || 100}</span>
+                  <span>{currentStep?.playerShield || playerShip?.shield || 0}</span>
                 </div>
                 <div className={styles.statRow}>
                   <span>Fighters:</span>
@@ -186,7 +184,7 @@ export default function CombatOverlay({
                 </div>
                 <div className={styles.statRow}>
                   <span>Shield:</span>
-                  <span>{currentStep?.enemyShield || enemyShip?.shield || 0} / {enemyShip?.shield_max || 100}</span>
+                  <span>{currentStep?.enemyShield || enemyShip?.shield || 0}</span>
                 </div>
                 <div className={styles.statRow}>
                   <span>Fighters:</span>

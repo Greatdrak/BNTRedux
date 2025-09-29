@@ -10,7 +10,6 @@ interface EnemyShip {
   hull?: number
   hull_max?: number
   shield?: number
-  shield_max?: number
   fighters?: number
   torpedoes?: number
   energy?: number
@@ -193,7 +192,7 @@ export default function EnemyShipOverlay({
                 <div className={styles.section}>
                   <h4>Ship Systems</h4>
                   {renderDataPoint('Hull', `${scanData?.hull || 0} / ${scanData?.hull_max || 0}`, 'hull')}
-                  {renderDataPoint('Shield', `${scanData?.shield || 0} / ${scanData?.shield_max || 0}`, 'shield')}
+                  {renderDataPoint('Shield', `${scanData?.shield || 0}`, 'shield')}
                   {renderDataPoint('Energy', `${scanData?.energy || 0} / ${scanData?.energy_max || 0}`, 'energy')}
                 </div>
 

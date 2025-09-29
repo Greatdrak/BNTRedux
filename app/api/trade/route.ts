@@ -14,6 +14,8 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { portId, action, resource, qty, universe_id } = body
     
+    console.log('🔍 TRADE DEBUG:', { userId, portId, action, resource, qty, universe_id })
+    
     // Validate input
     if (!portId || typeof portId !== 'string') {
       return NextResponse.json({ error: { code: 'bad_request', message: 'Invalid portId' } }, { status: 400 })
@@ -40,7 +42,10 @@ export async function POST(request: NextRequest) {
       .eq('id', portId)
       .single()
 
+    console.log('🔍 PORT DEBUG:', { portData, portErr })
+
     if (portErr || !portData) {
+      console.log('❌ PORT NOT FOUND:', portErr)
       return NextResponse.json({ error: { code: 'not_found', message: 'Port not found' } }, { status: 404 })
     }
 
@@ -49,13 +54,21 @@ export async function POST(request: NextRequest) {
     }
 
     if (['ore','organics','goods','energy'].includes(portData.kind)) {
+      // Ports SELL their native commodity and BUY everything else (including their own native commodity)
       if (action === 'buy' && resource !== portData.kind) {
         return NextResponse.json({ error: { code: 'resource_not_allowed', message: "Can only buy the port's native commodity" } }, { status: 400 })
       }
-      if (action === 'sell' && resource === portData.kind) {
-        return NextResponse.json({ error: { code: 'resource_not_allowed', message: `Cannot sell ${resource} back to a ${portData.kind} port` } }, { status: 400 })
-      }
+      // REMOVED: The sell restriction - ports CAN buy their own native commodity
     }
+
+    console.log('🔍 CALLING game_trade RPC with:', {
+      p_user_id: userId,
+      p_port_id: portId,
+      p_action: action,
+      p_resource: resource,
+      p_qty: qty,
+      p_universe_id: universe_id
+    })
 
     const { data, error } = await supabaseAdmin.rpc('game_trade', {
       p_user_id: userId,
@@ -66,16 +79,20 @@ export async function POST(request: NextRequest) {
       p_universe_id: universe_id
     })
     
+    console.log('🔍 game_trade RPC RESULT:', { data, error })
+    
     if (error) {
-      console.error('RPC error:', error)
+      console.error('❌ RPC error:', error)
       return NextResponse.json({ error: { code: 'rpc_failed', message: 'Trade operation failed' } }, { status: 500 })
     }
     
     // Check if RPC returned an error
     if (data.error) {
+      console.log('❌ RPC returned error:', data.error)
       return NextResponse.json({ error: data.error }, { status: 400 })
     }
     
+    console.log('✅ TRADE SUCCESS:', data)
     return NextResponse.json(data)
     
   } catch (error) {

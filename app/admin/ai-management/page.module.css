@@ -1,0 +1,397 @@
+.container {
+  padding: 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #333;
+}
+
+.headerLeft {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.header h1 {
+  color: #00ff00;
+  margin: 0;
+  font-family: 'Courier New', monospace;
+}
+
+.backBtn {
+  background: transparent;
+  border: 1px solid #00ff00;
+  color: #00ff00;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  text-decoration: none;
+  font-family: 'Courier New', monospace;
+  transition: background-color 0.2s;
+}
+
+.backBtn:hover {
+  background: rgba(0, 255, 0, 0.1);
+}
+
+.controls {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.universeSelect {
+  background: #1a1a1a;
+  border: 1px solid #333;
+  color: #00ff00;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  font-family: 'Courier New', monospace;
+}
+
+.triggerButton, .refreshButton, .createButton {
+  background: #0066cc;
+  border: none;
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: 'Courier New', monospace;
+  transition: background-color 0.2s;
+}
+
+.triggerButton:hover, .refreshButton:hover, .createButton:hover {
+  background: #0052a3;
+}
+
+.triggerButton:disabled, .refreshButton:disabled, .createButton:disabled {
+  background: #333;
+  cursor: not-allowed;
+}
+
+.createButton {
+  background: #00aa00;
+}
+
+.createButton:hover {
+  background: #008800;
+}
+
+.error {
+  background: #ff4444;
+  color: white;
+  padding: 1rem;
+  border-radius: 4px;
+  margin-bottom: 1rem;
+  font-family: 'Courier New', monospace;
+}
+
+.enhancedAiToggle {
+  background: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.toggleContainer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.toggleLabel {
+  color: #cccccc;
+  font-family: 'Courier New', monospace;
+  font-size: 1.1rem;
+}
+
+.enabled {
+  color: #00ff00;
+  font-weight: bold;
+}
+
+.disabled {
+  color: #ff4444;
+  font-weight: bold;
+}
+
+.toggleButton {
+  background: #0066cc;
+  border: none;
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: 'Courier New', monospace;
+  font-weight: bold;
+  transition: background-color 0.2s;
+}
+
+.toggleButton.enabled {
+  background: #ff4444;
+}
+
+.toggleButton.enabled:hover {
+  background: #cc3333;
+}
+
+.toggleButton.disabled {
+  background: #00aa00;
+}
+
+.toggleButton.disabled:hover {
+  background: #008800;
+}
+
+.toggleButton:disabled {
+  background: #333;
+  cursor: not-allowed;
+}
+
+.toggleDescription {
+  color: #888;
+  font-family: 'Courier New', monospace;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.statCard {
+  background: #1a1a1a;
+  border: 1px solid #333;
+  padding: 1.5rem;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.statCard h3 {
+  color: #00ff00;
+  margin: 0 0 1rem 0;
+  font-size: 0.9rem;
+  font-family: 'Courier New', monospace;
+}
+
+.statValue {
+  color: #ffffff;
+  font-size: 2rem;
+  font-weight: bold;
+  font-family: 'Courier New', monospace;
+}
+
+.personalityDistribution {
+  background: #1a1a1a;
+  border: 1px solid #333;
+  padding: 1.5rem;
+  border-radius: 8px;
+  margin-bottom: 2rem;
+}
+
+.personalityDistribution h3 {
+  color: #00ff00;
+  margin: 0 0 1rem 0;
+  font-family: 'Courier New', monospace;
+}
+
+.personalityBars {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.personalityBar {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.personalityLabel {
+  min-width: 80px;
+  font-weight: bold;
+  font-family: 'Courier New', monospace;
+}
+
+.barContainer {
+  flex: 1;
+  height: 20px;
+  background: #333;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.bar {
+  height: 100%;
+  transition: width 0.3s ease;
+}
+
+.count {
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+  min-width: 30px;
+  text-align: right;
+}
+
+.tabsContainer {
+  background: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.tabs {
+  display: flex;
+  border-bottom: 1px solid #333;
+}
+
+.tab, .tabActive {
+  background: none;
+  border: none;
+  color: #cccccc;
+  padding: 1rem 2rem;
+  cursor: pointer;
+  font-family: 'Courier New', monospace;
+  transition: background-color 0.2s;
+}
+
+.tabActive {
+  color: #00ff00;
+  background: #333;
+}
+
+.tab:hover {
+  background: #2a2a2a;
+}
+
+.playersGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 1rem;
+  padding: 1.5rem;
+  max-height: 800px;
+  overflow-y: auto;
+}
+
+.playerCard {
+  background: #2a2a2a;
+  border: 1px solid #444;
+  border-radius: 8px;
+  padding: 1.5rem;
+  transition: border-color 0.2s;
+}
+
+.playerCard:hover {
+  border-color: #00ff00;
+}
+
+.playerHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.playerHeader h4 {
+  color: #00ff00;
+  margin: 0;
+  font-family: 'Courier New', monospace;
+}
+
+.personality {
+  color: white;
+  padding: 0.25rem 0.5rem;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: bold;
+  font-family: 'Courier New', monospace;
+  text-transform: uppercase;
+}
+
+.playerStats {
+  margin-bottom: 1rem;
+}
+
+.statRow {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+  color: #cccccc;
+  font-family: 'Courier New', monospace;
+  font-size: 0.9rem;
+}
+
+.statRow span:first-child {
+  color: #888;
+}
+
+.shipLevels {
+  margin-bottom: 1rem;
+}
+
+.shipLevels h5 {
+  color: #00ff00;
+  margin: 0 0 0.5rem 0;
+  font-family: 'Courier New', monospace;
+  font-size: 0.9rem;
+}
+
+.levelsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.25rem;
+  font-family: 'Courier New', monospace;
+  font-size: 0.8rem;
+  color: #cccccc;
+}
+
+.playerActions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.resetButton {
+  background: #ff4444;
+  border: none;
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: 'Courier New', monospace;
+  font-size: 0.8rem;
+  transition: background-color 0.2s;
+}
+
+.resetButton:hover {
+  background: #cc3333;
+}
+
+/* Scrollbar styling */
+.playersGrid::-webkit-scrollbar {
+  width: 8px;
+}
+
+.playersGrid::-webkit-scrollbar-track {
+  background: #1a1a1a;
+}
+
+.playersGrid::-webkit-scrollbar-thumb {
+  background: #333;
+  border-radius: 4px;
+}
+
+.playersGrid::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}

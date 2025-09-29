@@ -27,6 +27,8 @@ export async function DELETE(
       p_universe_id: universeId
     })
 
+    console.log('Destroy universe RPC response:', { data, error })
+
     if (error) {
       console.error('Error destroying universe:', error)
       return NextResponse.json({ error: { code: 'server_error', message: 'Failed to destroy universe' } }, { status: 500 })
@@ -36,6 +38,7 @@ export async function DELETE(
       return NextResponse.json(data.error, { status: 400 })
     }
 
+    console.log('Returning data to frontend:', data)
     return NextResponse.json(data)
 
   } catch (error) {

@@ -211,14 +211,14 @@ export default function TradeRouteOverlay({ open, onClose, universeId, onRouteCh
   const checkWarpConnection = async (fromSector: number, toSector: number, accessToken: string): Promise<boolean> => {
     try {
       // Check if there's a warp connection between the sectors
-      const response = await fetch(`/api/map?center=${fromSector}&radius=10&universe_id=${universeId}`, {
+      const response = await fetch(`/api/sector?number=${fromSector}&universe_id=${universeId}`, {
         headers: { 'Authorization': `Bearer ${accessToken}` }
       })
       
       const data = await response.json()
       
-      // Look for the target sector in the warps
-      return data.warps?.some((warp: any) => warp.to_sector === toSector) || false
+      // Look for the target sector in the warps array (it's just sector numbers, not objects)
+      return data.warps?.includes(toSector) || false
     } catch (err) {
       console.error('Error checking warp connection:', err)
       return false

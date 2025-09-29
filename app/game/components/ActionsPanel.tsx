@@ -158,6 +158,8 @@ export default function ActionsPanel({ port, player, shipCredits, ship, inventor
       setTransactionInProgress(true)
       try {
         await Promise.resolve(onTrade({ action, resource, qty }))
+        // Reset quantity to 1 after successful trade to avoid validation errors
+        setQty(1)
       } finally {
         // allow the SWR refresh to flip tradeLoading; as a safety, clear after short delay
         setTimeout(() => setTransactionInProgress(false), 300)

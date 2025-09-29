@@ -30,28 +30,48 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'Planet not found' }, { status: 404 })
     }
 
+    // Check if user owns the planet (handles multiple players per user)
+    const { data: ownsPlanet } = await supabaseAdmin.rpc('user_owns_planet', {
+      p_user_id: userId,
+      p_universe_id: universeId,
+      p_planet_id: planetId
+    })
+
+    if (!ownsPlanet) {
+      return NextResponse.json({ success: false, error: 'Planet not found or not owned by user' }, { status: 404 })
+    }
+
+    // Get the correct player ID for this user and planet
+    const { data: correctPlayerId } = await supabaseAdmin.rpc('get_planet_owner_player_id', {
+      p_user_id: userId,
+      p_universe_id: universeId,
+      p_planet_id: planetId
+    })
+
+    if (!correctPlayerId) {
+      return NextResponse.json({ success: false, error: 'Could not determine player ownership' }, { status: 404 })
+    }
+
     // Get player data
     const { data: player, error: playerError } = await supabaseAdmin
       .from('players')
       .select('id, universe_id, user_id, handle')
-      .eq('user_id', userId)
-      .eq('universe_id', universeId)
+      .eq('id', correctPlayerId)
       .single()
 
     if (playerError || !player) {
       return NextResponse.json({ success: false, error: 'Player not found' }, { status: 404 })
     }
 
-    // Get current planet, ship, and player data
+    // Get current planet data
     const { data: planet } = await supabaseAdmin
       .from('planets')
       .select('ore, organics, goods, energy, fighters, torpedoes, credits, colonists')
       .eq('id', planetId)
-      .eq('owner_player_id', player.id)
       .single()
 
     if (!planet) {
-      return NextResponse.json({ success: false, error: 'Planet not found or not owned by player' }, { status: 404 })
+      return NextResponse.json({ success: false, error: 'Planet not found' }, { status: 404 })
     }
 
     const { data: ship } = await supabaseAdmin

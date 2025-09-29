@@ -175,6 +175,33 @@
   accent-color: #42f5b9;
 }
 
+.field input[type="checkbox"]:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.field input[type="text"]:disabled,
+.field input[type="number"]:disabled {
+  background: rgba(0, 0, 0, 0.1);
+  border-color: rgba(130, 60, 180, 0.2);
+  color: #8a7a9a;
+  cursor: not-allowed;
+}
+
+.field .disabled {
+  background: rgba(0, 0, 0, 0.1);
+  border-color: rgba(130, 60, 180, 0.2);
+  color: #8a7a9a;
+  cursor: not-allowed;
+}
+
+.field .hint {
+  color: #8a7a9a;
+  font-size: 12px;
+  margin-top: 4px;
+  font-style: italic;
+}
+
 .field label:has(input[type="checkbox"]) {
   flex-direction: row;
   align-items: center;

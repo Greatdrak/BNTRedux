@@ -11,7 +11,6 @@ interface PlayerShip {
   hull_max: number
   hull_lvl: number
   shield: number
-  shield_max: number
   shield_lvl: number
   engine_lvl: number
   comp_lvl: number
@@ -42,7 +41,6 @@ interface EnemyShip {
   hull_max?: number
   hull_lvl?: number
   shield?: number
-  shield_max?: number
   shield_lvl?: number
   fighters?: number
   torpedoes?: number
@@ -146,7 +144,7 @@ export default function CombatComparisonOverlay({
             <h3>Combat Statistics</h3>
             <div className={styles.comparisonGrid}>
               {renderComparisonRow('Hull', formatHealth(playerShip.hull, playerShip.hull_max), formatHealth(enemyShip.hull, enemyShip.hull_max))}
-              {renderComparisonRow('Shield', formatHealth(playerShip.shield, playerShip.shield_max), formatHealth(enemyShip.shield, enemyShip.shield_max))}
+              {renderComparisonRow('Shield', `${playerShip.shield}`, `${enemyShip.shield || 0}`)}
               {renderComparisonRow('Energy', formatHealth(playerShip.energy, playerShip.energy_max), formatHealth(enemyShip.energy, enemyShip.energy_max))}
               {renderComparisonRow('Fighters', formatNumber(playerShip.fighters), formatNumber(enemyShip.fighters))}
               {renderComparisonRow('Torpedoes', formatNumber(playerShip.torpedoes), formatNumber(enemyShip.torpedoes))}

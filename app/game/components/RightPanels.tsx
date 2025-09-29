@@ -78,7 +78,7 @@ export default function RightPanels({
           <div className={styles.warpSection}>
             <h4>Warp Gates</h4>
             <div className={styles.warpList}>
-              {warps.map((warpNumber: number) => (
+              {warps.sort((a, b) => a - b).map((warpNumber: number) => (
                 <button
                   key={warpNumber}
                   onClick={() => onWarpClick(warpNumber)}

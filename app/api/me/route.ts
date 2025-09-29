@@ -7,6 +7,7 @@ export async function GET(request: NextRequest) {
   try {
     // Verify bearer token
     const authResult = await verifyBearerToken(request)
+    
     if ('error' in authResult) {
       return createAuthErrorResponse(authResult)
     }
@@ -39,8 +40,31 @@ export async function GET(request: NextRequest) {
     }
     
     if (!universe) {
+      // Check if there are any universes available at all
+      const { data: anyUniverse } = await supabaseAdmin
+        .from('universes')
+        .select('id, name')
+        .order('created_at', { ascending: true })
+        .limit(1)
+        .single()
+      
+      if (!anyUniverse) {
+        return NextResponse.json(
+          { error: { code: 'no_universes', message: 'No universes available. Please contact an administrator.' } },
+          { status: 404 }
+        )
+      }
+      
+      // If specific universe not found but others exist, redirect to first available
       return NextResponse.json(
-        { error: { code: 'not_found', message: 'No universe found' } },
+        { 
+          error: { 
+            code: 'universe_not_found', 
+            message: 'The requested universe no longer exists.',
+            redirect_universe: anyUniverse.id,
+            redirect_universe_name: anyUniverse.name
+          } 
+        },
         { status: 404 }
       )
     }
@@ -89,7 +113,6 @@ export async function GET(request: NextRequest) {
           .eq('id', existingPlayer.current_sector)
           .single()
         
-        
         if (secError) {
           console.error('Sector lookup error:', secError)
           // If sector doesn't exist, move player to sector 0
@@ -114,8 +137,6 @@ export async function GET(request: NextRequest) {
         }
       }
       
-      
-      
       // Player exists, return their data
       return NextResponse.json({
         player: {
@@ -139,7 +160,7 @@ export async function GET(request: NextRequest) {
     // Player doesn't exist in this universe - they need to register first
     return NextResponse.json(
       { error: { code: 'player_not_found', message: 'No player found in this universe. Please register first.' } },
-      { status: 404 }
+      { status: 200 } // Changed from 404 to 200 so SWR doesn't treat it as a network error
     )
     
   } catch (error) {

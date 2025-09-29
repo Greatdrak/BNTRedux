@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
     const sectorNumber = parseInt(searchParams.get('number') || '0')
     const universeId = searchParams.get('universe_id')
     
-    if (sectorNumber < 0 || sectorNumber > 500) {
+    if (sectorNumber < 0 || sectorNumber > 2000) {
       return NextResponse.json(
         { error: 'Invalid sector number' },
         { status: 400 }
@@ -120,31 +120,62 @@ export async function GET(request: NextRequest) {
       playerId = player.id
     }
     
-    // Get ships in this sector
+    // Get ships in this sector - first get player IDs, then ships
+    const { data: playersInSector, error: playersError } = await supabaseAdmin
+      .from('players')
+      .select('id')
+      .eq('current_sector', sector.id)
+      .eq('universe_id', sector.universe_id)
+    
+    const playerIds = playersInSector?.map(p => p.id) || []
+    
     const { data: ships, error: shipsError } = await supabaseAdmin
       .from('ships')
       .select(`
         id,
         name,
-        players!inner(
-          id,
-          handle,
-          is_ai,
-          current_sector
-        )
+        player_id
       `)
-      .eq('players.current_sector', sector.id)
-      .eq('players.universe_id', sector.universe_id)
+      .in('player_id', playerIds)
     
-    const shipData = shipsError ? [] : (ships?.map(ship => ({
-      id: ship.id,
-      name: ship.name || 'Scout',
-      player: {
-        id: ship.players?.[0]?.id,
-        handle: ship.players?.[0]?.handle,
-        is_ai: ship.players?.[0]?.is_ai
+    // Get player data for all ships
+    let playerData: Record<string, any> = {}
+    if (ships && ships.length > 0) {
+      const playerIds = ships.map(ship => ship.player_id)
+      const { data: players, error: playersError } = await supabaseAdmin
+        .from('players')
+        .select('id, handle, is_ai')
+        .in('id', playerIds)
+      
+      if (!playersError && players) {
+        playerData = players.reduce((acc, player) => {
+          acc[player.id] = player
+          return acc
+        }, {} as Record<string, any>)
       }
-    })) || [])
+    }
+
+    const shipData = shipsError ? [] : (ships?.map(ship => {
+      const player = playerData[ship.player_id]
+      const isAI = player?.is_ai
+      const shipName = ship.name || 'Scout'
+      console.log('🔍 SHIP DEBUG:', { 
+        shipId: ship.id, 
+        shipName: ship.name, 
+        playerHandle: player?.handle, 
+        isAI, 
+        displayName: shipName 
+      })
+      return {
+        id: ship.id,
+        name: shipName, // White text - ship name
+        player: {
+          id: player?.id,
+          handle: player?.handle, // Yellow text - player name
+          is_ai: isAI
+        }
+      }
+    }) || [])
 
     // Get owner names for planets
     let ownerNames: Record<string, string> = {}

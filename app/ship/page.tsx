@@ -12,7 +12,6 @@ interface ShipData {
   hull_max: number
   hull_lvl: number
   shield: number
-  shield_max: number
   shield_lvl: number
   engine_lvl: number
   comp_lvl: number
@@ -23,6 +22,7 @@ interface ShipData {
   cloak_lvl: number
   armor: number
   armor_max: number
+  armor_lvl: number
   cargo: number
   fighters: number
   torpedoes: number
@@ -232,7 +232,7 @@ function ShipPageContent() {
               </div>
               <div className={styles.techItem}>
                 <span className={styles.techLabel}>Armor</span>
-                <span className={styles.techValue}>Lv {Math.max(0, shipData.armor_max)}</span>
+                <span className={styles.techValue}>Lv {shipData.armor_lvl || 0}</span>
               </div>
               <div className={styles.techItem}>
                 <span className={styles.techLabel}>Shields</span>

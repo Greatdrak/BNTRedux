@@ -79,23 +79,29 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: { code: 'invalid_ai_count', message: 'AI player count must be between 0 and 100' } }, { status: 400 })
     }
 
-    const { data, error } = await supabaseAdmin.rpc('create_universe', {
+    console.log('🔧 Creating universe with params:', {
       p_name: name.trim(),
-      p_port_density: portDensity,
-      p_planet_density: planetDensity,
-      p_sector_count: sectorCount,
-      p_ai_player_count: aiPlayerCount
+      p_sector_count: sectorCount
     })
 
+    const { data, error } = await supabaseAdmin.rpc('create_universe', {
+      p_name: name.trim(),
+      p_sector_count: sectorCount
+    })
+
+    console.log('📡 Supabase RPC response:', { data, error })
+
     if (error) {
-      console.error('Error creating universe:', error)
+      console.error('❌ Supabase error creating universe:', error)
       return NextResponse.json({ error: { code: 'server_error', message: 'Failed to create universe' } }, { status: 500 })
     }
 
-    if (data.error) {
+    if (data && data.error) {
+      console.error('❌ Function returned error:', data.error)
       return NextResponse.json(data.error, { status: 400 })
     }
 
+    console.log('✅ Universe created successfully:', data)
     return NextResponse.json(data)
 
   } catch (error) {

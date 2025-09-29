@@ -158,7 +158,7 @@ export async function POST(request: NextRequest) {
             key: 'ai_player_actions', 
             name: 'AI Player Actions', 
             due: isDue(s.ai_player_actions_interval_minutes || 5, s.last_ai_player_actions_event), 
-            rpc: 'run_ai_player_actions', 
+            rpc: 'cron_run_ai_actions', 
             args: {},
             interval: s.ai_player_actions_interval_minutes || 5
           },

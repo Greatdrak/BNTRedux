@@ -108,7 +108,13 @@ export default function AdminPage() {
   }
 
   const handleDestroyUniverse = async (universeId: string, universeName: string) => {
-    if (!confirm(`Are you sure you want to destroy universe "${universeName}"? This action cannot be undone!`)) {
+    const confirmMessage = `⚠️ WARNING: Destroying universe "${universeName}" will:\n\n` +
+      `• Delete ALL players, ships, planets, and data in this universe\n` +
+      `• Force any logged-in players to be redirected to another universe\n` +
+      `• This action CANNOT be undone!\n\n` +
+      `Are you absolutely sure you want to proceed?`
+    
+    if (!confirm(confirmMessage)) {
       return
     }
 
@@ -132,10 +138,13 @@ export default function AdminPage() {
 
       const result = await response.json()
 
+      console.log('Destroy universe response:', result)
+      
       if (result.error) {
         setStatus(`Error: ${result.error.message}`)
       } else {
-        setStatus(`Universe "${result.universe_name}" destroyed successfully!`)
+        const universeName = result.universe_name || 'Unknown'
+        setStatus(`Universe "${universeName}" destroyed successfully!`)
         mutate() // Refresh the list
       }
     } catch (error) {
@@ -182,8 +191,8 @@ export default function AdminPage() {
             <a href="/admin/universe-settings" className={styles.settingsButton}>
               ⚙️ Universe Settings
             </a>
-            <a href="/admin/ai-players" className={styles.settingsButton}>
-              🤖 AI Players
+            <a href="/admin/ai-management" className={styles.settingsButton}>
+              🤖 AI Management
             </a>
             <a href="/admin/cron-logs" className={styles.settingsButton}>
               📋 Cron Logs

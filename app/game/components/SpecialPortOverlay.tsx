@@ -14,7 +14,6 @@ interface SpecialPortOverlayProps {
     hull_max: number
     hull_lvl: number
     shield: number
-    shield_max: number
     shield_lvl: number
     engine_lvl: number
     comp_lvl: number

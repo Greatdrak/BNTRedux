@@ -305,36 +305,24 @@ export default function UniverseSettingsPage() {
                     <h3>Game Mechanics</h3>
                     <div className={styles.grid}>
                       <div className={styles.field}>
-                        <label>Game Version</label>
-                        <input
-                          type="text"
-                          value={settings.game_version}
-                          onChange={(e) => handleSettingChange('game_version', e.target.value)}
-                        />
-                      </div>
-                      <div className={styles.field}>
-                        <label>Game Name</label>
-                        <input
-                          type="text"
-                          value={settings.game_name}
-                          onChange={(e) => handleSettingChange('game_name', e.target.value)}
-                        />
-                      </div>
-                      <div className={styles.field}>
                         <label>Number of Sectors</label>
                         <input
                           type="number"
                           value={settings.number_of_sectors}
-                          onChange={(e) => handleSettingChange('number_of_sectors', parseInt(e.target.value))}
+                          disabled
+                          className={styles.disabled}
                         />
+                        <span className={styles.hint}>Set during universe creation</span>
                       </div>
                       <div className={styles.field}>
                         <label>Max Links per Sector</label>
                         <input
                           type="number"
                           value={settings.max_links_per_sector}
-                          onChange={(e) => handleSettingChange('max_links_per_sector', parseInt(e.target.value))}
+                          disabled
+                          className={styles.disabled}
                         />
+                        <span className={styles.hint}>Set during universe creation</span>
                       </div>
                       <div className={styles.field}>
                         <label>Max Planets per Sector</label>
@@ -389,10 +377,12 @@ export default function UniverseSettingsPage() {
                           <input
                             type="checkbox"
                             checked={settings.igb_enabled}
-                            onChange={(e) => handleSettingChange('igb_enabled', e.target.checked)}
+                            disabled
+                            className={styles.disabled}
                           />
                           IGB Enabled
                         </label>
+                        <span className={styles.hint}>Set during universe creation</span>
                       </div>
                       <div className={styles.field}>
                         <label>IGB Interest Rate per Update (%)</label>
@@ -400,8 +390,10 @@ export default function UniverseSettingsPage() {
                           type="number"
                           step="0.001"
                           value={settings.igb_interest_rate_per_update}
-                          onChange={(e) => handleSettingChange('igb_interest_rate_per_update', parseFloat(e.target.value))}
+                          disabled
+                          className={styles.disabled}
                         />
+                        <span className={styles.hint}>Set during universe creation</span>
                       </div>
                       <div className={styles.field}>
                         <label>IGB Loan Rate per Update (%)</label>
@@ -409,8 +401,10 @@ export default function UniverseSettingsPage() {
                           type="number"
                           step="0.001"
                           value={settings.igb_loan_rate_per_update}
-                          onChange={(e) => handleSettingChange('igb_loan_rate_per_update', parseFloat(e.target.value))}
+                          disabled
+                          className={styles.disabled}
                         />
+                        <span className={styles.hint}>Set during universe creation</span>
                       </div>
                       <div className={styles.field}>
                         <label>Planet Interest Rate (%)</label>
@@ -418,16 +412,20 @@ export default function UniverseSettingsPage() {
                           type="number"
                           step="0.001"
                           value={settings.planet_interest_rate}
-                          onChange={(e) => handleSettingChange('planet_interest_rate', parseFloat(e.target.value))}
+                          disabled
+                          className={styles.disabled}
                         />
+                        <span className={styles.hint}>Set during universe creation</span>
                       </div>
                       <div className={styles.field}>
                         <label>Colonists Limit</label>
                         <input
                           type="number"
                           value={settings.colonists_limit}
-                          onChange={(e) => handleSettingChange('colonists_limit', parseInt(e.target.value))}
+                          disabled
+                          className={styles.disabled}
                         />
+                        <span className={styles.hint}>Set during universe creation</span>
                       </div>
                       <div className={styles.field}>
                         <label>Colonist Production Rate</label>
@@ -435,64 +433,80 @@ export default function UniverseSettingsPage() {
                           type="number"
                           step="0.001"
                           value={settings.colonist_production_rate}
-                          onChange={(e) => handleSettingChange('colonist_production_rate', parseFloat(e.target.value))}
+                          disabled
+                          className={styles.disabled}
                         />
+                        <span className={styles.hint}>Set during universe creation</span>
                       </div>
                       <div className={styles.field}>
                         <label>Colonists per Fighter</label>
                         <input
                           type="number"
                           value={settings.colonists_per_fighter}
-                          onChange={(e) => handleSettingChange('colonists_per_fighter', parseInt(e.target.value))}
+                          disabled
+                          className={styles.disabled}
                         />
+                        <span className={styles.hint}>Set during universe creation</span>
                       </div>
                       <div className={styles.field}>
                         <label>Colonists per Torpedo</label>
                         <input
                           type="number"
                           value={settings.colonists_per_torpedo}
-                          onChange={(e) => handleSettingChange('colonists_per_torpedo', parseInt(e.target.value))}
+                          disabled
+                          className={styles.disabled}
                         />
+                        <span className={styles.hint}>Set during universe creation</span>
                       </div>
                       <div className={styles.field}>
                         <label>Colonists per Ore</label>
                         <input
                           type="number"
                           value={settings.colonists_per_ore}
-                          onChange={(e) => handleSettingChange('colonists_per_ore', parseInt(e.target.value))}
+                          disabled
+                          className={styles.disabled}
                         />
+                        <span className={styles.hint}>Set during universe creation</span>
                       </div>
                       <div className={styles.field}>
                         <label>Colonists per Organics</label>
                         <input
                           type="number"
                           value={settings.colonists_per_organics}
-                          onChange={(e) => handleSettingChange('colonists_per_organics', parseInt(e.target.value))}
+                          disabled
+                          className={styles.disabled}
                         />
+                        <span className={styles.hint}>Set during universe creation</span>
                       </div>
                       <div className={styles.field}>
                         <label>Colonists per Goods</label>
                         <input
                           type="number"
                           value={settings.colonists_per_goods}
-                          onChange={(e) => handleSettingChange('colonists_per_goods', parseInt(e.target.value))}
+                          disabled
+                          className={styles.disabled}
                         />
+                        <span className={styles.hint}>Set during universe creation</span>
                       </div>
                       <div className={styles.field}>
                         <label>Colonists per Energy</label>
                         <input
                           type="number"
                           value={settings.colonists_per_energy}
-                          onChange={(e) => handleSettingChange('colonists_per_energy', parseInt(e.target.value))}
+                          disabled
+                          className={styles.disabled}
                         />
+                        <span className={styles.hint}>Set during universe creation</span>
                       </div>
                       <div className={styles.field}>
                         <label>Colonists per Credits</label>
                         <input
                           type="number"
                           value={settings.colonists_per_credits}
-                          onChange={(e) => handleSettingChange('colonists_per_credits', parseInt(e.target.value))}
+                          disabled
+                          className={styles.disabled}
                         />
+                        <span className={styles.hint}>Set during universe creation</span>
                       </div>
                     </div>
                   </div>
