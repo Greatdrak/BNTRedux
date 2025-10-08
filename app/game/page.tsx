@@ -1189,7 +1189,7 @@ function GameContent() {
                       setGenesisOpen(false)
                       mutatePlayer()
                     } else {
-                      setStatusMessage(data?.error || 'Failed')
+                      setStatusMessage(data?.error?.message || data?.error || 'Failed')
                       setStatusType('error')
                     }
                   } catch (err) {
