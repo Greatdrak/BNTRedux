@@ -95,12 +95,7 @@ export class AIService {
       
       const player = playerData[0]
       
-      console.log('Player data in analyzeSituation:', { 
-        id: player.id, 
-        handle: player.handle, 
-        current_sector: player.current_sector,
-        turns: player.turns 
-      })
+      // Player analyzed (silent)
       
       const ship = Array.isArray(player.ships) ? player.ships[0] : player.ships
       
@@ -205,16 +200,18 @@ export class AIService {
           success: false,
           actionsExecuted: 0,
           turnsUsed: 0,
-          errors: [`Hyperspace failed: ${error.message}`]
+          errors: [`Hyperspace failed: ${error.message || JSON.stringify(error)}`]
         }
       }
       
       if (result?.error) {
+        const errorMsg = typeof result.error === 'string' ? result.error : 
+                        result.error?.message || JSON.stringify(result.error)
         return {
           success: false,
           actionsExecuted: 0,
           turnsUsed: 0,
-          errors: [`Hyperspace failed: ${result.error}`]
+          errors: [`Hyperspace failed: ${errorMsg}`]
         }
       }
       
@@ -1214,10 +1211,7 @@ export class AIService {
             // Execute action
             const result = await aiService.executeAction(player.user_id, universeId, decision)
             
-            // Add error details if action failed
-            if (!result.success && result.errors && result.errors.length > 0) {
-              console.log(`Action failed for ${player.handle}:`, result.errors[0])
-            }
+            // Track errors (silent - errors are in playerResults)
             
             // Store simplified result
             playerResults.push({
