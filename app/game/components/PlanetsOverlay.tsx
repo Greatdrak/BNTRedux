@@ -93,7 +93,7 @@ export default function PlanetsOverlay({
     if (!planetsData?.planets) return []
 
     let filtered = planetsData.planets.filter(planet => 
-      planet.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (planet.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       planet.sector.toString().includes(searchTerm)
     )
 

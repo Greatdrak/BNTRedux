@@ -381,18 +381,20 @@
 }
 
 .planetBelt {
-  display: flex;
-  justify-content: center;
-  align-items: flex-end;
-  gap: 16px;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
+  justify-items: center;
+  align-items: end;
+  max-height: 200px;
 }
 
 .planetContainer {
   display: flex;
   flex-direction: column;
   align-items: center;
-  min-width: 120px;
+  min-width: 80px;
+  max-width: 80px;
   transition: transform 0.2s ease, opacity 0.2s ease;
 }
 
@@ -402,8 +404,8 @@
 }
 
 .planetOrb {
-  width: 96px;
-  height: 96px;
+  width: 64px;
+  height: 64px;
   border-radius: 50%;
   background: radial-gradient(circle at 30% 30%, #c8b08a 0%, #6c5a44 40%, #2d2630 75%, #0d0d12 100%);
   box-shadow: 0 0 20px rgba(255,255,255,0.08), 0 0 60px rgba(99,230,190,0.08);
@@ -412,17 +414,21 @@
 
 .planetLabel {
   text-align: center;
-  margin-top: 8px;
+  margin-top: 6px;
   color: #ffc107;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.2;
 }
 
 .planetOwner {
   text-align: center;
-  margin-top: 2px;
-  font-size: 11px;
+  margin-top: 1px;
+  font-size: 10px;
   color: #63e6be;
   opacity: 0.7;
   font-weight: 400;
+  line-height: 1.1;
 }
 
 .shipsSection {

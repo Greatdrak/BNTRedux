@@ -5,7 +5,7 @@ import { verifyBearerToken, createAuthErrorResponse } from '@/lib/auth-helper'
 export async function POST(request: NextRequest) {
   const auth = await verifyBearerToken(request)
   if ('error' in auth) return createAuthErrorResponse(auth)
-  const { action, sectorNumber, planetId, universe_id } = await request.json()
+  const { action, sectorNumber, planetId, universe_id, name } = await request.json()
 
   if (!['create','destroy'].includes(action)) {
     return NextResponse.json({ error: { code:'invalid_action', message:'action must be create or destroy' } }, { status:400 })
@@ -80,7 +80,7 @@ export async function POST(request: NextRequest) {
   // Create planet
   const { data: newPlanet, error: cErr } = await supabaseAdmin
     .from('planets')
-    .insert({ sector_id: sector.id, owner_player_id: me.id, colonists: 0 })
+    .insert({ sector_id: sector.id, owner_player_id: me.id, colonists: 0, name: name || 'New Planet' })
     .select('id')
     .single()
   if (cErr || !newPlanet) return NextResponse.json({ error:{ code:'create_failed', message:'Failed to create planet' } }, { status:500 })

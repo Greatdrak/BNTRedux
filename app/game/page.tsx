@@ -1181,13 +1181,13 @@ function GameContent() {
                   const sectorNum = parseInt((document.getElementById('genesis-sector') as HTMLInputElement)?.value || '0')
                   const name = (document.getElementById('genesis-name') as HTMLInputElement)?.value || 'New Planet'
                   try {
-                    const res = await apiCall('/api/planet/genesis', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action, sectorNumber: sectorNum, name }) })
+                    const res = await apiCall('/api/planet/genesis', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action, sectorNumber: sectorNum, name, universe_id: playerUniverseId || universeId }) })
                     const data = await res?.json()
-                    if (data?.success) {
+                    if (data?.ok || data?.success) {
                       setStatusMessage(`Planet ${action === 'create' ? 'created' : 'destroyed'} successfully`)
                       setStatusType('success')
                       setGenesisOpen(false)
-                      mutatePlayer()
+                      await Promise.all([mutatePlayer(), mutateSector()])
                     } else {
                       setStatusMessage(data?.error?.message || data?.error || 'Failed')
                       setStatusType('error')
