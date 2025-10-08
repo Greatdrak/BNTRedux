@@ -1305,11 +1305,7 @@ export class AIService {
           humanMedian: communismBoost.humanMedian,
           targetAIScore: communismBoost.targetAIScore
         } : null,
-        topPlayers: topAIPlayers || [],
-        debug: {
-          samplePlayer: aiPlayers[0],
-          samplePlayerTurns: aiPlayers[0]?.turns
-        }
+        topPlayers: topAIPlayers || []
       }
       
     } catch (error) {

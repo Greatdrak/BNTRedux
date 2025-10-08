@@ -238,10 +238,11 @@ export async function POST(request: NextRequest) {
                   console.log(`✅ ${event.name}: ${message}`)
                 } else if (event.key === 'ai_player_actions') {
                   const stats = (Array.isArray(rpcResult) ? rpcResult[0] : rpcResult) || {}
-                  const actions = stats.actions_taken ?? 0
-                  const players = stats.players_processed ?? 0
-                  message = `AI actions: ${actions} actions across ${players} players`
-                  console.log(`🤖 ${event.name}:`, stats)
+                  const actions = stats.totalActions ?? stats.actions_taken ?? 0
+                  const players = stats.playersProcessed ?? stats.players_processed ?? 0
+                  const turns = stats.totalTurnsUsed ?? 0
+                  message = `AI: ${players}p/${actions}a/${turns}t used`
+                  console.log(`🤖 AI: ${players} players, ${actions} actions, ${turns} turns`)
                 } else {
                   message = `${event.name} completed successfully`
                   console.log(`✅ ${event.name} completed`)
