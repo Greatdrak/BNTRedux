@@ -14,6 +14,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { toSectorNumber, universe_id } = body
     
+    
     console.log('Move API called with:', { userId, toSectorNumber, universe_id })
     
     if (typeof toSectorNumber !== 'number' || toSectorNumber < 0) {
@@ -60,7 +61,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Upsert visited for the player's new sector number
+    // Upsert visited for the player's new sector number and stamp last visitor
     try {
       const { data: me } = await supabaseAdmin
         .from('players')
@@ -69,8 +70,8 @@ export async function POST(request: NextRequest) {
         .eq('universe_id', universe_id)
         .single()
       if (me?.id && me?.current_sector) {
-        await supabaseAdmin.rpc('sql', {})
         await supabaseAdmin.from('visited').upsert({ player_id: me.id, sector_id: me.current_sector, last_seen: new Date().toISOString() })
+        await supabaseAdmin.rpc('mark_sector_last_visited', { p_player_id: me.id, p_sector_id: me.current_sector })
       }
     } catch {}
 

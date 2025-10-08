@@ -1,9 +1,9 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
-import styles from './MapOverlay.module.css'
+import styles from './WarpScanOverlay.module.css'
 
-interface WarpCell { number: number, port?: { kind: 'ore'|'organics'|'goods'|'energy'|'special' } | null, planetCount?: number }
+interface WarpCell { number: number, port?: { kind: 'ore'|'organics'|'goods'|'energy'|'special' } | null, planetCount?: number, shipCount?: number, lastVisitorHandle?: string|null }
 
 interface WarpScanOverlayProps {
   open: boolean
@@ -39,21 +39,63 @@ export default function WarpScanOverlay({ open, onClose, sectors, onPick }: Warp
     <div className={styles.backdrop} onClick={onClose}>
       <div className={styles.panel} onClick={(e)=> e.stopPropagation()}>
         <div className={styles.header}>
-          <h3>Scan Warps</h3>
+          <h3>📡 Scan Warps</h3>
           <button className={styles.close} onClick={onClose}>✕</button>
         </div>
-        <div className={styles.grid}>
-          {sectors.map((s, idx)=> (
-            <button key={s.number} ref={idx===0?firstRef:null} className={[styles.cell, styles.visited].join(' ')} onClick={()=> onPick(s.number)} title={`Sector ${s.number}${s.port?.kind?` — Port: ${s.port.kind}`:''}${s.planetCount ? ` — Planets: ${s.planetCount}`:''}`}>
-              <span className={styles.number}>{s.number}</span>
-              {iconFor(s.port?.kind as any) && (
-                <span className={styles.badgeBelow}>{iconFor(s.port?.kind as any)}</span>
-              )}
-              {s.planetCount && s.planetCount > 0 && (
-                <span className={styles.planetCount}>🪐 {s.planetCount}</span>
-              )}
-            </button>
-          ))}
+        <div className={styles.scrollContainer}>
+          <div className={styles.grid}>
+            {sectors.map((s, idx)=> (
+              <button 
+                key={s.number} 
+                ref={idx===0?firstRef:null} 
+                className={styles.warpCard}
+                onClick={()=> onPick(s.number)}
+              >
+                <div className={styles.cardHeader}>
+                  <span className={styles.sectorNumber}>{s.number}</span>
+                  {s.port?.kind && (
+                    <span className={styles.portIcon}>{iconFor(s.port.kind)}</span>
+                  )}
+                </div>
+                
+                {s.port?.kind && (
+                  <div className={styles.sectorName}>
+                    {s.port.kind === 'ore' ? 'Ore Port' :
+                     s.port.kind === 'organics' ? 'Organics Port' :
+                     s.port.kind === 'goods' ? 'Goods Port' :
+                     s.port.kind === 'energy' ? 'Energy Port' :
+                     'Special Port'}
+                  </div>
+                )}
+
+                <div className={styles.stats}>
+                  {typeof s.shipCount === 'number' && (
+                    <div className={`${styles.stat} ${styles.shipStat}`}>
+                      <span className={styles.statIcon}>🚀</span>
+                      <span className={styles.statLabel}>Ships</span>
+                      <span className={styles.statValue}>{s.shipCount}</span>
+                    </div>
+                  )}
+                  
+                  {typeof s.planetCount === 'number' && (
+                    <div className={`${styles.stat} ${styles.planetStat}`}>
+                      <span className={styles.statIcon}>🪐</span>
+                      <span className={styles.statLabel}>Planets</span>
+                      <span className={styles.statValue}>{s.planetCount}</span>
+                    </div>
+                  )}
+                  
+                  {s.lastVisitorHandle && (
+                    <div className={`${styles.stat} ${styles.visitorStat}`}>
+                      <span className={styles.statIcon}>👤</span>
+                      <span className={styles.statLabel}>Last Seen</span>
+                      <span className={styles.statValue}>{s.lastVisitorHandle}</span>
+                    </div>
+                  )}
+                </div>
+              </button>
+            ))}
+          </div>
         </div>
       </div>
     </div>

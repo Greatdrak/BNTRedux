@@ -116,7 +116,20 @@ export async function POST(request: NextRequest) {
       )
     }
     
-    // Update rankings
+    // Refresh all player scores first
+    const { error: refreshError } = await supabaseAdmin.rpc('refresh_all_player_scores', {
+      p_universe_id: universe_id
+    })
+    
+    if (refreshError) {
+      console.error('Error refreshing scores:', refreshError)
+      return NextResponse.json(
+        { error: { code: 'server_error', message: 'Failed to refresh scores' } },
+        { status: 500 }
+      )
+    }
+
+    // Then update rankings
     const { data, error } = await supabaseAdmin.rpc('update_universe_rankings', {
       p_universe_id: universe_id
     })
@@ -128,7 +141,8 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       )
     }
-    return NextResponse.json(data)
+    
+    return NextResponse.json(data || { success: true, message: 'Rankings updated' })
     
   } catch (error) {
     console.error('Error in /api/rankings POST:', error)

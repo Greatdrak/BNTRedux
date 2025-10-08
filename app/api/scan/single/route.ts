@@ -70,6 +70,44 @@ export async function POST(request: NextRequest) {
       .eq('players.universe_id', player.universe_id)
     
     const shipCount = ships?.length || 0
+
+    // Player logs: notify owners that their ship was scanned
+    try {
+      const scannedPlayerIds = (ships||[])
+        .map((s:any)=> s.players?.[0]?.id)
+        .filter((pid:any)=> pid && pid !== player.id)
+      const uniqueIds = Array.from(new Set(scannedPlayerIds))
+      if (uniqueIds.length) {
+        const inserts = uniqueIds.map(pid => ({
+          player_id: pid,
+          kind: 'ship_scanned',
+          ref_id: null,
+          message: `Your ship was scanned in sector ${sector.number}.`
+        }))
+        await supabaseAdmin.from('player_logs').insert(inserts)
+      }
+    } catch {}
+
+    // Player logs: notify planet owners that their sector was scanned
+    try {
+      const { data: planetOwners } = await supabaseAdmin
+        .from('planets')
+        .select('owner_player_id')
+        .eq('sector_id', sector.id)
+        .not('owner_player_id', 'is', null)
+      
+      const ownerIds = planetOwners?.map(p => p.owner_player_id).filter(id => id !== player.id) || []
+      const uniqueOwnerIds = Array.from(new Set(ownerIds))
+      if (uniqueOwnerIds.length) {
+        const inserts = uniqueOwnerIds.map(pid => ({
+          player_id: pid,
+          kind: 'planet_scanned',
+          ref_id: null,
+          message: `Your planet's sector ${sector.number} was scanned.`
+        }))
+        await supabaseAdmin.from('player_logs').insert(inserts)
+      }
+    } catch {}
     const shipDetails = ships?.map(ship => ({
       id: ship.id,
       name: ship.name || 'Scout',

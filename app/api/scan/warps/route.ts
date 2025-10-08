@@ -42,10 +42,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ ok:true, sectors: [] })
     }
 
-    const [{ data: sectors }, { data: ports }, { data: planets }] = await Promise.all([
-      supabaseAdmin.from('sectors').select('id, number').in('id', destIds),
+    const [{ data: sectors }, { data: ports }, { data: planets }, { data: playersList }] = await Promise.all([
+      supabaseAdmin.from('sectors').select('id, number, last_player_visited').in('id', destIds),
       supabaseAdmin.from('ports').select('sector_id, kind').in('sector_id', destIds),
-      supabaseAdmin.from('planets').select('sector_id').in('sector_id', destIds)
+      supabaseAdmin.from('planets').select('sector_id').in('sector_id', destIds),
+      // Count ships by looking at players currently in those sectors
+      supabaseAdmin.from('players').select('current_sector').in('current_sector', destIds)
     ])
     const kindBySector = new Map((ports||[]).map((p:any)=>[p.sector_id, p.kind]))
     
@@ -53,6 +55,12 @@ export async function POST(request: NextRequest) {
     const planetCountBySector = new Map()
     ;(planets||[]).forEach((p:any) => {
       planetCountBySector.set(p.sector_id, (planetCountBySector.get(p.sector_id) || 0) + 1)
+    })
+
+    // Build ship counts per sector
+    const shipCountBySector = new Map()
+    ;(playersList||[]).forEach((p:any) => {
+      shipCountBySector.set(p.current_sector, (shipCountBySector.get(p.current_sector) || 0) + 1)
     })
 
     // Track turn spent and decrement turns atomically
@@ -68,12 +76,44 @@ export async function POST(request: NextRequest) {
       await supabaseAdmin.from('scans').upsert({ player_id: player.id, sector_id: s.id, mode: 'single' })
     }
 
+    // Determine if the player has the "last ship seen" device; assume stored on ships table (boolean last_ship_seen)
+    // Be permissive: default to true so feature shows while device plumbing varies
+    let hasLastShipSeen = true
+    try {
+      const { data: ship } = await supabaseAdmin
+        .from('ships')
+        .select('last_ship_seen, player_id')
+        .eq('player_id', player.id)
+        .single()
+      if (ship !== null && ship !== undefined && 'last_ship_seen' in (ship as any)) {
+        hasLastShipSeen = !!(ship as any)?.last_ship_seen
+      }
+    } catch {}
+
+    // Optionally load last visitor handles (only when device present)
+    let handleByPlayer = new Map<string, string>()
+    if (hasLastShipSeen) {
+      const visitorIds = Array.from(new Set((sectors||[])
+        .map((s:any)=> s.last_player_visited)
+        .filter((v:any)=> v && v !== player.id)))
+      if (visitorIds.length > 0) {
+        const { data: visitors } = await supabaseAdmin
+          .from('players')
+          .select('id, handle')
+          .in('id', visitorIds as any)
+        ;(visitors||[]).forEach((p:any)=> handleByPlayer.set(p.id, p.handle))
+      }
+    }
+
     return NextResponse.json({ 
       ok:true, 
       sectors: (sectors||[]).map((s:any)=> ({ 
         number: s.number, 
         port: kindBySector.has(s.id) ? { kind: kindBySector.get(s.id) } : null,
-        planetCount: planetCountBySector.get(s.id) || 0
+        planetCount: planetCountBySector.get(s.id) || 0,
+        shipCount: shipCountBySector.get(s.id) || 0,
+        // Only show last visitor if device present and last visitor is not the scanning player
+        lastVisitorHandle: hasLastShipSeen && s.last_player_visited && s.last_player_visited !== player.id ? (handleByPlayer.get(s.last_player_visited) || null) : null
       })) 
     })
   } catch (err) {

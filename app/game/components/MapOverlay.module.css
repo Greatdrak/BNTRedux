@@ -53,13 +53,16 @@
   color: var(--text);
   line-height: 1;
 }
-.badge { position: absolute; top: 4px; right: 4px; font-size: 12px; }
+.badge { position: absolute; top: 6px; right: 6px; font-size: 14px; }
+
 .badgeBelow { 
   display: inline-block; 
   font-size: 16px; 
   line-height: 1;
   margin: 2px 0;
 }
+
+/* (Removed scan-only stat classes from shared map stylesheet) */
 
 .cell:hover, .cell:focus-visible {
   border-color: var(--accent);
@@ -100,4 +103,20 @@
   opacity: 0.9;
 }
 
+.shipCount {
+  font-size: 11px;
+  color: #60a5fa;
+  line-height: 1;
+  font-weight: 500;
+  opacity: 0.9;
+}
+
+.lastVisitor {
+  font-size: 10px;
+  color: #fbbf24;
+  line-height: 1;
+  font-weight: 500;
+  opacity: 0.85;
+  margin-top: 2px;
+}
 

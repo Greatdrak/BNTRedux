@@ -72,7 +72,7 @@ export default function TravelConfirmationModal({
           <div className={styles.warning}>
             <p>
               {travelType === 'realspace' 
-                ? '⚠️ Realspace travel will consume turns and may encounter hazards.'
+                ? '⚠️ Realspace travel will consume turns based on distance.'
                 : '🌌 Warp travel is faster but requires warp gates.'
               }
             </p>

@@ -27,6 +27,9 @@ interface ActionsPanelProps {
   ship?: {
     cargo: number
     hull_lvl?: number
+    energy?: number
+    energy_max?: number
+    power_lvl?: number
   }
   inventory?: {
     ore: number
@@ -80,6 +83,16 @@ export default function ActionsPanel({ port, player, shipCredits, ship, inventor
     const price = getCurrentPrice()
     const portStock = port.stock[resource]
     const creditsAffordable = Math.floor((shipCredits || 0) / price)
+    
+    // Energy has its own capacity separate from cargo
+    if (resource === 'energy') {
+      const currentEnergy = ship.energy || 0
+      const maxEnergy = ship.energy_max || Math.floor(100 * Math.pow(1.5, ship.power_lvl || 1))
+      const remainingEnergy = Math.max(0, maxEnergy - currentEnergy)
+      return Math.max(0, Math.min(creditsAffordable, portStock, remainingEnergy))
+    }
+    
+    // For other resources, check cargo space (excluding energy and colonists)
     const currentCargo = inventory.ore + inventory.organics + inventory.goods
     // Use BNT formula for cargo capacity: 100 * (1.5^hull_level)
     const shipCargoCapacity = Math.floor(100 * Math.pow(1.5, ship.hull_lvl || 1))
@@ -138,10 +151,19 @@ export default function ActionsPanel({ port, player, shipCredits, ship, inventor
       const totalCost = getTotalCost()
       if (totalCost > (shipCredits || 0)) return `Insufficient credits (need ${totalCost.toLocaleString()}, have ${(shipCredits || 0).toLocaleString()})`
       if (qty > port.stock[resource]) return `Insufficient port stock (need ${qty.toLocaleString()}, port has ${port.stock[resource].toLocaleString()})`
-      // Cargo capacity
-      const currentCargo = inventory.ore + inventory.organics + inventory.goods
-      const remainingCargo = Math.max(0, ship.cargo - currentCargo)
-      if (qty > remainingCargo) return `Insufficient cargo (need ${qty.toLocaleString()}, free ${remainingCargo.toLocaleString()})`
+      
+      // Energy has its own capacity check
+      if (resource === 'energy') {
+        const currentEnergy = ship.energy || 0
+        const maxEnergy = ship.energy_max || Math.floor(100 * Math.pow(1.5, ship.power_lvl || 1))
+        const remainingEnergy = Math.max(0, maxEnergy - currentEnergy)
+        if (qty > remainingEnergy) return `Insufficient energy capacity (need ${qty.toLocaleString()}, free ${remainingEnergy.toLocaleString()}). Upgrade Power at Special Port.`
+      } else {
+        // Cargo capacity for other resources (excluding energy)
+        const currentCargo = inventory.ore + inventory.organics + inventory.goods
+        const remainingCargo = Math.max(0, ship.cargo - currentCargo)
+        if (qty > remainingCargo) return `Insufficient cargo (need ${qty.toLocaleString()}, free ${remainingCargo.toLocaleString()})`
+      }
       return null // Valid
     } else {
       if (qty > inventory[resource]) return `Insufficient inventory (need ${qty.toLocaleString()}, have ${inventory[resource].toLocaleString()})`

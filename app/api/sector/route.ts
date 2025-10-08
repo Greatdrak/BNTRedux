@@ -26,7 +26,9 @@ export async function GET(request: NextRequest) {
       .select(`
         id,
         number,
-        universe_id
+        universe_id,
+        name,
+        owner_player_id
       `)
       .eq('number', sectorNumber)
     
@@ -159,13 +161,6 @@ export async function GET(request: NextRequest) {
       const player = playerData[ship.player_id]
       const isAI = player?.is_ai
       const shipName = ship.name || 'Scout'
-      console.log('🔍 SHIP DEBUG:', { 
-        shipId: ship.id, 
-        shipName: ship.name, 
-        playerHandle: player?.handle, 
-        isAI, 
-        displayName: shipName 
-      })
       return {
         id: ship.id,
         name: shipName, // White text - ship name

@@ -7,6 +7,7 @@ import { supabase } from '@/lib/supabase-client'
 import GameLayout from './components/GameLayout'
 import GameHeader from './components/GameHeader'
 import LeftCommandsPanel from './components/LeftCommandsPanel'
+import SectorRulesOverlay from './components/SectorRulesOverlay'
 import CenterViewport from './components/CenterViewport'
 import RightPanels from './components/RightPanels'
 import ShipsFooter from './components/ShipsFooter'
@@ -68,6 +69,7 @@ function GameContent() {
   const [tradeLoading, setTradeLoading] = useState(false)
   const [statusMessage, setStatusMessage] = useState<string | null>(null)
   const [statusType, setStatusType] = useState<'success' | 'error' | 'info'>('info')
+  const [warpActive, setWarpActive] = useState(false)
   const [mapOpen, setMapOpen] = useState(false)
   const [mapData, setMapData] = useState<any[]>([])
   const [warpScanOpen, setWarpScanOpen] = useState(false)
@@ -79,6 +81,9 @@ function GameContent() {
   const [leaderboardOpen, setLeaderboardOpen] = useState(false)
   const [tradeRouteOpen, setTradeRouteOpen] = useState(false)
   const [planetsOpen, setPlanetsOpen] = useState(false)
+  const [genesisOpen, setGenesisOpen] = useState(false)
+  const [activityOpen, setActivityOpen] = useState(false)
+  const [sectorRulesOpen, setSectorRulesOpen] = useState(false)
   const [upgradeLoading, setUpgradeLoading] = useState(false)
   const [authChecked, setAuthChecked] = useState(false)
   const [tradeRoutes, setTradeRoutes] = useState<any[]>([])
@@ -172,7 +177,12 @@ function GameContent() {
   const { data: playerData, error: playerError, mutate: mutatePlayer } = useSWR(
     meUrl,
     fetcher,
-    { revalidateOnFocus: false, revalidateOnReconnect: false, dedupingInterval: 10000 }
+    { 
+      revalidateOnFocus: false, 
+      revalidateOnReconnect: false, 
+      dedupingInterval: 60000, // 1 minute - only refetch when explicitly requested
+      revalidateOnMount: true
+    }
   )
 
   // Handle universe deletion errors and character creation
@@ -231,7 +241,12 @@ function GameContent() {
   const { data: sectorData, error: sectorError, mutate: mutateSector } = useSWR(
     sectorKey,
     fetcher,
-    { revalidateOnFocus: false, revalidateOnReconnect: false, dedupingInterval: 10000 }
+    { 
+      revalidateOnFocus: false, 
+      revalidateOnReconnect: false, 
+      dedupingInterval: 60000, // 1 minute - only refetch when explicitly requested
+      revalidateOnMount: true
+    }
   )
 
   // Handle sector errors (might indicate universe issues)
@@ -242,6 +257,28 @@ function GameContent() {
       setStatusType('error')
     }
   }, [sectorError, playerError])
+
+  // Load activity logs when modal opens
+  useEffect(() => {
+    if (!activityOpen) return
+    apiCall('/api/logs').then(r=>r.json()).then(d=>{
+      if (d?.logs) {
+        const logsDiv = document.getElementById('activity-logs')
+        if (logsDiv) {
+          logsDiv.innerHTML = d.logs.map((l:any) => `
+            <div style="border-bottom:1px solid var(--line); padding:8px 0;">
+              <div style="font-size:12px; opacity:.7;">${new Date(l.occurred_at).toLocaleString()}</div>
+              <div style="font-weight:600;">${l.message}</div>
+            </div>
+          `).join('') || '<div style="opacity:.7;">No activity yet.</div>'
+        }
+      }
+    }).catch((err)=>{
+      console.error('Failed to load logs:', err)
+      const logsDiv = document.getElementById('activity-logs')
+      if (logsDiv) logsDiv.innerHTML = '<div style="opacity:.7;">Failed to load logs.</div>'
+    })
+  }, [activityOpen])
 
   // Determine background based on sector data
   const hasPort = sectorData?.port !== null && sectorData?.port !== undefined
@@ -274,21 +311,13 @@ function GameContent() {
   // Apply background
   useBackground(backgroundType)
 
-  // Force refresh data when universe changes
+  // Fetch initial data when universe changes or on mount
   useEffect(() => {
     if (universeId && authChecked) {
-      mutatePlayer()
-      mutateSector()
+      // Only fetch trade routes, player/sector will be fetched by SWR
       fetchTradeRoutes()
     }
-  }, [universeId, authChecked, mutatePlayer, mutateSector])
-
-  // Fetch trade routes on mount
-  useEffect(() => {
-    if (authChecked && universeId) {
-      fetchTradeRoutes()
-    }
-  }, [authChecked, universeId])
+  }, [universeId, authChecked])
   
   // Derived snapshots for easier access (and to avoid TDZ in effects)
   const player = playerData?.player
@@ -325,10 +354,22 @@ function GameContent() {
     return () => subscription.unsubscribe()
   }, [router])
 
+  // After player data loads, ensure URL contains universe_id
+  useEffect(() => {
+    if (!authChecked) return
+    const playerUni = playerData?.player?.universe_id
+    const urlUni = universeId
+    if (playerUni && !urlUni) {
+      // Inject universe_id into URL without adding history entries
+      router.replace(`/game?universe_id=${playerUni}`)
+    }
+  }, [authChecked, playerData, universeId, router])
+
   const handleMove = async (toSectorNumber: number) => {
     if (moveLoading || !playerData?.player?.turns) return
     
     setMoveLoading(true)
+    setWarpActive(true)
     setStatusMessage(null)
     
     try {
@@ -348,9 +389,8 @@ function GameContent() {
           setStatusMessage(errorMsg)
           setStatusType('error')
         } else {
-          // Revalidate both player and sector data
-          mutatePlayer()
-          mutateSector()
+          // Only revalidate player (for turns) and sector (for new location)
+          await Promise.all([mutatePlayer(), mutateSector()])
           setStatusMessage(`Moved to sector ${toSectorNumber}`)
           setStatusType('success')
         }
@@ -360,6 +400,7 @@ function GameContent() {
       setStatusType('error')
     } finally {
       setMoveLoading(false)
+      setTimeout(() => setWarpActive(false), 450)
     }
   }
 
@@ -387,9 +428,8 @@ function GameContent() {
           setStatusMessage(result.error.message)
           setStatusType('error')
         } else {
-          // Revalidate both player and sector data for live inventory updates
-          mutatePlayer()
-          mutateSector()
+          // Only revalidate player for inventory/credits updates
+          await mutatePlayer()
           setStatusMessage(`${data.action === 'buy' ? 'Bought' : 'Sold'} ${data.qty} ${data.resource}`)
           setStatusType('success')
           
@@ -425,7 +465,7 @@ function GameContent() {
           setStatusMessage(result.error.message)
           setStatusType('error')
         } else {
-          mutatePlayer(); mutateSector()
+          await Promise.all([mutatePlayer(), mutateSector()])
           setStatusMessage(`Jumped to sector ${toSectorNumber}`)
           setStatusType('success')
         }
@@ -606,8 +646,8 @@ function GameContent() {
           setStatusType('error')
           return { error: result.error }
         } else {
-          // Revalidate
-          mutatePlayer(); mutateSector()
+          // Revalidate player only (inventory/credits changed)
+          await mutatePlayer()
           const sold = result.sold || {}
           const bought = result.bought || {}
           const soldParts = ['ore','organics','goods','energy']
@@ -656,22 +696,28 @@ function GameContent() {
   }
 
   const fetchTradeRoutes = async () => {
-    if (!authChecked || !universeId) return
-    
+    if (!authChecked) return
+    const finalUniverseId = playerUniverseId || universeId
     try {
-      const response = await apiCall(`/api/trade-routes?universe_id=${universeId}`)
+      const endpoint = finalUniverseId ? `/api/trade-routes?universe_id=${finalUniverseId}` : '/api/trade-routes'
+      const response = await apiCall(endpoint)
       if (response) {
         const data = await response.json()
-        if (data.ok) {
-          setTradeRoutes(data.routes || [])
-        }
+        const routesResp = Array.isArray(data)
+          ? data
+          : (Array.isArray(data?.routes) ? data.routes : [])
+        setTradeRoutes(routesResp)
       }
     } catch (error) {
-      console.error('Error fetching trade routes:', error)
+      // swallow
     }
   }
 
-  const executeTradeRoute = async (routeId: string) => {
+  const executeTradeRoute = async (routeIdOrEncoded: string) => {
+    // Support encoded format "routeId|iters" from left panel
+    const [routeId, itersStr] = String(routeIdOrEncoded).split('|')
+    const iterations = Math.max(1, parseInt(itersStr || '1', 10))
+
     if (!player?.turns) {
       setStatusMessage('No turns remaining')
       setStatusType('error')
@@ -682,7 +728,7 @@ function GameContent() {
       const response = await apiCall(`/api/trade-routes/${routeId}/execute`, {
         method: 'POST',
         body: JSON.stringify({ 
-          max_iterations: 1,
+          max_iterations: iterations,
           universe_id: universeId
         })
       })
@@ -690,17 +736,16 @@ function GameContent() {
       if (response) {
         const data = await response.json()
         if (data.ok) {
-          setStatusMessage('Trade route executed successfully!')
+          setStatusMessage(`Executed route ${iterations}x successfully`) 
           setStatusType('success')
-          await fetchTradeRoutes() // Refresh routes
-          await mutatePlayer() // Refresh player data (turns, credits, inventory)
+          await fetchTradeRoutes()
+          await mutatePlayer()
         } else {
           setStatusMessage(data.error?.message || 'Failed to execute trade route')
           setStatusType('error')
         }
       }
     } catch (error) {
-      console.error('Error executing trade route:', error)
       setStatusMessage('Failed to execute trade route')
       setStatusType('error')
     }
@@ -713,9 +758,36 @@ function GameContent() {
     if (travelTarget.type === 'warp') {
       await handleMove(travelTarget.sector)
     } else {
-      // Realspace travel - would need to implement this
-      setStatusMessage('Realspace travel not yet implemented')
-      setStatusType('error')
+      // Realspace travel using hyperspace API via authenticated helper
+      try {
+        const response = await apiCall('/api/hyperspace', {
+          method: 'POST',
+          body: JSON.stringify({
+            toSectorNumber: travelTarget.sector,
+            universe_id: playerUniverseId || universeId
+          })
+        })
+
+        if (!response || !response.ok) {
+          const errorData = await response?.json().catch(() => ({}))
+          throw new Error(errorData.error?.message || 'Hyperspace travel failed')
+        }
+
+        const data = await response.json()
+        if (data.error) {
+          throw new Error(data.error.message || data.error)
+        }
+
+        await mutatePlayer()
+        await mutateSector()
+        
+        setStatusMessage(`Successfully traveled to Sector ${travelTarget.sector}`)
+        setStatusType('success')
+      } catch (error) {
+        console.error('Hyperspace travel failed:', error)
+        setStatusMessage(error instanceof Error ? error.message : 'Travel failed')
+        setStatusType('error')
+      }
     }
   }
 
@@ -861,16 +933,18 @@ function GameContent() {
   }
 
   return (
-    <div className={styles.container}>
+    <div className={`${styles.container} nebula-drift`}>
       <GameLayout>
         {{
           header: (
             <GameHeader
               playerName={player?.handle || 'Loading...'}
               currentSector={player?.current_sector_number || 0}
+              sectorName={sector?.name || undefined}
               turns={player?.turns || 0}
               turnsUsed={player?.turns_spent || 0}
               credits={player?.credits || 0}
+              score={player?.score || 0}
               engineLevel={playerData?.ship?.engine_lvl || 0}
               lastTurnTs={player?.last_turn_ts}
               turnCap={playerData?.player?.turn_cap}
@@ -879,6 +953,7 @@ function GameContent() {
               onUniverseChange={handleUniverseChange}
               onRefresh={refreshData}
               onLogout={handleLogout}
+              onSectorClick={() => setSectorRulesOpen(true)}
             />
           ),
 
@@ -891,6 +966,8 @@ function GameContent() {
                   case 'leaderboard': setLeaderboardOpen(true); break;
                   case 'trade-routes': setTradeRouteOpen(true); break;
                   case 'planets': setPlanetsOpen(true); break;
+                  case 'genesis': setGenesisOpen(true); break;
+                  case 'activity': setActivityOpen(true); break;
                   case 'admin': router.push('/admin'); break;
                   case 'favorite-sector': 
                     apiCall('/api/favorite', { method:'POST', body: JSON.stringify({ sectorNumber: sector?.number, flag: true })})
@@ -917,6 +994,8 @@ function GameContent() {
                 sector={sector}
                 planets={planets}
                 port={port}
+                ships={sectorData?.ships || []}
+                currentPlayerShipId={playerData?.ship?.id}
                 onPlanetClick={(index) => {
                   setSelectedPlanetIndex(index)
                   setPlanetOverlayOpen(true)
@@ -928,19 +1007,11 @@ function GameContent() {
                     setPortOverlayOpen(true)
                   }
                 }}
+                onShipClick={(ship) => {
+                  setSelectedEnemyShip(ship)
+                  setEnemyShipOverlayOpen(true)
+                }}
               />
-              {/* Ships section - part of center, not footer */}
-              {sectorData?.ships && sectorData.ships.filter((ship: any) => ship.id !== playerData?.ship?.id).length > 0 && (
-                <ShipsFooter
-                  sectorNumber={sector?.number || 0}
-                  ships={sectorData.ships}
-                  currentPlayerShipId={playerData?.ship?.id}
-                  onShipClick={(ship) => {
-                    setSelectedEnemyShip(ship)
-                    setEnemyShipOverlayOpen(true)
-                  }}
-                />
-              )}
             </>
           ),
 
@@ -965,6 +1036,9 @@ function GameContent() {
           )
         }}
       </GameLayout>
+
+      {/* Warp overlay */}
+      <div className={`${styles.warpOverlay} ${warpActive ? styles.warpActive : ''}`} />
 
       {/* Status Bar - Fixed positioning */}
       <StatusBar
@@ -1035,11 +1109,12 @@ function GameContent() {
               credits: playerData?.ship?.credits || 0
             }
           }}
+          playerShip={playerData?.ship}
           onClose={() => setPlanetOverlayOpen(false)}
           onClaim={handleClaimPlanet}
           onStore={handleStoreResource}
           onWithdraw={handleWithdrawResource}
-          onRefresh={() => { mutatePlayer(); mutateSector(); }}
+          onRefresh={() => { Promise.all([mutatePlayer(), mutateSector()]); }}
         />
       )}
 
@@ -1059,6 +1134,10 @@ function GameContent() {
             mutateSector()
             fetchTradeRoutes()
           }}
+          onTravelToSector={(sectorNum, type) => {
+            setTravelTarget({ sector: sectorNum, type })
+            setTravelModalOpen(true)
+          }}
         />
 
         <PlanetsOverlay
@@ -1072,6 +1151,102 @@ function GameContent() {
           onStatusMessage={(message, type) => {
             setStatusMessage(message)
             setStatusType(type)
+          }}
+        />
+        {genesisOpen && (
+          <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,.6)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:1000 }} onClick={()=> setGenesisOpen(false)}>
+            <div style={{ background:'var(--panel)', border:'1px solid var(--line)', borderRadius:8, width:400, padding:16 }} onClick={e=> e.stopPropagation()}>
+              <div style={{ display:'flex', justifyContent:'space-between', marginBottom:12 }}>
+                <h3 style={{ margin:0 }}>⚠️ Genesis Torpedo</h3>
+                <button onClick={()=> setGenesisOpen(false)}>✕</button>
+              </div>
+              <div style={{ marginBottom:12 }}>
+                <label style={{ display:'block', marginBottom:4 }}>Action:</label>
+                <select id="genesis-action" style={{ width:'100%', padding:4 }}>
+                  <option value="create">Create Planet</option>
+                  <option value="destroy">Destroy Planet</option>
+                </select>
+              </div>
+              <div style={{ marginBottom:12 }}>
+                <label style={{ display:'block', marginBottom:4 }}>Sector Number:</label>
+                <input type="number" id="genesis-sector" defaultValue={sector?.number || 0} style={{ width:'100%', padding:4 }} />
+              </div>
+              <div style={{ marginBottom:12 }}>
+                <label style={{ display:'block', marginBottom:4 }}>Planet Name (create only):</label>
+                <input type="text" id="genesis-name" placeholder="New Planet" style={{ width:'100%', padding:4 }} />
+              </div>
+              <button 
+                onClick={async ()=>{
+                  const action = (document.getElementById('genesis-action') as HTMLSelectElement)?.value
+                  const sectorNum = parseInt((document.getElementById('genesis-sector') as HTMLInputElement)?.value || '0')
+                  const name = (document.getElementById('genesis-name') as HTMLInputElement)?.value || 'New Planet'
+                  try {
+                    const res = await apiCall('/api/planet/genesis', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action, sectorNumber: sectorNum, name }) })
+                    const data = await res.json()
+                    if (data?.success) {
+                      setStatusMessage(`Planet ${action === 'create' ? 'created' : 'destroyed'} successfully`)
+                      setStatusType('success')
+                      setGenesisOpen(false)
+                      mutatePlayer()
+                    } else {
+                      setStatusMessage(data?.error || 'Failed')
+                      setStatusType('error')
+                    }
+                  } catch (err) {
+                    console.error('Genesis error:', err)
+                    setStatusMessage('Failed to use device')
+                    setStatusType('error')
+                  }
+                }}
+                style={{ width:'100%', padding:8, background:'var(--accent)', border:'none', borderRadius:4, color:'white' }}
+              >
+                Use Device
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Activity Logs Modal */}
+        {activityOpen && (
+          <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,.6)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:1000 }} onClick={()=> setActivityOpen(false)}>
+            <div style={{ background:'var(--panel)', border:'1px solid var(--line)', borderRadius:8, width:480, maxHeight:'70vh', overflow:'auto', padding:16 }} onClick={e=> e.stopPropagation()}>
+              <div style={{ display:'flex', justifyContent:'space-between', marginBottom:12 }}>
+                <h3 style={{ margin:0 }}>📝 Activity</h3>
+                <button onClick={()=> setActivityOpen(false)}>✕</button>
+              </div>
+              <div id="activity-logs" style={{ listStyle:'none', margin:0, padding:0 }}>
+                <div style={{ opacity:.7 }}>Loading...</div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <SectorRulesOverlay
+          open={sectorRulesOpen}
+          onClose={() => setSectorRulesOpen(false)}
+          sectorNumber={player?.current_sector_number || 0}
+          universeId={playerUniverseId || universeId}
+          isOwner={sector?.owner_player_id === player?.id}
+          fetchFn={apiCall}
+          onRename={async (newName) => {
+            const res = await apiCall('/api/sector/rename', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                sectorNumber: player?.current_sector_number,
+                name: newName,
+                universe_id: playerUniverseId || universeId
+              })
+            })
+            const data = await res.json()
+            if (data?.success) {
+              setStatusMessage('Sector renamed successfully')
+              setStatusType('success')
+              mutateSector()
+            } else {
+              setStatusMessage(data?.error?.message || 'Failed to rename sector')
+              setStatusType('error')
+            }
           }}
         />
 

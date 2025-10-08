@@ -9,7 +9,7 @@ interface LeftCommandsPanelProps {
   onTradeRouteExecute: (routeId: string) => void;
   currentSector: number;
   playerTurns: number;
-  onTravelToSector: (sector: number, type: 'warp') => void;
+  onTravelToSector: (sector: number, type: 'warp' | 'realspace') => void;
 }
 
 export default function LeftCommandsPanel({
@@ -51,6 +51,18 @@ export default function LeftCommandsPanel({
         </button>
         <button 
           className={styles.commandItem}
+          onClick={() => onCommandClick('genesis')}
+        >
+          ⚠️ Genesis
+        </button>
+        <button 
+          className={styles.commandItem}
+          onClick={() => onCommandClick('activity')}
+        >
+          📝 Activity
+        </button>
+        <button 
+          className={styles.commandItem}
           onClick={() => onCommandClick('admin')}
         >
           ⚙️ Admin
@@ -71,12 +83,12 @@ export default function LeftCommandsPanel({
             {tradeRoutes.slice(0, 5).map((route: any) => (
               <div key={route.id} className={styles.routeItem}>
                 <div className={styles.routeHeader}>
-                  <span className={styles.routeName}>{route.name}</span>
-                  <span className={styles.routeProfit}>
-                    +{route.total_profit?.toLocaleString() || 0}
-                  </span>
+                  <button className={styles.routeNameBtn} onClick={() => onTradeRouteClick(route.id)}>
+                    {route.name}
+                  </button>
+                  <span className={styles.routeProfit} title="Profit per Turn">P/T {route.current_profit_per_turn ? route.current_profit_per_turn.toLocaleString() : '—'}</span>
                 </div>
-                
+
                 <div className={styles.routeWaypoints}>
                   {route.waypoints.slice(0, 2).map((waypoint: any) => (
                     <button
@@ -86,7 +98,7 @@ export default function LeftCommandsPanel({
                       }`}
                       onClick={() => {
                         if (waypoint.port_info?.sector_number !== currentSector) {
-                          onTravelToSector(waypoint.port_info?.sector_number, 'warp')
+                          onTravelToSector(waypoint.port_info?.sector_number, 'realspace')
                         }
                       }}
                       title={`Travel to Sector ${waypoint.port_info?.sector_number}`}
@@ -98,16 +110,27 @@ export default function LeftCommandsPanel({
                     <span className={styles.moreSectors}>+{route.waypoints.length - 2}</span>
                   )}
                 </div>
-                
-                {/* Execute button only if in first sector */}
-                {route.waypoints[0]?.port_info?.sector_number === currentSector && (
-                  <button 
-                    className={styles.executeBtn}
-                    onClick={() => onTradeRouteExecute(route.id)}
-                    disabled={!playerTurns}
-                  >
-                    ▶️ Execute
-                  </button>
+
+                {/* Quick execute presets */}
+                {route.waypoints[0]?.port_info?.sector_number === currentSector ? (
+                  <div className={styles.segmentGroup}>
+                    {[1,5,10,20,50].map((iters) => (
+                      <button
+                        key={iters}
+                        className={styles.segmentBtn}
+                        disabled={!playerTurns}
+                        onClick={() => {
+                          if (iters === 1) return onTradeRouteExecute(route.id)
+                          onTradeRouteExecute(`${route.id}|${iters}` as unknown as string)
+                        }}
+                        title={iters === 1 ? 'Execute once' : `Execute x${iters}`}
+                      >
+                        {iters === 1 ? 'Execute' : `x${iters}`}
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <div className={styles.hintText}>Move to start sector to execute</div>
                 )}
               </div>
             ))}

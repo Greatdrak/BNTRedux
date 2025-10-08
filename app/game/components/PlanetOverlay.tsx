@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase-client'
+import PlanetCombatOverlay from './PlanetCombatOverlay'
+import CombatOverlay from './CombatOverlay'
 import styles from './PlanetOverlay.module.css'
 
 interface Planet {
@@ -54,6 +56,7 @@ interface PlanetOverlayProps {
       credits: number
     }
   }
+  playerShip?: any
   onClose: () => void
   onClaim: (name: string) => void
   onStore: (resource: string, qty: number) => void
@@ -65,6 +68,7 @@ export default function PlanetOverlay({
   planets, 
   initialPlanetIndex = 0,
   player, 
+  playerShip,
   onClose, 
   onClaim, 
   onStore, 
@@ -81,6 +85,10 @@ export default function PlanetOverlay({
   const [activeTab, setActiveTab] = useState<'overview' | 'transfer' | 'production' | 'base'>('overview')
   const [showRenameForm, setShowRenameForm] = useState(false)
   const [statusMessage, setStatusMessage] = useState('')
+  const [planetCombatOpen, setPlanetCombatOpen] = useState(false)
+  const [planetCombatData, setPlanetCombatData] = useState<{ steps: any[]; winner: 'attacker' | 'defender' | 'draw' } | null>(null)
+  const [useShipCombatOverlay, setUseShipCombatOverlay] = useState<{ open: boolean, combatResult: any, steps: any[] } | null>(null)
+  const [canCapture, setCanCapture] = useState(false)
   
   // Get current planet from slideshow
   const currentPlanet = planets[currentPlanetIndex]
@@ -374,7 +382,12 @@ export default function PlanetOverlay({
     }
   }
 
-  if (!currentPlanet?.owner) {
+  // Ownership states
+  const isOwnedByMe = !!currentPlanet?.owner
+  const isUnowned = !currentPlanet?.ownerName
+  const isOwnedByOther = !isOwnedByMe && !isUnowned
+
+  if (isUnowned) {
     return (
       <div className={styles.overlay} onClick={onClose}>
         <div className={styles.panel} onClick={(e) => e.stopPropagation()}>
@@ -421,6 +434,7 @@ export default function PlanetOverlay({
     )
   }
 
+  // Owned by me or by others
   return (
     <div className={styles.overlay} onClick={onClose}>
       <div className={styles.panel} onClick={(e) => e.stopPropagation()}>
@@ -458,24 +472,28 @@ export default function PlanetOverlay({
           >
             Overview
           </button>
-          <button 
-            className={`${styles.tab} ${activeTab === 'transfer' ? styles.active : ''}`}
-            onClick={() => setActiveTab('transfer')}
-          >
-            Transfer
-          </button>
-          <button 
-            className={`${styles.tab} ${activeTab === 'production' ? styles.active : ''}`}
-            onClick={() => setActiveTab('production')}
-          >
-            Production
-          </button>
-          <button 
-            className={`${styles.tab} ${activeTab === 'base' ? styles.active : ''}`}
-            onClick={() => setActiveTab('base')}
-          >
-            Base
-          </button>
+          {isOwnedByMe && (
+            <>
+              <button 
+                className={`${styles.tab} ${activeTab === 'transfer' ? styles.active : ''}`}
+                onClick={() => setActiveTab('transfer')}
+              >
+                Transfer
+              </button>
+              <button 
+                className={`${styles.tab} ${activeTab === 'production' ? styles.active : ''}`}
+                onClick={() => setActiveTab('production')}
+              >
+                Production
+              </button>
+              <button 
+                className={`${styles.tab} ${activeTab === 'base' ? styles.active : ''}`}
+                onClick={() => setActiveTab('base')}
+              >
+                Base
+              </button>
+            </>
+          )}
         </div>
         
         <div className={styles.content}>
@@ -571,10 +589,62 @@ export default function PlanetOverlay({
                 </div>
               </div>
 
+              {/* Attack action for planets owned by others */}
+              {isOwnedByOther && (
+                <div className={styles.actionsRow}>
+                  <button
+                    className={styles.actionBtn}
+                    disabled={loading || player.turns < 1}
+                    onClick={async () => {
+                      setLoading(true)
+                      try {
+                        const { data: { session } } = await supabase.auth.getSession()
+                        if (!session?.access_token) {
+                          alert('Not authenticated')
+                          return
+                        }
+                        const resp = await fetch('/api/planet/attack', {
+                          method: 'POST',
+                          headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${session.access_token}`
+                          },
+                          body: JSON.stringify({ planet_id: currentPlanet.id })
+                        })
+                        const result = await resp.json()
+                        if (resp.ok && result.success) {
+                          onRefresh()
+                          if (result.combat_result && result.combat_result.turnsUsed === 1) {
+                            setUseShipCombatOverlay({ open: true, combatResult: result.combat_result, steps: result.result.steps || [] })
+                            // Enable capture only if attacker won and planet armor (enemy hull) is 0
+                            const win = result.combat_result.winner === 'player'
+                            const planetArmor = result.combat_result.enemyShip?.hull || 0
+                            setCanCapture(win && planetArmor <= 0)
+                          } else {
+                            setPlanetCombatData({ steps: result.result.steps || [], winner: result.result.winner })
+                            setPlanetCombatOpen(true)
+                            setCanCapture(result.result.winner === 'attacker')
+                          }
+                        } else {
+                          alert(result.error || 'Attack failed')
+                        }
+                      } catch (e) {
+                        console.error('Attack error', e)
+                        alert('Attack failed')
+                      } finally {
+                        setLoading(false)
+                      }
+                    }}
+                  >
+                    {loading ? 'Attacking...' : 'Attack Planet'}
+                  </button>
+                </div>
+              )}
+
             </div>
           )}
 
-          {activeTab === 'transfer' && (
+          {isOwnedByMe && activeTab === 'transfer' && (
             <div className={styles.tabContent}>
               <div className={styles.section}>
                 <h4>Transfer Resources</h4>
@@ -749,7 +819,7 @@ export default function PlanetOverlay({
           )}
 
 
-          {activeTab === 'production' && (
+          {isOwnedByMe && activeTab === 'production' && (
             <div className={styles.tabContent}>
               <div className={styles.section}>
                 <h4>Production Status</h4>
@@ -849,7 +919,7 @@ export default function PlanetOverlay({
             </div>
           )}
 
-          {activeTab === 'base' && (
+          {isOwnedByMe && activeTab === 'base' && (
             <div className={styles.tabContent}>
               <div className={styles.section}>
                 <h4>Planet Base</h4>
@@ -940,7 +1010,76 @@ export default function PlanetOverlay({
             {statusMessage}
           </div>
         )}
+
+        {/* Capture Planet CTA shown when defeated */}
+        {isOwnedByOther && canCapture && (
+          <div className={styles.actionsRow}>
+            <button
+              className={styles.actionBtn}
+              disabled={loading}
+              onClick={async () => {
+                setLoading(true)
+                try {
+                  const { data: { session } } = await supabase.auth.getSession()
+                  if (!session?.access_token) { alert('Not authenticated'); return }
+                  const resp = await fetch('/api/planet/capture', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+                    body: JSON.stringify({ planet_id: currentPlanet.id })
+                  })
+                  const j = await resp.json()
+                  if (!resp.ok) { alert(j.error || 'Capture failed'); return }
+                  setStatusMessage('Planet captured!')
+                  setCanCapture(false)
+                  onRefresh()
+                } finally {
+                  setLoading(false)
+                }
+              }}
+            >
+              Capture Planet
+            </button>
+          </div>
+        )}
       </div>
+      <PlanetCombatOverlay
+        open={planetCombatOpen}
+        onClose={() => setPlanetCombatOpen(false)}
+        playerShip={playerShip || {}}
+        planet={{ name: currentPlanet?.name || 'Planet', defenses: currentPlanet?.defenses as any, stock: currentPlanet?.stock as any }}
+        steps={planetCombatData?.steps || []}
+        winner={planetCombatData?.winner || 'draw'}
+      />
+
+      {useShipCombatOverlay?.open && (
+        <CombatOverlay
+          open={useShipCombatOverlay.open}
+          onClose={() => setUseShipCombatOverlay(null)}
+          playerShip={playerShip}
+          enemyShip={{ name: currentPlanet?.name || 'Planet', hull_lvl: 1, shield: currentPlanet?.defenses?.shields || 0, fighters: currentPlanet?.defenses?.fighters || 0, torpedoes: currentPlanet?.defenses?.torpedoes || 0, energy: currentPlanet?.stock?.energy || 0 }}
+          combatResult={useShipCombatOverlay.combatResult}
+          combatSteps={useShipCombatOverlay.steps as any}
+          isCombatComplete={true}
+          enemyIsPlanet={true}
+          planetId={currentPlanet?.id}
+          onCapturePlanet={async () => {
+            try {
+              const { data: { session } } = await supabase.auth.getSession()
+              if (!session?.access_token) return
+              const resp = await fetch('/api/planet/capture', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+                body: JSON.stringify({ planet_id: currentPlanet.id })
+              })
+              const j = await resp.json()
+              if (!resp.ok) { alert(j.error || 'Capture failed'); return }
+              setStatusMessage('Planet captured!')
+              setCanCapture(false)
+              onRefresh()
+            } catch {}
+          }}
+        />
+      )}
     </div>
   )
 }

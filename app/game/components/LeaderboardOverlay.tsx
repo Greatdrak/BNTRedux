@@ -89,7 +89,7 @@ export default function LeaderboardOverlay({ open, onClose, universeId }: Leader
       const data = await response.json()
       console.log('Ranking calculation response:', data)
       
-      if (data.ok) {
+      if (data.success || data.ok) {
         // Refresh the leaderboard after calculation
         await fetchLeaderboard()
       } else {

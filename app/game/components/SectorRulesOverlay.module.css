@@ -1,0 +1,194 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal {
+  background: var(--panel, #1a1a2e);
+  border: 1px solid var(--line, #333);
+  border-radius: 8px;
+  width: 90%;
+  max-width: 600px;
+  max-height: 80vh;
+  overflow: auto;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--line, #333);
+}
+
+.header h2 {
+  margin: 0;
+  font-size: 20px;
+  color: var(--text, #fff);
+}
+
+.closeBtn {
+  background: none;
+  border: none;
+  color: var(--text, #fff);
+  font-size: 24px;
+  cursor: pointer;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+
+.closeBtn:hover {
+  opacity: 1;
+}
+
+.loading {
+  padding: 40px;
+  text-align: center;
+  color: var(--text-dim, #999);
+}
+
+.content {
+  padding: 20px;
+}
+
+.federationBanner {
+  background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+  color: white;
+  padding: 12px;
+  border-radius: 6px;
+  margin-bottom: 16px;
+  text-align: center;
+  font-weight: 600;
+}
+
+.ownerInfo {
+  background: var(--accent-dim, #2a2a3e);
+  padding: 12px;
+  border-radius: 6px;
+  margin-bottom: 16px;
+}
+
+.unownedInfo {
+  background: rgba(120, 120, 120, 0.2);
+  padding: 12px;
+  border-radius: 6px;
+  margin-bottom: 16px;
+  color: var(--text-dim, #999);
+  font-style: italic;
+}
+
+.section {
+  margin-bottom: 24px;
+}
+
+.section h3 {
+  margin: 0 0 12px 0;
+  font-size: 16px;
+  color: var(--accent, #6366f1);
+}
+
+.nameDisplay {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.nameDisplay span {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.nameDisplay button {
+  padding: 4px 12px;
+  font-size: 12px;
+  background: var(--accent, #6366f1);
+  border: none;
+  border-radius: 4px;
+  color: white;
+  cursor: pointer;
+}
+
+.editName {
+  display: flex;
+  gap: 8px;
+}
+
+.editName input {
+  flex: 1;
+  padding: 8px;
+  background: var(--input, #2a2a3e);
+  border: 1px solid var(--line, #444);
+  border-radius: 4px;
+  color: var(--text, #fff);
+  font-size: 14px;
+}
+
+.editName button {
+  padding: 8px 16px;
+  background: var(--accent, #6366f1);
+  border: none;
+  border-radius: 4px;
+  color: white;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.editName button:last-child {
+  background: var(--danger, #ef4444);
+}
+
+.rules {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.rule {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  background: var(--panel-dim, rgba(255, 255, 255, 0.05));
+  border-radius: 6px;
+}
+
+.ruleLabel {
+  font-weight: 500;
+}
+
+.yes {
+  color: #10b981;
+  font-weight: 600;
+}
+
+.no {
+  color: #ef4444;
+  font-weight: 600;
+}
+
+.neutral {
+  color: var(--text, #fff);
+  font-weight: 600;
+}
+
+.editRules {
+  margin-top: 16px;
+  padding: 12px;
+  background: var(--accent-dim, rgba(99, 102, 241, 0.1));
+  border-radius: 6px;
+  font-size: 14px;
+  color: var(--text-dim, #999);
+}
+

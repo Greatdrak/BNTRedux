@@ -3,6 +3,8 @@
   max-width: 1600px;
   margin: 0 auto;
   overflow: hidden;
+  position: relative;
+  z-index: 1; /* place above body bg; nebula pseudo-elements use z-index 0 */
 }
 
 .loadingScreen {
@@ -113,6 +115,15 @@
   font-weight: bold;
   color: var(--text);
   line-height: 1;
+  transition: opacity 0.2s;
+}
+
+.statItem[style*="cursor: pointer"] .statValue {
+  cursor: pointer;
+}
+
+.statItem[style*="cursor: pointer"]:hover .statValue {
+  opacity: 0.8;
 }
 
 .headerControls {
@@ -213,6 +224,28 @@
   flex: 1;
 }
 
+/* Bottom section for planets and ships */
+.bottomSection {
+  display: flex;
+  width: 100%;
+  max-width: 980px;
+  gap: var(--space-6);
+  margin-top: var(--space-4);
+}
+
+.planetsSection,
+.shipsSection {
+  flex: 1;
+  min-width: 0;
+}
+
+.sectionTitle {
+  font-size: var(--font-size-lg);
+  color: var(--accent);
+  margin-bottom: var(--space-3);
+  text-align: center;
+}
+
 /* Legacy rightPanel styles moved to mainLayout selector above */
 
 /* Space viewport — reduce heavy boxes; suggest a window into space */
@@ -224,6 +257,23 @@
   border-radius: 14px;
   padding: var(--space-6);
   background: transparent;
+}
+
+/* Warp transition overlay */
+.warpOverlay {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(ellipse at center, rgba(99,230,190,0.0) 0%, rgba(99,230,190,0.15) 40%, rgba(11,12,22,0.9) 75%);
+  opacity: 0;
+  transform: scale(0.98);
+  transition: opacity 250ms ease, transform 400ms ease;
+  z-index: 9999;
+}
+
+.warpActive {
+  opacity: 1;
+  transform: scale(1.06);
 }
 
 .viewportHeader {
@@ -334,8 +384,8 @@
   display: flex;
   justify-content: center;
   align-items: flex-end;
-  gap: 24px;
-  margin: var(--space-5) auto var(--space-6);
+  gap: 16px;
+  flex-wrap: wrap;
 }
 
 .planetContainer {
@@ -583,6 +633,7 @@
   border-radius: var(--radius);
   padding: var(--space-3);
   color: #ffffff;
+  overflow: visible;
 }
 
 .commandList {
@@ -621,8 +672,45 @@
 .tradeRoutesList {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
+  gap: 8px;
 }
+
+/* Compact trade route row */
+.routeItem {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 6px 8px;
+  align-items: center;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 8px;
+  padding: 8px 10px;
+  overflow: visible;
+}
+
+.routeHeader { display:flex; align-items:center; gap:8px; }
+.routeNameBtn {
+  background: none; border: none; color: #e7faff; padding: 0; cursor: pointer;
+  font-weight: 600; font-size: 13px; text-align: left;
+}
+.routeNameBtn:hover { color: #aee8ff; }
+.routeProfit { color:#7ad4ff; font-size: 12px; margin-left:auto; }
+
+.routeWaypoints { display:flex; gap:6px; }
+.sectorBtn { background: rgba(99,230,190,0.15); border: 1px solid rgba(99,230,190,0.35); color:#63e6be; border-radius: 999px; padding:2px 6px; font-size:11px; font-weight:700; cursor:pointer; }
+.sectorBtn.currentSector { background: rgba(99,230,190,0.3); color:#001; border-color:#63e6be; }
+.moreSectors { color: var(--muted); font-size: 11px; }
+
+/* Segmented execute presets */
+.segmentGroup { display:flex; flex-wrap: wrap; background: rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); border-radius: 999px; overflow: visible; max-width: 100%; grid-column: 1 / -1; }
+.segmentBtn { background: transparent; color:#eaf7ff; border:none; padding:3px 6px; font-size:11px; cursor:pointer; white-space: nowrap; }
+.segmentBtn:not(:last-child){ border-right:1px solid rgba(255,255,255,0.12); }
+.segmentBtn:hover{ background: rgba(0,191,255,0.12); }
+
+.hintText { color: var(--muted); font-size: 11px; grid-column: 1 / -1; }
+
+/* Tweak trade routes heading spacing */
+.commandsBox h3 + .tradeRoutesList { margin-top: 6px; }
 
 .tradeRouteItem {
   background: var(--bgElev);

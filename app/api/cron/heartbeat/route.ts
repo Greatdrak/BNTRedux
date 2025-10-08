@@ -123,14 +123,6 @@ export async function POST(request: NextRequest) {
             interval: s.defenses_check_interval_minutes
           },
           { 
-            key: 'xenobes_play', 
-            name: 'Xenobes Play', 
-            due: isDue(s.xenobes_play_interval_minutes, s.last_xenobes_play_event), 
-            rpc: 'run_xenobes_turn', 
-            args: {},
-            interval: s.xenobes_play_interval_minutes
-          },
-          { 
             key: 'igb_interest', 
             name: 'IGB Interest', 
             due: isDue(s.igb_interest_accumulation_interval_minutes, s.last_igb_interest_accumulation_event), 
@@ -158,7 +150,7 @@ export async function POST(request: NextRequest) {
             key: 'ai_player_actions', 
             name: 'AI Player Actions', 
             due: isDue(s.ai_player_actions_interval_minutes || 5, s.last_ai_player_actions_event), 
-            rpc: 'cron_run_ai_actions', 
+            rpc: null, // Use Node.js AI service instead
             args: {},
             interval: s.ai_player_actions_interval_minutes || 5
           },
@@ -198,7 +190,29 @@ export async function POST(request: NextRequest) {
           if (event.due) {
             try {
               console.log(`🔄 ${event.name} for ${u.name} (interval: ${event.interval}min)`)
-              const { data: rpcResult, error: rpcError } = await supabaseAdmin.rpc(event.rpc, { p_universe_id: u.id, ...event.args })
+              
+              let rpcResult, rpcError
+              
+              if (event.key === 'ai_player_actions') {
+                // Use Node.js AI service instead of SQL function
+                const aiResponse = await fetch(`http://localhost:3000/api/ai/process-universe?universeId=${u.id}`, {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                })
+                
+                if (!aiResponse.ok) {
+                  rpcError = { message: `AI service returned ${aiResponse.status}` }
+                } else {
+                  rpcResult = await aiResponse.json()
+                }
+              } else {
+                // Use SQL RPC function
+                const result = await supabaseAdmin.rpc(event.rpc, { p_universe_id: u.id, ...event.args })
+                rpcResult = result.data
+                rpcError = result.error
+              }
               
               if (rpcError) {
                 status = 'error'
@@ -222,6 +236,12 @@ export async function POST(request: NextRequest) {
                   const stats = rpcResult[0] || rpcResult
                   message = `Processed ${stats.planets_processed} planets (${stats.colonists_grown} grew, ${stats.resources_produced} produced, ${stats.credits_produced} credits, ${stats.interest_generated} interest)`
                   console.log(`✅ ${event.name}: ${message}`)
+                } else if (event.key === 'ai_player_actions') {
+                  const stats = (Array.isArray(rpcResult) ? rpcResult[0] : rpcResult) || {}
+                  const actions = stats.actions_taken ?? 0
+                  const players = stats.players_processed ?? 0
+                  message = `AI actions: ${actions} actions across ${players} players`
+                  console.log(`🤖 ${event.name}:`, stats)
                 } else {
                   message = `${event.name} completed successfully`
                   console.log(`✅ ${event.name} completed`)

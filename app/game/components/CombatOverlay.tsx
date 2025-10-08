@@ -71,6 +71,9 @@ interface CombatOverlayProps {
   combatResult: CombatResult | null
   combatSteps: CombatStep[]
   isCombatComplete: boolean
+  enemyIsPlanet?: boolean
+  planetId?: string
+  onCapturePlanet?: () => Promise<void> | void
 }
 
 export default function CombatOverlay({
@@ -80,7 +83,10 @@ export default function CombatOverlay({
   enemyShip,
   combatResult,
   combatSteps,
-  isCombatComplete
+  isCombatComplete,
+  enemyIsPlanet,
+  planetId,
+  onCapturePlanet
 }: CombatOverlayProps) {
   const [currentStepIndex, setCurrentStepIndex] = useState(0)
   const [isAnimating, setIsAnimating] = useState(false)
@@ -136,7 +142,7 @@ export default function CombatOverlay({
     <div className={styles.overlay}>
       <div className={styles.modal}>
         <div className={styles.header}>
-          <h2>Ship Combat</h2>
+          <h2>{enemyIsPlanet ? 'Planet Combat' : 'Ship Combat'}</h2>
           <button className={styles.closeBtn} onClick={onClose}>×</button>
         </div>
 
@@ -173,15 +179,21 @@ export default function CombatOverlay({
             </div>
 
             <div className={styles.enemyShip}>
-              <h3>{enemyShip?.name || 'Enemy Ship'}</h3>
+              <h3>{enemyShip?.name || (enemyIsPlanet ? 'Planet' : 'Enemy Ship')}</h3>
               <div className={styles.shipImage}>
-                <ShipArt level={enemyShip?.hull_lvl || 1} size={80} />
+                {enemyIsPlanet ? (
+                  <div style={{ fontSize: 48 }}>🪐</div>
+                ) : (
+                  <ShipArt level={enemyShip?.hull_lvl || 1} size={80} />
+                )}
               </div>
               <div className={styles.shipStats}>
-                <div className={styles.statRow}>
-                  <span>Hull:</span>
-                  <span>{currentStep?.enemyHull || enemyShip?.hull || 0} / {enemyShip?.hull_max || 100}</span>
-                </div>
+                {!enemyIsPlanet && (
+                  <div className={styles.statRow}>
+                    <span>Hull:</span>
+                    <span>{currentStep?.enemyHull || enemyShip?.hull || 0} / {enemyShip?.hull_max || 100}</span>
+                  </div>
+                )}
                 <div className={styles.statRow}>
                   <span>Shield:</span>
                   <span>{currentStep?.enemyShield || enemyShip?.shield || 0}</span>
@@ -194,6 +206,12 @@ export default function CombatOverlay({
                   <span>Torpedoes:</span>
                   <span>{currentStep?.enemyTorpedoes || enemyShip?.torpedoes || 0}</span>
                 </div>
+                {enemyIsPlanet && (
+                  <div className={styles.statRow}>
+                    <span>Energy:</span>
+                    <span>{enemyShip?.energy || 0}</span>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -278,9 +296,16 @@ export default function CombatOverlay({
                 <p>Combat in progress...</p>
               </div>
             ) : (
-              <button className={styles.closeCombatBtn} onClick={onClose}>
-                Close Combat Report
-              </button>
+              <div className={styles.actionsRow}>
+                {enemyIsPlanet && combatResult?.winner === 'player' && (enemyShip?.shield || 0) <= 0 && (enemyShip?.fighters || 0) <= 0 && onCapturePlanet && planetId ? (
+                  <button className={styles.closeCombatBtn} onClick={async () => { await onCapturePlanet(); onClose(); }}>
+                    Capture Planet
+                  </button>
+                ) : null}
+                <button className={styles.closeCombatBtn} onClick={onClose}>
+                  Close Combat Report
+                </button>
+              </div>
             )}
           </div>
         </div>

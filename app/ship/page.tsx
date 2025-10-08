@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import useSWR from 'swr'
 import { supabase } from '@/lib/supabase-client'
 import styles from './page.module.css'
+import StatRing from './components/StatRing'
 
 interface ShipData {
   name: string
@@ -168,205 +169,103 @@ function ShipPageContent() {
 
   return (
     <div className={styles.container}>
-      {/* Header */}
-      <div className={styles.header}>
-        <div className={styles.headerLeft}>
-          <h1>Ship Report</h1>
-          <p className={styles.playerInfo}>{meData.player?.handle || 'Unknown'}</p>
-        </div>
-        <div className={styles.headerRight}>
-          <button 
-            onClick={handleRename} 
-            disabled={loading}
-            className={styles.renameBtn}
-          >
-            Rename Ship
-          </button>
-          <button onClick={() => router.push('/game')} className={styles.backBtn}>
-            Back to Game
-          </button>
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <div className={styles.mainContent}>
-        {/* Left Panel - Ship Info & Tech Levels */}
-        <div className={styles.leftPanel}>
-          <div className={styles.shipInfo}>
-            <h2>{shipData.name}</h2>
-            <div className={styles.shipImage}>
-              <img 
-                src="/images/ShipLevel1.png" 
-                alt="Ship" 
-                className={styles.shipImg}
-              />
-            </div>
-            <div className={styles.credits}>
-              <span className={styles.creditsLabel}>Credits:</span>
-              <span className={styles.creditsValue}>{credits.toLocaleString()}</span>
+      <div className={styles.hangar}>
+        {/* Center Stage */}
+        <div className={styles.centerStage}>
+          <div className={styles.shipPad}>
+            <div className={styles.padRing} />
+            <div className={styles.shipImgWrap}>
+              <img src="/images/ShipLevel1.png" alt="Ship" className={styles.shipImg} />
             </div>
           </div>
-
-          <div className={styles.techLevels}>
-            <h3>Component Levels</h3>
-            <div className={styles.techGrid}>
-              <div className={styles.techItem}>
-                <span className={styles.techLabel}>Hull</span>
-                <span className={styles.techValue}>Lv {shipData.hull_lvl}</span>
-              </div>
-              <div className={styles.techItem}>
-                <span className={styles.techLabel}>Engines</span>
-                <span className={styles.techValue}>Lv {shipData.engine_lvl}</span>
-              </div>
-              <div className={styles.techItem}>
-                <span className={styles.techLabel}>Power</span>
-                <span className={styles.techValue}>Lv {shipData.power_lvl}</span>
-              </div>
-              <div className={styles.techItem}>
-                <span className={styles.techLabel}>Computer</span>
-                <span className={styles.techValue}>Lv {shipData.comp_lvl}</span>
-              </div>
-              <div className={styles.techItem}>
-                <span className={styles.techLabel}>Sensors</span>
-                <span className={styles.techValue}>Lv {shipData.sensor_lvl}</span>
-              </div>
-              <div className={styles.techItem}>
-                <span className={styles.techLabel}>Armor</span>
-                <span className={styles.techValue}>Lv {shipData.armor_lvl || 0}</span>
-              </div>
-              <div className={styles.techItem}>
-                <span className={styles.techLabel}>Shields</span>
-                <span className={styles.techValue}>Lv {shipData.shield_lvl}</span>
-              </div>
-              <div className={styles.techItem}>
-                <span className={styles.techLabel}>Beam Weapons</span>
-                <span className={styles.techValue}>Lv {shipData.beam_lvl}</span>
-              </div>
-              <div className={styles.techItem}>
-                <span className={styles.techLabel}>Torpedo Launchers</span>
-                <span className={styles.techValue}>Lv {shipData.torp_launcher_lvl}</span>
-              </div>
-              <div className={styles.techItem}>
-                <span className={styles.techLabel}>Cloak</span>
-                <span className={styles.techValue}>Lv {shipData.cloak_lvl}</span>
-              </div>
-            </div>
-            <div className={styles.avgTech}>
-              <span className={styles.avgTechLabel}>Average Tech Level:</span>
-              <span className={styles.avgTechValue}>{avgTechLevel.toFixed(2)}</span>
-            </div>
+          {/* Radial HUD */}
+          <div className={styles.radialHud}>
+            {/* Hull */}
+            <StatRing label="Hull" value={Math.min(shipData.hull, shipData.hull_max || shipData.hull)} max={shipData.hull_max || shipData.hull || 1} color="#63e6be" title={`Hull ${shipData.hull}/${shipData.hull_max} (Lv ${shipData.hull_lvl})`} />
+            {/* Armor */}
+            <StatRing label="Armor" value={shipData.armor} max={shipData.armor_max} color="#7ad4ff" title={`Armor ${shipData.armor}/${shipData.armor_max} (Lv ${shipData.armor_lvl || 0})`} />
+            {/* Energy (not a hold) */}
+            <StatRing label="Energy" value={shipData.energy} max={shipData.energy_max} color="#ffe066" title={`Energy ${shipData.energy}/${shipData.energy_max}`} />
+            {/* Fighters */}
+            <StatRing label="Fighters" value={shipData.fighters} max={capacityData?.computer?.capacity || Math.round(100 * Math.pow(1.5, (shipData.comp_lvl || 1) - 1))} color="#a78bfa" title={`Fighters ${shipData.fighters}/${capacityData?.computer?.capacity || Math.round(100 * Math.pow(1.5, (shipData.comp_lvl || 1) - 1))}`} />
+            {/* Torpedoes */}
+            <StatRing label="Torpedoes" value={shipData.torpedoes} max={capacityData?.torp_launcher?.capacity || Math.round(100 * Math.pow(1.5, (shipData.torp_launcher_lvl || 1) - 1))} color="#ff9e9e" title={`Torpedoes ${shipData.torpedoes}/${capacityData?.torp_launcher?.capacity || Math.round(100 * Math.pow(1.5, (shipData.torp_launcher_lvl || 1) - 1))}`} />
           </div>
         </div>
 
-        {/* Right Panel - Holds, Armor & Weapons */}
-        <div className={styles.rightPanel}>
-          <div className={styles.holdsSection}>
-            <h3>Holds</h3>
-            <div className={styles.holdsGrid}>
-              <div className={styles.holdItem}>
-                <span className={styles.holdIcon}>🪨</span>
-                <span className={styles.holdLabel}>Ore</span>
-                <span className={styles.holdValue}>{(inventory.ore || 0).toLocaleString()}</span>
-              </div>
-              <div className={styles.holdItem}>
-                <span className={styles.holdIcon}>🌿</span>
-                <span className={styles.holdLabel}>Organics</span>
-                <span className={styles.holdValue}>{(inventory.organics || 0).toLocaleString()}</span>
-              </div>
-              <div className={styles.holdItem}>
-                <span className={styles.holdIcon}>📦</span>
-                <span className={styles.holdLabel}>Goods</span>
-                <span className={styles.holdValue}>{(inventory.goods || 0).toLocaleString()}</span>
-              </div>
-              <div className={styles.holdItem}>
-                <span className={styles.holdIcon}>👤</span>
-                <span className={styles.holdLabel}>Colonists</span>
-                <span className={styles.holdValue}>
-                  {shipData.colonists || 0} / {capacityData?.colonists?.max || Math.round(100 * Math.pow(1.5, shipData.hull_lvl || 1))}
-                </span>
-              </div>
-              <div className={styles.holdItem}>
-                <span className={styles.holdIcon}>⚡</span>
-                <span className={styles.holdLabel}>Energy</span>
-                <span className={styles.holdValue}>{shipData.energy || 0} / {shipData.energy_max || 0}</span>
-              </div>
+        {/* Quadrant Cards */}
+        <div className={styles.cardGrid}>
+          {/* Components */}
+          <div className={styles.card}>
+            <h3>Tech Levels</h3>
+            <div className={styles.cardBody}>
+              <div>Hull — Lv {shipData.hull_lvl}</div>
+              <div>Engines — Lv {shipData.engine_lvl}</div>
+              <div>Power — Lv {shipData.power_lvl}</div>
+              <div>Computer — Lv {shipData.comp_lvl}</div>
+              <div>Sensors — Lv {shipData.sensor_lvl}</div>
+              <div>Armor — Lv {shipData.armor_lvl || 0}</div>
+              <div>Shields — Lv {shipData.shield_lvl}</div>
+              <div>Beam Weapons — Lv {shipData.beam_lvl}</div>
+              <div>Torpedo Launchers — Lv {shipData.torp_launcher_lvl}</div>
+              <div>Cloak — Lv {shipData.cloak_lvl}</div>
+              <div style={{ marginTop:8, opacity:.8 }}>Avg Tech: {avgTechLevel.toFixed(2)}</div>
             </div>
           </div>
 
-          <div className={styles.weaponsSection}>
+          {/* Holds */}
+          <div className={styles.card}>
+            <h3>
+              Holds
+              <span style={{ marginLeft:8, opacity:.75 }}>
+                Capacity: { (capacityData?.hull?.capacity || Math.round(100 * Math.pow(1.5, (shipData.hull_lvl||1) - 1))).toLocaleString() }
+              </span>
+            </h3>
+            <div className={styles.cardBody}>
+              <div>Ore — {inventory.ore?.toLocaleString() || 0}</div>
+              <div>Organics — {inventory.organics?.toLocaleString() || 0}</div>
+              <div>Goods — {inventory.goods?.toLocaleString() || 0}</div>
+              <div>Colonists — {shipData.colonists || 0}</div>
+              <div style={{ height:8 }} />
+              <div style={{ opacity:.85 }}><strong>Energy Capacity</strong> — {shipData.energy_max || 0}</div>
+              <div>Energy — {shipData.energy || 0}</div>
+            </div>
+          </div>
+
+          {/* Armor & Weapons */}
+          <div className={styles.card}>
             <h3>Armor & Weapons</h3>
-            <div className={styles.weaponsGrid}>
-              <div className={styles.weaponItem}>
-                <span className={styles.weaponIcon}>🛡️</span>
-                <span className={styles.weaponLabel}>Armor Points</span>
-                <span className={styles.weaponValue}>{shipData.armor} / {shipData.armor_max}</span>
-              </div>
-              <div className={styles.weaponItem}>
-                <span className={styles.weaponIcon}>✈️</span>
-                <span className={styles.weaponLabel}>Fighters</span>
-                <span className={styles.weaponValue}>
-                  {shipData.fighters} / {capacityData?.computer?.capacity || Math.round(100 * Math.pow(1.5, (shipData.comp_lvl || 1) - 1))}
-                </span>
-              </div>
-              <div className={styles.weaponItem}>
-                <span className={styles.weaponIcon}>🚀</span>
-                <span className={styles.weaponLabel}>Torpedoes</span>
-                <span className={styles.weaponValue}>
-                  {shipData.torpedoes} / {capacityData?.torp_launcher?.capacity || Math.round(100 * Math.pow(1.5, (shipData.torp_launcher_lvl || 1) - 1))}
-                </span>
-              </div>
+            <div className={styles.cardBody}>
+              <div>Armor Points — {shipData.armor} / {shipData.armor_max}</div>
+              <div>Fighters — {shipData.fighters} / {capacityData?.computer?.capacity || Math.round(100 * Math.pow(1.5, (shipData.comp_lvl || 1) - 1))}</div>
+              <div>Torpedoes — {shipData.torpedoes} / {capacityData?.torp_launcher?.capacity || Math.round(100 * Math.pow(1.5, (shipData.torp_launcher_lvl || 1) - 1))}</div>
             </div>
           </div>
 
-          <div className={styles.devicesSection}>
+          {/* Devices */}
+          <div className={styles.card}>
             <h3>Devices</h3>
-            <div className={styles.devicesGrid}>
-              <div className={styles.deviceItem}>
-                <span className={styles.deviceIcon}>📡</span>
-                <span className={styles.deviceLabel}>Space Beacons</span>
-                <span className={styles.deviceValue}>{shipData.device_space_beacons}</span>
-              </div>
-              <div className={styles.deviceItem}>
-                <span className={styles.deviceIcon}>🔧</span>
-                <span className={styles.deviceLabel}>Warp Editors</span>
-                <span className={styles.deviceValue}>{shipData.device_warp_editors}</span>
-              </div>
-              <div className={styles.deviceItem}>
-                <span className={styles.deviceIcon}>💥</span>
-                <span className={styles.deviceLabel}>Genesis Torpedoes</span>
-                <span className={styles.deviceValue}>{shipData.device_genesis_torpedoes}</span>
-              </div>
-              <div className={styles.deviceItem}>
-                <span className={styles.deviceIcon}>🛡️</span>
-                <span className={styles.deviceLabel}>Mine Deflectors</span>
-                <span className={styles.deviceValue}>{shipData.device_mine_deflectors}</span>
-              </div>
-              <div className={styles.deviceItem}>
-                <span className={styles.deviceIcon}>⚡</span>
-                <span className={styles.deviceLabel}>Emergency Warp</span>
-                <span className={styles.deviceValue}>{shipData.device_emergency_warp ? 'Yes' : 'No'}</span>
-              </div>
-              <div className={styles.deviceItem}>
-                <span className={styles.deviceIcon}>🛟</span>
-                <span className={styles.deviceLabel}>Escape Pod</span>
-                <span className={styles.deviceValue}>{shipData.device_escape_pod ? 'Yes' : 'No'}</span>
-              </div>
-              <div className={styles.deviceItem}>
-                <span className={styles.deviceIcon}>⛽</span>
-                <span className={styles.deviceLabel}>Fuel Scoop</span>
-                <span className={styles.deviceValue}>{shipData.device_fuel_scoop ? 'Yes' : 'No'}</span>
-              </div>
-              <div className={styles.deviceItem}>
-                <span className={styles.deviceIcon}>👁️</span>
-                <span className={styles.deviceLabel}>Last Ship Seen</span>
-                <span className={styles.deviceValue}>{shipData.device_last_seen ? 'Yes' : 'No'}</span>
-              </div>
+            <div className={styles.cardBody}>
+              <div>Space Beacons — {shipData.device_space_beacons}</div>
+              <div>Warp Editors — {shipData.device_warp_editors}</div>
+              <div>Genesis Torpedoes — {shipData.device_genesis_torpedoes}</div>
+              <div>Mine Deflectors — {shipData.device_mine_deflectors}</div>
+              <div>Emergency Warp — {shipData.device_emergency_warp ? 'Yes' : 'No'}</div>
+              <div>Escape Pod — {shipData.device_escape_pod ? 'Yes' : 'No'}</div>
+              <div>Fuel Scoop — {shipData.device_fuel_scoop ? 'Yes' : 'No'}</div>
+              <div>Last Ship Seen — {shipData.device_last_seen ? 'Yes' : 'No'}</div>
             </div>
           </div>
         </div>
+
+        {/* Action Bar */}
+        <div className={styles.actionBar}>
+          <button className={styles.actionBtn} onClick={handleRename} disabled={loading}>Rename</button>
+          <button className={styles.actionBtn} onClick={() => router.push('/game')}>Back to Game</button>
+        </div>
       </div>
 
-      {/* Capacity Information - Collapsible */}
+      {/* Capacity Information */}
       <div className={styles.capacitySection}>
         <button 
           className={styles.capacityToggle}
@@ -375,36 +274,21 @@ function ShipPageContent() {
           <span>Capacity Information</span>
           <span className={styles.toggleIcon}>{showCapacity ? '▼' : '▶'}</span>
         </button>
-        
-        {showCapacity && capacityData && (
+        {showCapacity && (
           <div className={styles.capacityContent}>
             <div className={styles.capacityGrid}>
               <div className={styles.capacityItem}>
-                <strong>Fighters:</strong> Limited by Computer Level ({shipData.comp_lvl}) = {capacityData.computer?.capacity?.toLocaleString() || 'N/A'} max
+                <strong>Formula (BNT classic):</strong> capacity = 100 × (1.5^(tech_level − 1))
               </div>
-              <div className={styles.capacityItem}>
-                <strong>Torpedoes:</strong> Limited by Torpedo Launcher Level ({shipData.torp_launcher_lvl}) = {capacityData.torp_launcher?.capacity?.toLocaleString() || 'N/A'} max
-              </div>
-              <div className={styles.capacityItem}>
-                <strong>Armor:</strong> Limited by Armor Level = {capacityData.armor?.capacity?.toLocaleString() || 'N/A'} max
-              </div>
-              <div className={styles.capacityItem}>
-                <strong>Colonists:</strong> Limited by Hull Level ({shipData.hull_lvl}) = {capacityData.hull?.capacity?.toLocaleString() || 'N/A'} max
-              </div>
-              <div className={styles.capacityItem}>
-                <strong>Energy:</strong> Limited by Power Level ({shipData.power_lvl}) = {capacityData.power?.capacity?.toLocaleString() || 'N/A'} max
+              <div className={styles.capacityItem} style={{opacity:.85}}>
+                Energy is <em>separate</em> from cargo. Holds include commodities and colonists only. Energy capacity is dictated by <strong>Power</strong> tech level.
               </div>
             </div>
           </div>
         )}
       </div>
 
-      {/* Status Message */}
-      {status && (
-        <div className={styles.status}>
-          {status}
-        </div>
-      )}
+      {status && <div className={styles.status}>{status}</div>}
     </div>
   )
 }

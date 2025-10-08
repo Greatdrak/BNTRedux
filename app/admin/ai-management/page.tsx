@@ -17,6 +17,8 @@ interface AIPlayer {
   sector_number: number
   credits: number
   ai_personality: string
+  score?: number
+  turns?: number
   ship_levels: {
     hull: number
     engine: number
@@ -63,6 +65,7 @@ export default function AIManagementPage() {
   const [universes, setUniverses] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [lastProcessResult, setLastProcessResult] = useState<any>(null)
 
   useEffect(() => {
     fetchUniverses()
@@ -123,6 +126,7 @@ export default function AIManagementPage() {
       const playersResponse = await fetch(`/api/admin/ai-players?universe_id=${selectedUniverse}`, { headers })
       if (playersResponse.ok) {
         const playersData = await playersResponse.json()
+        console.log('AI Players data:', playersData.aiPlayers || playersData)
         setAiPlayers(playersData.aiPlayers || playersData)
       }
 
@@ -143,6 +147,8 @@ export default function AIManagementPage() {
 
   const triggerAIActions = async () => {
     setLoading(true)
+    setError(null)
+    setLastProcessResult(null)
     try {
       const { data: { session } } = await supabase.auth.getSession()
       
@@ -161,6 +167,8 @@ export default function AIManagementPage() {
       })
       
       if (response.ok) {
+        const result = await response.json()
+        setLastProcessResult(result)
         await fetchAIData() // Refresh data
       } else {
         setError('Failed to trigger AI actions')
@@ -297,6 +305,69 @@ export default function AIManagementPage() {
 
       {error && <div className={styles.error}>{error}</div>}
 
+      {/* Last AI Processing Results */}
+      {lastProcessResult && (
+        <div className={styles.processResults}>
+          <h3>🤖 Last AI Processing Cycle Results</h3>
+          <div className={styles.resultsGrid}>
+            <div className={styles.resultCard}>
+              <span className={styles.resultLabel}>Players Processed</span>
+              <span className={styles.resultValue}>{lastProcessResult.playersProcessed || 0}</span>
+            </div>
+            <div className={styles.resultCard}>
+              <span className={styles.resultLabel}>Total Actions</span>
+              <span className={styles.resultValue}>{lastProcessResult.totalActions || 0}</span>
+            </div>
+            <div className={styles.resultCard}>
+              <span className={styles.resultLabel}>Turns Used</span>
+              <span className={styles.resultValue}>{lastProcessResult.totalTurnsUsed || 0}</span>
+            </div>
+            {lastProcessResult.communismBoost && (
+              <>
+                <div className={styles.resultCard}>
+                  <span className={styles.resultLabel}>Credits Injected</span>
+                  <span className={styles.resultValue} style={{ color: '#FFD700' }}>
+                    {lastProcessResult.communismBoost.totalCreditsInjected?.toLocaleString() || 0}
+                  </span>
+                </div>
+                <div className={styles.resultCard}>
+                  <span className={styles.resultLabel}>AIs Boosted</span>
+                  <span className={styles.resultValue}>{lastProcessResult.communismBoost.aisBoosted || 0}</span>
+                </div>
+              </>
+            )}
+          </div>
+          {lastProcessResult.actionBreakdown && (
+            <div className={styles.actionBreakdown}>
+              <h4>Action Breakdown:</h4>
+              <div className={styles.actionGrid}>
+                {Object.entries(lastProcessResult.actionBreakdown).map(([action, count]: [string, any]) => (
+                  <div key={action} className={styles.actionItem}>
+                    <span>{action}:</span>
+                    <span className={styles.actionCount}>{count}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          {lastProcessResult.topPlayers && lastProcessResult.topPlayers.length > 0 && (
+            <div className={styles.topPlayers}>
+              <h4>Top 10 AI Players by Score:</h4>
+              <div className={styles.topPlayersList}>
+                {lastProcessResult.topPlayers.map((player: any, idx: number) => (
+                  <div key={player.handle} className={styles.topPlayerItem}>
+                    <span className={styles.rank}>#{idx + 1}</span>
+                    <span className={styles.playerHandle}>{player.handle}</span>
+                    <span className={styles.playerScore}>{player.score?.toLocaleString() || 0}</span>
+                    <span className={styles.playerTurns}>{player.turns || 0} turns</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Enhanced AI Status */}
       {selectedUniverse && (
         <div className={styles.enhancedAiToggle}>
@@ -348,28 +419,30 @@ export default function AIManagementPage() {
         </div>
       )}
 
-      <div className={styles.personalityDistribution}>
-        <h3>Personality Distribution</h3>
-        <div className={styles.personalityBars}>
-          {aiStats?.personality_distribution && Object.entries(aiStats.personality_distribution).map(([personality, count]) => (
-            <div key={personality} className={styles.personalityBar}>
-              <span className={styles.personalityLabel} style={{ color: getPersonalityColor(personality) }}>
-                {personality.charAt(0).toUpperCase() + personality.slice(1)}
-              </span>
-              <div className={styles.barContainer}>
-                <div 
-                  className={styles.bar}
-                  style={{ 
-                    width: `${(count / aiStats.total_ai_players) * 100}%`,
-                    backgroundColor: getPersonalityColor(personality)
-                  }}
-                />
+      {aiStats && aiStats.personality_distribution && (
+        <div className={styles.personalityDistribution}>
+          <h3>Personality Distribution</h3>
+          <div className={styles.personalityBars}>
+            {Object.entries(aiStats.personality_distribution).map(([personality, count]) => (
+              <div key={personality} className={styles.personalityBar}>
+                <span className={styles.personalityLabel} style={{ color: getPersonalityColor(personality) }}>
+                  {personality.charAt(0).toUpperCase() + personality.slice(1)}
+                </span>
+                <div className={styles.barContainer}>
+                  <div 
+                    className={styles.bar}
+                    style={{ 
+                      width: `${aiStats.total_ai_players > 0 ? (count / aiStats.total_ai_players) * 100 : 0}%`,
+                      backgroundColor: getPersonalityColor(personality)
+                    }}
+                  />
+                </div>
+                <span className={styles.count}>{count}</span>
               </div>
-              <span className={styles.count}>{count}</span>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       <div className={styles.tabsContainer}>
         <div className={styles.tabs}>
@@ -378,7 +451,7 @@ export default function AIManagementPage() {
         </div>
 
         <div className={styles.playersGrid}>
-          {aiPlayers.map(player => {
+          {aiPlayers && aiPlayers.length > 0 ? aiPlayers.map(player => {
             const memory = aiMemories.find(m => m.player_id === player.player_id)
             return (
               <div key={player.player_id} className={styles.playerCard}>
@@ -394,6 +467,14 @@ export default function AIManagementPage() {
                 
                 <div className={styles.playerStats}>
                   <div className={styles.statRow}>
+                    <span>Score:</span>
+                    <span className={styles.highlightStat}>{player.score?.toLocaleString() || 0}</span>
+                  </div>
+                  <div className={styles.statRow}>
+                    <span>Turns:</span>
+                    <span className={styles.highlightStat}>{player.turns?.toLocaleString() || 0}</span>
+                  </div>
+                  <div className={styles.statRow}>
                     <span>Sector:</span>
                     <span>{player.sector_number}</span>
                   </div>
@@ -403,7 +484,7 @@ export default function AIManagementPage() {
                   </div>
                   <div className={styles.statRow}>
                     <span>Planets:</span>
-                    <span>{memory?.owned_planets || 0}</span>
+                    <span>{player.owned_planets || 0}</span>
                   </div>
                   <div className={styles.statRow}>
                     <span>Goal:</span>
@@ -416,12 +497,16 @@ export default function AIManagementPage() {
                 </div>
 
                 <div className={styles.shipLevels}>
-                  <h5>Ship Levels</h5>
+                  <h5>Ship Tech Levels</h5>
                   <div className={styles.levelsGrid}>
-                    <span>Hull: {player.ship_levels.hull}</span>
-                    <span>Engine: {player.ship_levels.engine}</span>
-                    <span>Weapons: {player.ship_levels.beam_weapon}</span>
-                    <span>Armor: {player.ship_levels.armor}</span>
+                    <span>Hull: {player.ship_levels?.hull || 0}</span>
+                    <span>Engine: {player.ship_levels?.engine || 0}</span>
+                    <span>Power: {player.ship_levels?.power || 0}</span>
+                    <span>Computer: {player.ship_levels?.computer || 0}</span>
+                    <span>Sensors: {player.ship_levels?.sensors || 0}</span>
+                    <span>Beams: {player.ship_levels?.beam_weapon || 0}</span>
+                    <span>Armor: {player.ship_levels?.armor || 0}</span>
+                    <span>Shields: {player.ship_levels?.shield || 0}</span>
                   </div>
                 </div>
 
@@ -435,7 +520,9 @@ export default function AIManagementPage() {
                 </div>
               </div>
             )
-          })}
+          }) : (
+            <div className={styles.noData}>No AI players found in this universe.</div>
+          )}
         </div>
       </div>
     </div>

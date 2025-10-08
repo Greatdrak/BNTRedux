@@ -69,7 +69,7 @@ export default function RightPanels({
             onClick={onScanWarps} 
             disabled={!playerTurns}
           >
-            🔎 Scan Warps (-1)
+            📡 Scan Warps (-1)
           </button>
         </div>
 

@@ -9,6 +9,7 @@ interface TradeRouteOverlayProps {
   onClose: () => void
   universeId: string
   onRouteChange?: () => void
+  onTravelToSector?: (sectorNumber: number, travelType: 'warp' | 'realspace') => void
 }
 
 interface TradeRoute {
@@ -48,7 +49,7 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 )
 
-export default function TradeRouteOverlay({ open, onClose, universeId, onRouteChange }: TradeRouteOverlayProps) {
+export default function TradeRouteOverlay({ open, onClose, universeId, onRouteChange, onTravelToSector }: TradeRouteOverlayProps) {
   const [routes, setRoutes] = useState<TradeRoute[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -391,77 +392,57 @@ export default function TradeRouteOverlay({ open, onClose, universeId, onRouteCh
     }
   }
 
-  const executeRoute = async (routeId: string) => {
+  const executeRoute = async (routeId: string, iterations: number = 1) => {
     try {
       setLoading(true)
       setError(null)
-      
-      console.log('Starting trade route execution for route:', routeId)
-      console.log('Universe ID:', universeId)
-      
       const { data: { session } } = await supabase.auth.getSession()
-      if (!session) {
-        console.log('No session found')
-        return
-      }
+      if (!session) return
 
-      console.log('Making API call to execute trade route...')
-      
       // Add timeout to prevent hanging
       const controller = new AbortController()
-      const timeoutId = setTimeout(() => controller.abort(), 30000) // 30 second timeout
-      
-      try {
-        const response = await fetch(`/api/trade-routes/${routeId}/execute`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${session.access_token}`
-          },
-          body: JSON.stringify({ 
-            max_iterations: 1,
-            universe_id: universeId
-          }),
-          signal: controller.signal
-        })
-        
-        clearTimeout(timeoutId)
-        console.log('API response status:', response.status)
+      const timeoutId = setTimeout(() => controller.abort(), 30000)
 
-        if (!response.ok) {
-          throw new Error('Failed to execute trade route')
-        }
-
-        const data = await response.json()
-        console.log('Trade route execution response:', data)
-        
-        if (data.ok) {
-          // Show execution log if available
-          if (data.log) {
-            console.log('Execution log:', data.log)
-            setError(`Execution completed successfully!\n\nLog:\n${data.log}`)
-          }
-          
-          await fetchRoutes() // Refresh to show updated stats
-          onRouteChange?.() // Refresh main game data (player, sector, etc.)
-        } else {
-          throw new Error(data.error?.message || 'Failed to execute trade route')
-        }
-      } catch (fetchError) {
-        clearTimeout(timeoutId)
-        if ((fetchError as any)?.name === 'AbortError') {
-          console.error('Trade route execution timed out')
-          setError('Trade route execution timed out after 30 seconds')
-        } else {
-          throw fetchError
-        }
+      const response = await fetch(`/api/trade-routes/${routeId}/execute`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
+        },
+        body: JSON.stringify({ 
+          max_iterations: iterations,
+          universe_id: universeId
+        }),
+        signal: controller.signal
+      })
+      clearTimeout(timeoutId)
+      if (!response.ok) throw new Error('Failed to execute trade route')
+      const data = await response.json()
+      if (data.ok) {
+        await fetchRoutes()
+        onRouteChange?.()
+      } else {
+        throw new Error(data.error?.message || 'Failed to execute trade route')
       }
     } catch (err) {
-      console.error('Error executing trade route:', err)
       setError(err instanceof Error ? err.message : 'Failed to execute trade route')
     } finally {
       setLoading(false)
     }
+  }
+
+  const moveToSector = async (sectorNumber: number) => {
+    if (onTravelToSector) {
+      onTravelToSector(sectorNumber, 'realspace')
+    }
+  }
+
+  const estimateTurns = (route: TradeRoute, iterations: number) => {
+    // If we have historical data, estimate turns/iteration, else assume 2
+    const perIteration = route.current_iteration > 0 && route.total_turns_spent > 0
+      ? Math.max(1, Math.round(route.total_turns_spent / route.current_iteration))
+      : 2
+    return perIteration * iterations
   }
 
   const formatCurrency = (amount: number) => {
@@ -660,70 +641,59 @@ export default function TradeRouteOverlay({ open, onClose, universeId, onRouteCh
               ) : (
                 routes.map((route) => (
                   <div key={route.id} className={styles.routeCard}>
-                    <div className={styles.routeHeader}>
-                      <h3>{route.name}</h3>
-                      <div className={styles.routeStatus}>
-                        {route.is_active && <span className={styles.activeBadge}>Active</span>}
-                        {route.is_automated && <span className={styles.automatedBadge}>Automated</span>}
+                    {/* Compact row layout */}
+                    <div className={styles.routeRow}>
+                      <div className={styles.rowLeft}>
+                        <div className={styles.rowTitle}>
+                          <span className={styles.routeName}>{route.name}</span>
+                          {route.is_active && <span className={styles.badge}>Active</span>}
+                          {route.is_automated && <span className={styles.badgeWarn}>Automated</span>}
+                        </div>
+
+                        {route.waypoints && route.waypoints.length >= 2 && (
+                          <div className={styles.pathInline}>
+                            <button className={styles.linkBtn} onClick={() => onTravelToSector?.(route.waypoints[0].port_info.sector_number, 'realspace')}>
+                              {route.waypoints[0].port_info.sector_number}
+                            </button>
+                            <span className={styles.kindChip}>{route.waypoints[0].port_info.port_kind}</span>
+                            <span className={styles.arrow}>→</span>
+                            <button className={styles.linkBtn} onClick={() => onTravelToSector?.(route.waypoints[1].port_info.sector_number, 'realspace')}>
+                              {route.waypoints[1].port_info.sector_number}
+                            </button>
+                            <span className={styles.kindChip}>{route.waypoints[1].port_info.port_kind}</span>
+                          </div>
+                        )}
                       </div>
-                    </div>
-                    
-                    {route.description && (
-                      <p className={styles.routeDescription}>{route.description}</p>
-                    )}
-                    
-                    <div className={styles.routeStats}>
-                      <div className={styles.stat}>
-                        <span className={styles.statLabel}>Waypoints:</span>
-                        <span className={styles.statValue}>{route.waypoint_count}</span>
+
+                      <div className={styles.inlineStats}>
+                        <span title="Waypoints">Pts {route.waypoint_count}</span>
+                        <span title="Profit/Turn">P/T {route.current_profit_per_turn ? formatCurrency(route.current_profit_per_turn) : '—'}</span>
+                        <span title="Iterations">Iter {route.current_iteration}</span>
+                        <span title="Total Profit">Tot {formatCurrency(route.total_profit)}</span>
                       </div>
-                      <div className={styles.stat}>
-                        <span className={styles.statLabel}>Total Profit:</span>
-                        <span className={styles.statValue}>{formatCurrency(route.total_profit)}</span>
+
+                      <div className={styles.rowActions}>
+                        <div className={styles.segmentGroup}>
+                          {[1,5,10,20,50].map((iters) => (
+                            <button
+                              key={iters}
+                              className={styles.segmentBtn}
+                              disabled={loading || route.waypoint_count === 0}
+                              onClick={() => {
+                                if (iters === 1) return executeRoute(route.id, 1)
+                                const est = estimateTurns(route, iters)
+                                const ok = confirm(`Execute ${iters} iterations? Estimated turns: ${est}.`)
+                                if (ok) executeRoute(route.id, iters)
+                              }}
+                            >
+                              {iters === 1 ? 'Execute' : `x${iters}`}
+                            </button>
+                          ))}
+                        </div>
+                        <button className={styles.iconBtn} onClick={() => calculateProfitability(route.id)} title="Calculate Profit">📊</button>
+                        <button className={styles.iconBtnDanger} onClick={() => deleteRoute(route.id)} title="Delete">🗑️</button>
+                        <button className={styles.iconBtn} onClick={() => { setSelectedRoute(route); setShowRouteDetails(true) }} title="Details">📋</button>
                       </div>
-                      <div className={styles.stat}>
-                        <span className={styles.statLabel}>Profit/Turn:</span>
-                        <span className={styles.statValue}>
-                          {route.current_profit_per_turn ? formatCurrency(route.current_profit_per_turn) : 'Not calculated'}
-                        </span>
-                      </div>
-                      <div className={styles.stat}>
-                        <span className={styles.statLabel}>Iterations:</span>
-                        <span className={styles.statValue}>{route.current_iteration}</span>
-                      </div>
-                    </div>
-                    
-                    <div className={styles.routeActions}>
-                      <button 
-                        className={styles.actionBtn}
-                        onClick={() => {
-                          setSelectedRoute(route)
-                          setShowRouteDetails(true)
-                        }}
-                      >
-                        📋 View Details
-                      </button>
-                      <button 
-                        className={styles.actionBtn}
-                        onClick={() => calculateProfitability(route.id)}
-                        disabled={loading}
-                      >
-                        📊 Calculate Profit
-                      </button>
-                      <button 
-                        className={styles.actionBtn}
-                        onClick={() => executeRoute(route.id)}
-                        disabled={loading || route.waypoint_count === 0}
-                      >
-                        ▶️ Execute
-                      </button>
-                      <button 
-                        className={styles.deleteBtn}
-                        onClick={() => deleteRoute(route.id)}
-                        disabled={loading}
-                      >
-                        🗑️ Delete
-                      </button>
                     </div>
                     
                     <div className={styles.routeMeta}>

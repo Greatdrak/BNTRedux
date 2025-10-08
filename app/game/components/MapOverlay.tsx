@@ -36,12 +36,12 @@ export default function MapOverlay({ open, onClose, sectors, onPickTarget, curre
 
   const iconFor = (k: MapCell['portKind']) => {
     switch (k) {
-      case 'ore': return 'O'
-      case 'organics': return 'Rg'
-      case 'goods': return 'G'
-      case 'energy': return 'E'
-      case 'special': return 'S'
-      default: return '·'
+      case 'ore': return '🪨'
+      case 'organics': return '🌿'
+      case 'goods': return '📦'
+      case 'energy': return '⚡'
+      case 'special': return '✦'
+      default: return ''
     }
   }
 
@@ -65,11 +65,11 @@ export default function MapOverlay({ open, onClose, sectors, onPickTarget, curre
               ].join(' ')}
               style={{ borderColor: s.visited? '#63e6be':'var(--line)' }}
               onClick={()=> onPickTarget(s.number)}
-              title={`Sector ${s.number}${s.portKind?` — Port: ${s.portKind}`:''}${s.hasPlanet?` — Planet ${s.planetOwned?'(owned)':'(unowned)'}`:''}`}
+              title={`Sector ${s.number}${(s.visited||s.scanned) && s.portKind?` — Port: ${s.portKind}`:''}${(s.visited||s.scanned) && s.hasPlanet?` — Planet ${s.planetOwned?'(owned)':'(unowned)'}`:''}`}
             >
               <span className={styles.number}>{s.number}</span>
-              <span className={styles.badgeBelow}>{iconFor(s.portKind)}</span>
-              {s.hasPlanet && (
+              <span className={styles.badgeBelow}>{(s.visited||s.scanned)? iconFor(s.portKind) : ''}</span>
+              {(s.visited||s.scanned) && s.hasPlanet && (
                 <span className={[styles.planetBadge, s.planetOwned ? styles.planetOwned : styles.planetUnowned].join(' ')}>
                   🪐
                 </span>

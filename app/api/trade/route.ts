@@ -49,6 +49,44 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: { code: 'not_found', message: 'Port not found' } }, { status: 404 })
     }
 
+    // Get port's sector for rule checking
+    const { data: portSector } = await supabaseAdmin
+      .from('ports')
+      .select('sector_id')
+      .eq('id', portId)
+      .single()
+
+    if (!portSector?.sector_id) {
+      return NextResponse.json({ error: { code: 'invalid_port', message: 'Port sector not found' } }, { status: 404 })
+    }
+
+    // Get player ID for sector permission check
+    const { data: playerData } = await supabaseAdmin
+      .from('players')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('universe_id', universe_id)
+      .single()
+
+    if (!playerData) {
+      return NextResponse.json({ error: { code: 'player_not_found', message: 'Player not found' } }, { status: 404 })
+    }
+
+    // Check sector rules - trading allowed?
+    const { data: sectorPermission } = await supabaseAdmin
+      .rpc('check_sector_permission', {
+        p_sector_id: portSector.sector_id,
+        p_player_id: playerData.id,
+        p_action: 'trade'
+      })
+    
+    if (sectorPermission && !sectorPermission.allowed) {
+      return NextResponse.json(
+        { error: { code: sectorPermission.reason || 'sector_rules', message: sectorPermission.message || 'Trading is not allowed in this sector' } },
+        { status: 403 }
+      )
+    }
+
     if (portData.kind === 'special') {
       return NextResponse.json({ error: { code: 'invalid_port_kind', message: 'This is a Special port: no commodity trading.' } }, { status: 400 })
     }

@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
 
     const { data: sectors } = await supabaseAdmin
       .from('sectors')
-      .select('id, number')
+      .select('id, number, last_visited_at, last_visited_by')
       .eq('universe_id', player.universe_id)
       .gte('number', minNum)
       .lte('number', maxNum)
@@ -58,12 +58,51 @@ export async function POST(request: NextRequest) {
       planetCountBySector.set(p.sector_id, (planetCountBySector.get(p.sector_id) || 0) + 1)
     })
 
+    // Check if player has the last-ship-seen device
+    const { data: ship } = await supabaseAdmin
+      .from('ships')
+      .select('device_last_seen')
+      .eq('player_id', player.id)
+      .single()
+
+    let lastSeenBySector: Record<string, any> = {}
+    if (ship?.device_last_seen) {
+      // Resolve last_visited_by into ship name + player handle
+      const byIds = rows
+        .map(r => r.last_visited_by)
+        .filter((id:any) => !!id)
+      if (byIds.length > 0) {
+        const { data: visitors } = await supabaseAdmin
+          .from('players')
+          .select('id, handle')
+          .in('id', byIds)
+        const visitorMap = new Map((visitors||[]).map((v:any)=>[v.id, v.handle]))
+
+        const { data: visitorShips } = await supabaseAdmin
+          .from('ships')
+          .select('player_id, name')
+          .in('player_id', byIds)
+        const shipMap = new Map((visitorShips||[]).map((s:any)=>[s.player_id, s.name || 'Ship']))
+
+        for (const r of rows) {
+          if (r.last_visited_by) {
+            lastSeenBySector[r.id] = {
+              at: r.last_visited_at,
+              shipName: shipMap.get(r.last_visited_by) || 'Ship',
+              playerHandle: visitorMap.get(r.last_visited_by) || null
+            }
+          }
+        }
+      }
+    }
+
     return NextResponse.json({ 
       ok:true, 
       sectors: rows.map(r => ({ 
         number: r.number, 
         port: portBySector.has(r.id) ? { kind: portBySector.get(r.id) } : null,
-        planetCount: planetCountBySector.get(r.id) || 0
+        planetCount: planetCountBySector.get(r.id) || 0,
+        lastSeen: lastSeenBySector[r.id] || null
       })) 
     })
   } catch (err) {

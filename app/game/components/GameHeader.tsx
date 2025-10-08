@@ -6,9 +6,11 @@ import styles from '../page.module.css'
 interface GameHeaderProps {
   playerName: string;
   currentSector: number;
+  sectorName?: string;
   turns: number;
   turnsUsed: number;
   credits: number;
+  score?: number;
   engineLevel: number;
   lastTurnTs?: string;
   turnCap?: number;
@@ -17,14 +19,17 @@ interface GameHeaderProps {
   onUniverseChange: (universeId: string) => void;
   onRefresh: () => void;
   onLogout: () => void;
+  onSectorClick?: () => void;
 }
 
 export default function GameHeader({
   playerName,
   currentSector,
+  sectorName,
   turns,
   turnsUsed,
   credits,
+  score = 0,
   engineLevel,
   lastTurnTs,
   turnCap,
@@ -32,7 +37,8 @@ export default function GameHeader({
   universeId,
   onUniverseChange,
   onRefresh,
-  onLogout
+  onLogout,
+  onSectorClick
 }: GameHeaderProps) {
   const [showUniverseDropdown, setShowUniverseDropdown] = useState(false)
   const [countdown, setCountdown] = useState<number>(0)
@@ -83,9 +89,11 @@ export default function GameHeader({
 
       {/* Game Stats */}
       <div className={styles.headerStats}>
-        <div className={styles.statItem}>
-          <span className={styles.statLabel}>SECTOR</span>
-          <span className={styles.statValue}>{currentSector}</span>
+        <div className={styles.statItem} onClick={onSectorClick} style={{ cursor: onSectorClick ? 'pointer' : 'default' }}>
+          <span className={styles.statLabel}>SECTOR {currentSector}</span>
+          <span className={styles.statValue} title="Click to view sector rules">
+            {sectorName || (currentSector >= 0 && currentSector <= 10 ? 'Federation Territory' : 'Uncharted Territory')} 🔍
+          </span>
         </div>
         <div className={styles.statItem}>
           <span className={styles.statLabel}>TURNS</span>
@@ -98,6 +106,10 @@ export default function GameHeader({
         <div className={styles.statItem}>
           <span className={styles.statLabel}>CREDITS</span>
           <span className={styles.statValue}>{credits.toLocaleString()}</span>
+        </div>
+        <div className={styles.statItem}>
+          <span className={styles.statLabel}>SCORE</span>
+          <span className={styles.statValue}>{score.toLocaleString()}</span>
         </div>
         <div className={styles.statItem}>
           <span className={styles.statLabel}>ENG</span>

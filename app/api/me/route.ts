@@ -75,7 +75,7 @@ export async function GET(request: NextRequest) {
     // Check if player exists in the selected universe
     const { data: existingPlayer } = await supabaseAdmin
       .from('players')
-      .select('id, handle, turns, turns_spent, last_turn_ts, current_sector')
+      .select('id, handle, turns, turns_spent, last_turn_ts, current_sector, score')
       .eq('user_id', userId)
       .eq('universe_id', universe.id)
       .maybeSingle()
@@ -150,7 +150,8 @@ export async function GET(request: NextRequest) {
           current_sector: existingPlayer.current_sector,
           current_sector_number: currentSectorNumber,
           universe_id: universe.id,
-          universe_name: universe.name
+          universe_name: universe.name,
+          score: existingPlayer.score || 0
         },
         ship: shipData,
         inventory: inventoryData
