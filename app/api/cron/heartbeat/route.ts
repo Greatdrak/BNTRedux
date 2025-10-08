@@ -207,7 +207,7 @@ export async function POST(request: NextRequest) {
                 } else {
                   rpcResult = await aiResponse.json()
                 }
-              } else {
+              } else if (event.rpc) {
                 // Use SQL RPC function
                 const result = await supabaseAdmin.rpc(event.rpc, { p_universe_id: u.id, ...event.args })
                 rpcResult = result.data

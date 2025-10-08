@@ -3,15 +3,15 @@ import { supabaseAdmin } from '@/lib/supabase-server'
 import { verifyBearerToken, createAuthErrorResponse } from '@/lib/auth-helper'
 
 // POST /api/trade-routes/[id]/execute - Execute a trade route
-export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id: routeId } = await params
     const authResult = await verifyBearerToken(request)
     if ('error' in authResult) {
       return createAuthErrorResponse(authResult)
     }
 
     const userId = authResult.userId
-    const routeId = params.id
     const body = await request.json()
     const { max_iterations = 1, universe_id } = body
 

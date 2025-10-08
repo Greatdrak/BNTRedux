@@ -3,7 +3,7 @@ import { supabaseAdmin } from '@/lib/supabase-server'
 import { verifyBearerToken, createAuthErrorResponse } from '@/lib/auth-helper'
 
 // PUT /api/trade-routes/[id] - Update a trade route
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const authResult = await verifyBearerToken(request)
     if ('error' in authResult) {
@@ -11,7 +11,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     }
     
     const userId = authResult.userId
-    const routeId = params.id
+    const { id: routeId } = await params
     const body = await request.json()
     const { name, description, is_active, is_automated, max_iterations } = body
     
@@ -111,15 +111,15 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 }
 
 // DELETE /api/trade-routes/[id] - Delete a trade route
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id: routeId } = await params
     const authResult = await verifyBearerToken(request)
     if ('error' in authResult) {
       return createAuthErrorResponse(authResult)
     }
     
     const userId = authResult.userId
-    const routeId = params.id
     
     // Validate route ID
     if (!routeId || typeof routeId !== 'string') {

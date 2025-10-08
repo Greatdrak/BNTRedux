@@ -39,11 +39,12 @@ export async function GET(request: NextRequest) {
   }
 
   // Format response
+  const players = Array.isArray(sector.players) ? sector.players[0] : sector.players
   const response = {
     sectorNumber: sector.number,
     name: sector.name || 'Uncharted Territory',
     owned: sector.controlled || false,
-    ownerHandle: sector.players?.handle || null,
+    ownerHandle: players?.handle || null,
     rules: {
       allowAttacking: sector.allow_attacking,
       allowTrading: sector.allow_trading,

@@ -41,16 +41,19 @@ export async function GET(request: NextRequest) {
     }
 
     // Format memories data
-    const formattedMemories = memories?.map(memory => ({
-      player_id: memory.player_id,
-      player_name: memory.players?.handle || 'Unknown',
-      last_action: memory.last_action,
-      current_goal: memory.current_goal,
-      target_sector_id: memory.target_sector_id,
-      owned_planets: memory.owned_planets || 0,
-      last_profit: memory.last_profit || 0,
-      consecutive_losses: memory.consecutive_losses || 0
-    })) || []
+    const formattedMemories = memories?.map(memory => {
+      const players = Array.isArray(memory.players) ? memory.players[0] : memory.players
+      return {
+        player_id: memory.player_id,
+        player_name: players?.handle || 'Unknown',
+        last_action: memory.last_action,
+        current_goal: memory.current_goal,
+        target_sector_id: memory.target_sector_id,
+        owned_planets: memory.owned_planets || 0,
+        last_profit: memory.last_profit || 0,
+        consecutive_losses: memory.consecutive_losses || 0
+      }
+    }) || []
 
     return NextResponse.json({
       memories: formattedMemories,

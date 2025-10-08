@@ -5,7 +5,7 @@ import { verifyBearerToken } from '@/lib/auth-helper'
 // DELETE /api/admin/universes/[id] - Destroy universe
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const authResult = await verifyBearerToken(request)
@@ -15,7 +15,8 @@ export async function DELETE(
 
     // TODO: Add admin authorization check here
 
-    const universeId = params.id
+    const { id } = await params
+    const universeId = id
 
     // Validate UUID format
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i

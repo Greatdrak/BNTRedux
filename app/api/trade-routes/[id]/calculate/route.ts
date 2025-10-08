@@ -3,15 +3,15 @@ import { supabaseAdmin } from '@/lib/supabase-server'
 import { verifyBearerToken, createAuthErrorResponse } from '@/lib/auth-helper'
 
 // POST /api/trade-routes/[id]/calculate - Calculate route profitability
-export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id: routeId } = await params
     const authResult = await verifyBearerToken(request)
     if ('error' in authResult) {
       return createAuthErrorResponse(authResult)
     }
     
     const userId = authResult.userId
-    const routeId = params.id
     
     // Validate route ID
     if (!routeId || typeof routeId !== 'string') {

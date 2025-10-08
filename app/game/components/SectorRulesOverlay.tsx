@@ -11,7 +11,7 @@ interface SectorRulesOverlayProps {
   isOwner: boolean
   onRename?: (newName: string) => Promise<void>
   onUpdateRules?: (rules: any) => Promise<void>
-  fetchFn?: (url: string) => Promise<Response>
+  fetchFn?: (url: string, options?: RequestInit) => Promise<Response | undefined>
 }
 
 export default function SectorRulesOverlay({
@@ -35,7 +35,7 @@ export default function SectorRulesOverlay({
     
     setLoading(true)
     fetchFn(`/api/sector/rules?sectorNumber=${sectorNumber}&universe_id=${universeId}`)
-      .then(r => r.json())
+      .then(r => r?.json())
       .then(data => {
         setSectorData(data)
         setNewName(data.name || '')

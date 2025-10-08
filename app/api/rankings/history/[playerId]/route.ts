@@ -5,7 +5,7 @@ import { verifyBearerToken, createAuthErrorResponse } from '@/lib/auth-helper'
 // GET /api/rankings/history/[playerId] - Get ranking history for a player
 export async function GET(
   request: NextRequest,
-  { params }: { params: { playerId: string } }
+  { params }: { params: Promise<{ playerId: string }> }
 ) {
   try {
     // Verify bearer token
@@ -15,7 +15,7 @@ export async function GET(
     }
     
     const userId = authResult.userId
-    const playerId = params.playerId
+    const { playerId } = await params
     const { searchParams } = new URL(request.url)
     const universeId = searchParams.get('universe_id')
     const limit = parseInt(searchParams.get('limit') || '100')

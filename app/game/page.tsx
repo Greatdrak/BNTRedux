@@ -261,7 +261,7 @@ function GameContent() {
   // Load activity logs when modal opens
   useEffect(() => {
     if (!activityOpen) return
-    apiCall('/api/logs').then(r=>r.json()).then(d=>{
+    apiCall('/api/logs').then(r=>r?.json()).then(d=>{
       if (d?.logs) {
         const logsDiv = document.getElementById('activity-logs')
         if (logsDiv) {
@@ -1182,7 +1182,7 @@ function GameContent() {
                   const name = (document.getElementById('genesis-name') as HTMLInputElement)?.value || 'New Planet'
                   try {
                     const res = await apiCall('/api/planet/genesis', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action, sectorNumber: sectorNum, name }) })
-                    const data = await res.json()
+                    const data = await res?.json()
                     if (data?.success) {
                       setStatusMessage(`Planet ${action === 'create' ? 'created' : 'destroyed'} successfully`)
                       setStatusType('success')
@@ -1238,7 +1238,7 @@ function GameContent() {
                 universe_id: playerUniverseId || universeId
               })
             })
-            const data = await res.json()
+            const data = await res?.json()
             if (data?.success) {
               setStatusMessage('Sector renamed successfully')
               setStatusType('success')
