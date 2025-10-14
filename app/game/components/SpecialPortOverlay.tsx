@@ -46,6 +46,7 @@ interface SpecialPortOverlayProps {
   universeId?: string
   onStatusMessage?: (message: string, type: 'success' | 'error' | 'info') => void
   onPurchaseComplete?: () => void
+  highlightHullUpgrade?: boolean
 }
 
 interface CapacityData {
@@ -79,7 +80,8 @@ export default function SpecialPortOverlay({
   upgradeLoading = false,
   universeId,
   onStatusMessage,
-  onPurchaseComplete
+  onPurchaseComplete,
+  highlightHullUpgrade = false
 }: SpecialPortOverlayProps) {
   // State for classic BNT Special Port features
   const [activeTab, setActiveTab] = useState<'upgrades' | 'devices'>('upgrades')
@@ -415,7 +417,7 @@ export default function SpecialPortOverlay({
                         </div>
                       </div>
                       <button
-                        className={`${styles.upgradeBtn} ${!canAfford(attr) ? styles.disabled : ''}`}
+                        className={`${styles.upgradeBtn} ${!canAfford(attr) ? styles.disabled : ''} ${highlightHullUpgrade && attr === 'hull' ? styles.highlightUpgrade : ''}`}
                         onClick={() => onUpgrade(attr)}
                         disabled={!canAfford(attr) || upgradeLoading}
                       >

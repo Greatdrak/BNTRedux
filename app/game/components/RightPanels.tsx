@@ -25,6 +25,9 @@ interface RightPanelsProps {
   onWarpClick: (sectorNumber: number) => void;
   moveLoading: boolean;
   playerTurns: number;
+  
+  // Tutorial highlighting
+  highlightFullScan?: boolean;
 }
 
 export default function RightPanels({
@@ -42,7 +45,8 @@ export default function RightPanels({
   warps,
   onWarpClick,
   moveLoading,
-  playerTurns
+  playerTurns,
+  highlightFullScan = false
 }: RightPanelsProps) {
   return (
     <>
@@ -65,7 +69,7 @@ export default function RightPanels({
         <div className={styles.navActions}>
           <button className={styles.navBtn} onClick={onMapClick}>🗺️ Map</button>
           <button 
-            className={styles.navBtn} 
+            className={`${styles.navBtn} ${highlightFullScan ? styles.highlightNav : ''}`} 
             onClick={onScanWarps} 
             disabled={!playerTurns}
           >

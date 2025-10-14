@@ -273,8 +273,15 @@ export async function POST(request: NextRequest) {
     // Logs: attacker and defender
     try {
       const winnerText = combatResult.winner === 'player' ? 'win' : (combatResult.winner === 'enemy' ? 'loss' : 'draw')
+      
+      // Build attacker message with credits gained if they won
+      let attackerMessage = `You attacked ${ (targetShip as any).players?.handle || 'a ship' } - result: ${winnerText}.`
+      if (combatResult.winner === 'player' && combatResult.salvage?.credits && combatResult.salvage.credits > 0) {
+        attackerMessage += ` Gained ${combatResult.salvage.credits} credits in salvage.`
+      }
+      
       await supabaseAdmin.from('player_logs').insert([
-        { player_id: attackerPlayer.id, kind: 'ship_attacked', ref_id: targetShip.id, message: `You attacked ${ (targetShip as any).players?.handle || 'a ship' } - result: ${winnerText}.` },
+        { player_id: attackerPlayer.id, kind: 'ship_attacked', ref_id: targetShip.id, message: attackerMessage },
         { player_id: (targetShip as any).players?.id, kind: 'ship_attacked', ref_id: attackerPlayer.ships?.[0]?.id, message: `Your ship was attacked by ${ (attackerPlayer as any).handle || 'a player' } - result: ${winnerText === 'win' ? 'loss' : (winnerText === 'loss' ? 'win' : 'draw') }.` },
       ])
     } catch {}

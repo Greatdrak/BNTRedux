@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import styles from '../page.module.css'
+import { toggleMusic, isMusicEnabled, initMusic } from '@/lib/sound-system'
 
 interface GameHeaderProps {
   playerName: string;
@@ -43,6 +44,12 @@ export default function GameHeader({
   const [showUniverseDropdown, setShowUniverseDropdown] = useState(false)
   const [countdown, setCountdown] = useState<number>(0)
   const [progress, setProgress] = useState<number>(0)
+  const [musicOn, setMusicOn] = useState(isMusicEnabled())
+
+  // Initialize music on mount (if user previously enabled it)
+  useEffect(() => {
+    initMusic()
+  }, [])
 
   // Countdown logic based on lastTurnTs
   useEffect(() => {
@@ -77,6 +84,11 @@ export default function GameHeader({
     const mins = Math.floor(seconds / 60)
     const secs = seconds % 60
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
+  }
+
+  const handleMusicToggle = () => {
+    toggleMusic()
+    setMusicOn(isMusicEnabled())
   }
 
   return (
@@ -145,6 +157,13 @@ export default function GameHeader({
         </div>
         <button className={styles.refreshButton} onClick={onRefresh}>
           Refresh
+        </button>
+        <button 
+          className={styles.musicButton} 
+          onClick={handleMusicToggle}
+          title={musicOn ? "Music: ON" : "Music: OFF"}
+        >
+          {musicOn ? '🎵' : '🔇'}
         </button>
         <button className={styles.logoutButton} onClick={onLogout}>
           Logout

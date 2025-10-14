@@ -8,19 +8,24 @@ export default function Commands() {
 
   useEffect(()=>{
     if (!openLogs) return
-    fetch('/api/logs').then(r=>r.json()).then(d=>{
+    const universeId = new URLSearchParams(window.location.search).get('universe_id')
+    if (!universeId) {
+      console.error('No universe_id found in URL')
+      return
+    }
+    fetch(`/api/logs?universe_id=${universeId}`).then(r=>r.json()).then(d=>{
       if (d?.logs) setLogs(d.logs)
     })
   }, [openLogs])
 
   return (
     <div style={{ display:'flex', gap:8 }}>
-      <button onClick={()=> setOpenLogs(true)}>📝 Activity</button>
+      <button onClick={()=> setOpenLogs(true)}>📝 Player Logs</button>
       {openLogs && (
         <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,.6)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:1000 }} onClick={()=> setOpenLogs(false)}>
           <div style={{ background:'var(--panel)', border:'1px solid var(--line)', borderRadius:8, width:480, maxHeight:'70vh', overflow:'auto', padding:16 }} onClick={e=> e.stopPropagation()}>
             <div style={{ display:'flex', justifyContent:'space-between', marginBottom:12 }}>
-              <h3 style={{ margin:0 }}>Activity</h3>
+              <h3 style={{ margin:0 }}>Player Logs</h3>
               <button onClick={()=> setOpenLogs(false)}>✕</button>
             </div>
             <ul style={{ listStyle:'none', margin:0, padding:0 }}>

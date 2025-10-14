@@ -19,11 +19,13 @@ import MapOverlay from './components/MapOverlay'
 import WarpScanOverlay from './components/WarpScanOverlay'
 import PortOverlay from './components/PortOverlay'
 import SpecialPortOverlay from './components/SpecialPortOverlay'
+import { playWarpSound, playClickSound, playScanSound, playMapSound, playHyperspaceSound } from '@/lib/sound-system'
 import PlanetOverlay from './components/PlanetOverlay'
 import PlanetsOverlay from './components/PlanetsOverlay'
 import LeaderboardOverlay from './components/LeaderboardOverlay'
 import TradeRouteOverlay from './components/TradeRouteOverlay'
 import TravelConfirmationModal from './components/TravelConfirmationModal'
+import TutorialOverlay from './components/TutorialOverlay'
 import StatusBar from './components/StatusBar'
 import { useBackground } from '@/lib/use-background'
 import styles from './page.module.css'
@@ -96,6 +98,13 @@ function GameContent() {
   const [combatResult, setCombatResult] = useState<any>(null)
   const [combatSteps, setCombatSteps] = useState<any[]>([])
   const [isCombatComplete, setIsCombatComplete] = useState(false)
+  const [tutorialOpen, setTutorialOpen] = useState(false)
+  const [tutorialStep, setTutorialStep] = useState(1)
+  const [tutorialCompleted, setTutorialCompleted] = useState(false)
+  const [highlightPort, setHighlightPort] = useState(false)
+  const [highlightFullScan, setHighlightFullScan] = useState(false)
+  const [highlightPortSector, setHighlightPortSector] = useState(false)
+  const [highlightMaxBuy, setHighlightMaxBuy] = useState(false)
   const router = useRouter()
   const searchParams = useSearchParams()
   
@@ -114,6 +123,10 @@ function GameContent() {
         router.push(loginUrl)
       } else {
         setAuthChecked(true)
+        
+        // Check tutorial completion status
+        const tutorialCompleted = localStorage.getItem('bnt_tutorial_completed') === 'true'
+        setTutorialCompleted(tutorialCompleted)
         
         // Check for pending registration after email verification
         const pendingRegistration = sessionStorage.getItem('pendingRegistration')
@@ -261,22 +274,81 @@ function GameContent() {
   // Load activity logs when modal opens
   useEffect(() => {
     if (!activityOpen) return
-    apiCall('/api/logs').then(r=>r?.json()).then(d=>{
+    const finalUniverseId = playerUniverseId || universeId
+    apiCall(`/api/logs?universe_id=${finalUniverseId}`).then(r=>r?.json()).then(d=>{
       if (d?.logs) {
         const logsDiv = document.getElementById('activity-logs')
         if (logsDiv) {
-          logsDiv.innerHTML = d.logs.map((l:any) => `
-            <div style="border-bottom:1px solid var(--line); padding:8px 0;">
-              <div style="font-size:12px; opacity:.7;">${new Date(l.occurred_at).toLocaleString()}</div>
-              <div style="font-weight:600;">${l.message}</div>
-            </div>
-          `).join('') || '<div style="opacity:.7;">No activity yet.</div>'
+          // Store logs globally for filtering
+          (window as any).allLogs = d.logs
+          
+          // Create compact log entries with filtering
+          const renderLogs = (logs: any[]) => {
+            return logs.map((l:any) => {
+              const timestamp = new Date(l.occurred_at).toLocaleString()
+              
+              return `
+                <div class="log-entry" data-kind="${l.kind || 'unknown'}" style="display:flex; align-items:center; padding:4px 0; border-bottom:1px solid var(--line); font-size:13px;">
+                  <span style="min-width:140px; opacity:.7; font-size:11px;">${timestamp}</span>
+                  <span style="flex:1; margin-left:8px;">${l.message}</span>
+                </div>
+              `
+            }).join('') || '<div style="opacity:.7; text-align:center; padding:20px; color:white;">No logs found.</div>'
+          }
+          
+          logsDiv.innerHTML = renderLogs(d.logs)
+          
+          // Add filter event listeners
+          const filterButtons = document.querySelectorAll('.log-filter')
+          filterButtons.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+              e.preventDefault()
+              
+              // Update active button
+              filterButtons.forEach(b => {
+                (b as HTMLElement).style.background = 'var(--panel)'
+                b.classList.remove('active')
+              })
+              ;(btn as HTMLElement).style.background = 'var(--accent)'
+              btn.classList.add('active')
+              
+              // Filter logs
+              const filter = btn.id.replace('filter-', '')
+              let filteredLogs = d.logs
+              
+              if (filter !== 'all') {
+                const kindMap: any = {
+                  'attacks': ['attack', 'planet_attack', 'combat'],
+                  'trades': ['trade_buy', 'trade_sell', 'trade_route_completed'],
+                  'movement': ['warp_move', 'hyperspace_jump'],
+                  'planets': ['planet_created', 'planet_captured', 'planet_claimed', 'planet_attack'],
+                  'scans': ['scan_performed', 'scan_single', 'scan_warps']
+                }
+                
+                const kinds = kindMap[filter] || []
+                filteredLogs = d.logs.filter((log: any) => {
+                  // Check exact kind match first
+                  if (kinds.includes(log.kind)) return true
+                  
+                  // For attacks, also check if message contains attack keywords
+                  if (filter === 'attacks') {
+                    const message = log.message?.toLowerCase() || ''
+                    return message.includes('attacked') || message.includes('attack') || message.includes('combat')
+                  }
+                  
+                  return false
+                })
+              }
+              
+              logsDiv.innerHTML = renderLogs(filteredLogs)
+            })
+          })
         }
       }
     }).catch((err)=>{
       console.error('Failed to load logs:', err)
       const logsDiv = document.getElementById('activity-logs')
-      if (logsDiv) logsDiv.innerHTML = '<div style="opacity:.7;">Failed to load logs.</div>'
+      if (logsDiv) logsDiv.innerHTML = '<div style="opacity:.7; color:white;">Failed to load logs.</div>'
     })
   }, [activityOpen])
 
@@ -324,6 +396,19 @@ function GameContent() {
   const sector = sectorData?.sector
   const port = sectorData?.port
   const planets = sectorData?.planets || []
+
+  // Tutorial auto-start logic for new players in sector 0
+  useEffect(() => {
+    if (authChecked && playerData?.player && sectorData?.sector && !tutorialCompleted) {
+      const currentSector = playerData.player.current_sector_number
+      const isNewPlayer = playerData.player.score === 0 && playerData.player.turns_spent === 0
+      
+      if (currentSector === 0 && isNewPlayer) {
+        setTutorialOpen(true)
+        setTutorialStep(1)
+      }
+    }
+  }, [authChecked, playerData, sectorData, tutorialCompleted])
 
   useEffect(() => {
     const checkSession = async () => {
@@ -393,6 +478,7 @@ function GameContent() {
           await Promise.all([mutatePlayer(), mutateSector()])
           setStatusMessage(`Moved to sector ${toSectorNumber}`)
           setStatusType('success')
+          playWarpSound() // Play warp sound on successful movement
         }
       }
     } catch (error) {
@@ -468,6 +554,7 @@ function GameContent() {
           await Promise.all([mutatePlayer(), mutateSector()])
           setStatusMessage(`Jumped to sector ${toSectorNumber}`)
           setStatusType('success')
+          playHyperspaceSound() // Play hyperspace whoosh sound on successful realspace jump
         }
       }
     } catch {
@@ -500,7 +587,11 @@ function GameContent() {
     mapTimer = setTimeout(()=> fetchMap(center), 200)
   }
 
-  const openMap = async () => { await fetchMap(); setMapOpen(true) }
+  const openMap = async () => { 
+    await fetchMap()
+    setMapOpen(true)
+    playMapSound() // Play map sound when overlay opens
+  }
 
   // Planet handlers
   const handleClaimPlanet = async (name: string) => {
@@ -618,6 +709,11 @@ function GameContent() {
           mutatePlayer()
           setStatusMessage(`${attr.charAt(0).toUpperCase() + attr.slice(1)} upgraded!`)
           setStatusType('success')
+          
+          // Advance tutorial if upgrading hull during tutorial step 3
+          if (tutorialOpen && tutorialStep === 3 && attr === 'hull') {
+            setTutorialStep(4)
+          }
         }
       }
     } catch {
@@ -681,8 +777,14 @@ function GameContent() {
       } else {
         setWarpScanData(j.sectors || [])
         setWarpScanOpen(true)
+        playScanSound() // Play scan sound when overlay opens
         // Refresh turns after spending 1
         mutatePlayer()
+        
+        // Advance tutorial if in step 4
+        if (tutorialOpen && tutorialStep === 4) {
+          setTutorialStep(5)
+        }
       }
     }
   }
@@ -783,6 +885,7 @@ function GameContent() {
         
         setStatusMessage(`Successfully traveled to Sector ${travelTarget.sector}`)
         setStatusType('success')
+        playHyperspaceSound() // Play hyperspace whoosh sound on successful realspace travel
       } catch (error) {
         console.error('Hyperspace travel failed:', error)
         setStatusMessage(error instanceof Error ? error.message : 'Travel failed')
@@ -932,6 +1035,41 @@ function GameContent() {
     }
   }
 
+  // Tutorial handlers
+  const handleTutorialComplete = () => {
+    localStorage.setItem('bnt_tutorial_completed', 'true')
+    setTutorialCompleted(true)
+    setTutorialOpen(false)
+    setTutorialStep(1)
+    setHighlightPort(false)
+  }
+
+  const handleTutorialClose = () => {
+    setTutorialOpen(false)
+    setHighlightPort(false)
+  }
+
+  const handleTutorialStepChange = (step: number) => {
+    setTutorialStep(step)
+  }
+
+  const handleTutorialStart = () => {
+    setTutorialOpen(true)
+    setTutorialStep(1)
+  }
+
+  const handleTutorialStepData = (stepData: any) => {
+    if (stepData) {
+      setHighlightFullScan(stepData.highlightFullScan || false)
+      setHighlightPortSector(stepData.highlightPortSector || false)
+      setHighlightMaxBuy(stepData.highlightMaxBuy || false)
+    } else {
+      setHighlightFullScan(false)
+      setHighlightPortSector(false)
+      setHighlightMaxBuy(false)
+    }
+  }
+
   return (
     <div className={`${styles.container} nebula-drift`}>
       <GameLayout>
@@ -968,6 +1106,7 @@ function GameContent() {
                   case 'planets': setPlanetsOpen(true); break;
                   case 'genesis': setGenesisOpen(true); break;
                   case 'activity': setActivityOpen(true); break;
+                  case 'new-player-guide': handleTutorialStart(); break;
                   case 'admin': router.push('/admin'); break;
                   case 'favorite-sector': 
                     apiCall('/api/favorite', { method:'POST', body: JSON.stringify({ sectorNumber: sector?.number, flag: true })})
@@ -1003,6 +1142,10 @@ function GameContent() {
                 onPortClick={() => {
                   if (port?.kind === 'special') {
                     setSpecialPortOverlayOpen(true)
+                    // Advance tutorial if in step 1 or 2
+                    if (tutorialOpen && (tutorialStep === 1 || tutorialStep === 2)) {
+                      setTutorialStep(3)
+                    }
                   } else {
                     setPortOverlayOpen(true)
                   }
@@ -1011,6 +1154,9 @@ function GameContent() {
                   setSelectedEnemyShip(ship)
                   setEnemyShipOverlayOpen(true)
                 }}
+                onTutorialStart={handleTutorialStart}
+                tutorialCompleted={tutorialCompleted}
+                highlightPort={highlightPort}
               />
             </>
           ),
@@ -1032,6 +1178,7 @@ function GameContent() {
               onWarpClick={handleMove}
               moveLoading={moveLoading}
               playerTurns={player?.turns}
+              highlightFullScan={highlightFullScan}
             />
           )
         }}
@@ -1091,6 +1238,7 @@ function GameContent() {
           // Refresh player data to get updated ship credits
           mutatePlayer()
         }}
+        highlightHullUpgrade={tutorialOpen && tutorialStep === 3}
       />
 
       {planetOverlayOpen && planets.length > 0 && (
@@ -1206,15 +1354,26 @@ function GameContent() {
           </div>
         )}
 
-        {/* Activity Logs Modal */}
+        {/* Player Logs Modal */}
         {activityOpen && (
           <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,.6)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:1000 }} onClick={()=> setActivityOpen(false)}>
-            <div style={{ background:'var(--panel)', border:'1px solid var(--line)', borderRadius:8, width:480, maxHeight:'70vh', overflow:'auto', padding:16 }} onClick={e=> e.stopPropagation()}>
+            <div style={{ background:'var(--panel)', border:'1px solid var(--line)', borderRadius:8, width:600, maxHeight:'80vh', overflow:'hidden', padding:16 }} onClick={e=> e.stopPropagation()}>
               <div style={{ display:'flex', justifyContent:'space-between', marginBottom:12 }}>
-                <h3 style={{ margin:0 }}>📝 Activity</h3>
-                <button onClick={()=> setActivityOpen(false)}>✕</button>
+                <h3 style={{ margin:0 }}>📝 Player Logs</h3>
+                <button onClick={()=> setActivityOpen(false)} style={{ background:'transparent', border:'none', color:'white', fontSize:18, cursor:'pointer', padding:'4px 8px', borderRadius:4, transition:'background 0.2s' }} onMouseOver={(e) => (e.target as HTMLElement).style.background = 'rgba(255,255,255,0.1)'} onMouseOut={(e) => (e.target as HTMLElement).style.background = 'transparent'}>✕</button>
               </div>
-              <div id="activity-logs" style={{ listStyle:'none', margin:0, padding:0 }}>
+              
+              {/* Filter buttons */}
+              <div style={{ display:'flex', gap:8, marginBottom:12, flexWrap:'wrap' }}>
+                <button id="filter-all" className="log-filter active" style={{ padding:'4px 8px', fontSize:12, border:'1px solid var(--line)', background:'var(--accent)', borderRadius:4, color:'white' }}>All</button>
+                <button id="filter-attacks" className="log-filter" style={{ padding:'4px 8px', fontSize:12, border:'1px solid var(--line)', background:'var(--panel)', borderRadius:4, color:'white' }}>⚔️ Attacks</button>
+                <button id="filter-trades" className="log-filter" style={{ padding:'4px 8px', fontSize:12, border:'1px solid var(--line)', background:'var(--panel)', borderRadius:4, color:'white' }}>💰 Trades</button>
+                <button id="filter-movement" className="log-filter" style={{ padding:'4px 8px', fontSize:12, border:'1px solid var(--line)', background:'var(--panel)', borderRadius:4, color:'white' }}>🚀 Movement</button>
+                <button id="filter-planets" className="log-filter" style={{ padding:'4px 8px', fontSize:12, border:'1px solid var(--line)', background:'var(--panel)', borderRadius:4, color:'white' }}>🌍 Planets</button>
+                <button id="filter-scans" className="log-filter" style={{ padding:'4px 8px', fontSize:12, border:'1px solid var(--line)', background:'var(--panel)', borderRadius:4, color:'white' }}>🔍 Scans</button>
+              </div>
+              
+              <div id="activity-logs" style={{ listStyle:'none', margin:0, padding:0, maxHeight:'50vh', overflow:'auto' }}>
                 <div style={{ opacity:.7 }}>Loading...</div>
               </div>
             </div>
@@ -1298,6 +1457,17 @@ function GameContent() {
             combatSteps={combatSteps}
             isCombatComplete={isCombatComplete}
           />
+
+          {/* Tutorial Overlay */}
+      <TutorialOverlay
+        open={tutorialOpen}
+        onClose={handleTutorialClose}
+        onComplete={handleTutorialComplete}
+        onHighlightPort={setHighlightPort}
+        currentStep={tutorialStep}
+        onStepChange={handleTutorialStepChange}
+        onStepData={handleTutorialStepData}
+      />
 
     </div>
   )

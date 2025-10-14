@@ -131,6 +131,7 @@
   align-items: center;
   gap: var(--space-3);
   flex-shrink: 0;
+  flex-wrap: wrap;
 }
 
 .universeSelector {
@@ -158,7 +159,7 @@
   z-index: 100;
 }
 
-.refreshButton {
+.refreshButton, .musicButton {
   background: var(--accent);
   color: #000;
   border: none;
@@ -167,6 +168,19 @@
   cursor: pointer;
   font-size: var(--font-size-sm);
   font-weight: 500;
+}
+
+.musicButton {
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid var(--line);
+  font-size: 1rem;
+  padding: var(--space-2) var(--space-3);
+}
+
+.musicButton:hover {
+  background: var(--accent);
+  color: #000;
 }
 
 .logoutButton {
@@ -336,6 +350,33 @@
   z-index: 10;
 }
 
+/* Teach Me Button - Sector 0 */
+.teachMeButton {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  z-index: 10;
+}
+
+.teachMeBtn {
+  background: var(--accent);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 8px 16px;
+  color: white;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.teachMeBtn:hover {
+  background: var(--accent-hover, #4a9eff);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
 .portTitle {
   font-size: var(--font-size-md);
   color: var(--accent);
@@ -370,6 +411,25 @@
   transform: translateY(-1px);
   box-shadow: 0 0 24px rgba(99, 230, 190, 0.45);
   background: rgba(99, 230, 190, 0.22);
+}
+
+/* Port highlighting for tutorial */
+.portHighlight {
+  animation: portPulse 2s ease-in-out infinite;
+  background: rgba(255, 215, 0, 0.3) !important;
+  border-color: #ffd700 !important;
+  box-shadow: 0 0 32px rgba(255, 215, 0, 0.6) !important;
+}
+
+@keyframes portPulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 32px rgba(255, 215, 0, 0.6);
+  }
+  50% {
+    transform: scale(1.05);
+    box-shadow: 0 0 48px rgba(255, 215, 0, 0.8);
+  }
 }
 
 .portResource {
@@ -869,6 +929,23 @@
   transform: none;
 }
 
+.highlightNav {
+  animation: navPulse 2s ease-in-out infinite;
+  border: 2px solid #ffd700 !important;
+  box-shadow: 0 0 20px rgba(255, 215, 0, 0.6) !important;
+}
+
+@keyframes navPulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.6);
+  }
+  50% {
+    transform: scale(1.05);
+    box-shadow: 0 0 30px rgba(255, 215, 0, 0.8);
+  }
+}
+
 .warpSection {
   margin-top: var(--space-2);
 }
@@ -941,25 +1018,7 @@
   margin: 0;
 }
 
-.logoutButton {
-  position: fixed;
-  top: var(--space-6);
-  right: var(--space-6);
-  padding: var(--space-2) var(--space-4);
-  background: var(--danger);
-  color: white;
-  border: 1px solid var(--danger);
-  border-radius: var(--radius);
-  cursor: pointer;
-  font-size: var(--font-size-sm);
-  transition: all 0.2s ease;
-  z-index: 1000;
-}
-
-.logoutButton:hover {
-  background: #ff4444;
-  transform: translateY(-1px);
-}
+/* Removed duplicate logoutButton styles - using the ones defined earlier */
 
 /* Responsive design */
 @media (max-width: 1200px) {

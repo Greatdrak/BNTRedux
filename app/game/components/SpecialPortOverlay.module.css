@@ -211,6 +211,23 @@
   opacity: 0.6;
 }
 
+.highlightUpgrade {
+  animation: upgradePulse 2s ease-in-out infinite;
+  border: 2px solid #ffd700 !important;
+  box-shadow: 0 0 20px rgba(255, 215, 0, 0.6) !important;
+}
+
+@keyframes upgradePulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.6);
+  }
+  50% {
+    transform: scale(1.05);
+    box-shadow: 0 0 30px rgba(255, 215, 0, 0.8);
+  }
+}
+
 /* Tab Navigation */
 .tabNav {
   display: flex;

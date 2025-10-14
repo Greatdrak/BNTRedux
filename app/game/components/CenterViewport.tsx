@@ -23,6 +23,9 @@ interface CenterViewportProps {
   onPlanetClick: (index: number) => void;
   onPortClick: () => void;
   onShipClick?: (ship: any) => void;
+  onTutorialStart?: () => void;
+  tutorialCompleted?: boolean;
+  highlightPort?: boolean;
 }
 
 export default function CenterViewport({
@@ -33,7 +36,10 @@ export default function CenterViewport({
   currentPlayerShipId,
   onPlanetClick,
   onPortClick,
-  onShipClick
+  onShipClick,
+  onTutorialStart,
+  tutorialCompleted = false,
+  highlightPort = false
 }: CenterViewportProps) {
   // console.log('CenterViewport rendered:', { sector, planets, port })
   return (
@@ -50,7 +56,7 @@ export default function CenterViewport({
         {port ? (
           <div className={styles.portTopRight}>
             <span
-              className={styles.portBadge}
+              className={`${styles.portBadge} ${highlightPort ? styles.portHighlight : ''}`}
               onClick={onPortClick}
             >
               {port.kind === 'ore' && '🪨 Ore'}
@@ -61,6 +67,19 @@ export default function CenterViewport({
             </span>
           </div>
         ) : null}
+
+        {/* Teach Me Button - Only in Sector 0 */}
+        {sector?.number === 0 && onTutorialStart && (
+          <div className={styles.teachMeButton}>
+            <button
+              className={styles.teachMeBtn}
+              onClick={onTutorialStart}
+              title="Start Tutorial"
+            >
+              🎓 Teach Me!
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Bottom section: Planets (left) and Ships (right) */}

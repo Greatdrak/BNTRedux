@@ -108,6 +108,16 @@ export async function POST(request: NextRequest) {
         await supabaseAdmin.from('player_logs').insert(inserts)
       }
     } catch {}
+
+    // Log the scan action for the player who performed it
+    try {
+      await supabaseAdmin.from('player_logs').insert({
+        player_id: player.id,
+        kind: 'scan_performed',
+        ref_id: sector.id,
+        message: `You scanned sector ${sector.number}. Found ${shipCount} ship(s), ${planetCount} planet(s).`
+      })
+    } catch {}
     const shipDetails = ships?.map(ship => ({
       id: ship.id,
       name: ship.name || 'Scout',

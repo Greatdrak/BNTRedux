@@ -59,7 +59,13 @@ export default function LeftCommandsPanel({
           className={styles.commandItem}
           onClick={() => onCommandClick('activity')}
         >
-          📝 Activity
+          📝 Player Logs
+        </button>
+        <button 
+          className={styles.commandItem}
+          onClick={() => onCommandClick('new-player-guide')}
+        >
+          📚 New Player Guide
         </button>
         <button 
           className={styles.commandItem}

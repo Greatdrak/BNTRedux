@@ -62,16 +62,67 @@ export class AIService {
     
     switch (type) {
       case 'Trader':
-        return new TraderPersonality()
+        return new TraderPersonality(this)
       case 'Explorer':
-        return new ExplorerPersonality()
+        return new ExplorerPersonality(this)
       case 'Warrior':
-        return new WarriorPersonality()
+        return new WarriorPersonality(this)
       case 'Colonizer':
-        return new ColonizerPersonality()
+        return new ColonizerPersonality(this)
       default:
-        return new BalancedPersonality()
+        return new BalancedPersonality(this)
     }
+  }
+  
+  // Helper to check if combat supplies need refilling
+  checkCombatReadiness(situation: any): { needsRefill: boolean; fighterPercent: number; torpedoPercent: number; armorPercent: number } {
+    const { shipLevels, fighters, torpedoes, armorPoints } = situation
+    
+    // Calculate capacities
+    const fighterCapacity = Math.floor(100 * Math.pow(1.5, (shipLevels?.computer || 1) - 1))
+    const torpedoCapacity = (shipLevels?.torpLauncher || 0) * 100
+    const armorCapacity = Math.floor(100 * Math.pow(1.5, shipLevels?.armor || 1))
+    
+    // Calculate percentages
+    const fighterPercent = fighterCapacity > 0 ? (fighters || 0) / fighterCapacity : 1
+    const torpedoPercent = torpedoCapacity > 0 ? (torpedoes || 0) / torpedoCapacity : 1
+    const armorPercent = armorCapacity > 0 ? (armorPoints || 0) / armorCapacity : 1
+    
+    // Need refill if any are below 50%
+    const needsRefill = fighterPercent < 0.5 || torpedoPercent < 0.5 || armorPercent < 0.5
+    
+    // Combat status logging disabled for performance
+    
+    return { needsRefill, fighterPercent, torpedoPercent, armorPercent }
+  }
+  
+  // Helper to calculate average tech level and determine if hoarding credits
+  checkTechLevel(situation: any): { avgLevel: number; isHoarding: boolean } {
+    const { shipLevels, credits } = situation
+    
+    const levels = [
+      shipLevels?.hull || 0,
+      shipLevels?.engine || 0,
+      shipLevels?.computer || 0,
+      shipLevels?.power || 0,
+      shipLevels?.sensors || 0,
+      shipLevels?.beamWeapon || 0,
+      shipLevels?.torpLauncher || 0,
+      shipLevels?.shields || 0,
+      shipLevels?.armor || 0,
+      shipLevels?.cloak || 0
+    ]
+    
+    const avgLevel = levels.reduce((a, b) => a + b, 0) / levels.length
+    
+    // Calculate expected upgrade cost for current average level
+    // Cost formula: 1000 * 2^level (doubles each time)
+    const expectedCost = 1000 * Math.pow(2, Math.floor(avgLevel))
+    
+    // Hoarding if credits > 50x the expected upgrade cost AND average level < 15
+    const isHoarding = credits > expectedCost * 50 && avgLevel < 15
+    
+    return { avgLevel, isHoarding }
   }
   
   // Analyze current situation
@@ -83,7 +134,10 @@ export class AIService {
         .select(`
           id, handle, turns, current_sector,
           ships!inner(
-            id, credits, hull, hull_max, ore, organics, goods, energy
+            id, credits, hull, hull_max, ore, organics, goods, energy,
+            fighters, torpedoes, armor,
+            hull_lvl, engine_lvl, comp_lvl, power_lvl, sensor_lvl, 
+            beam_lvl, torp_launcher_lvl, shield_lvl, armor_lvl, cloak_lvl
           )
         `)
         .eq('id', playerId)
@@ -99,14 +153,19 @@ export class AIService {
       
       const ship = Array.isArray(player.ships) ? player.ships[0] : player.ships
       
-      // Get ship levels separately
-      const { data: shipLevelsData } = await supabaseAdmin
-        .from('ship_levels')
-        .select('hull_level, engine_level, power_level, computer_level')
-        .eq('ship_id', ship.id)
-        .single()
-      
-      const shipLevels = shipLevelsData || { hull_level: 0, engine_level: 0, power_level: 0, computer_level: 0 }
+      // Ship levels are now in the ships table
+      const shipLevels = {
+        hull: ship.hull_lvl || 0,
+        engine: ship.engine_lvl || 0,
+        computer: ship.comp_lvl || 0,
+        power: ship.power_lvl || 0,
+        sensors: ship.sensor_lvl || 0,
+        beamWeapon: ship.beam_lvl || 0,
+        torpLauncher: ship.torp_launcher_lvl || 0,
+        shields: ship.shield_lvl || 0,
+        armor: ship.armor_lvl || 0,
+        cloak: ship.cloak_lvl || 0
+      }
       
       // Check if player has a current sector
       if (!player.current_sector) {
@@ -145,7 +204,7 @@ export class AIService {
       
       // DEBUG: Log port information for sector 0 (only if no special port found)
       if (sectorData.number === 0 && specialPorts === 0) {
-        console.log(`⚠️ Sector 0 has no special port!`, { portCount, commodityPorts, specialPorts })
+        // Sector 0 warning (logging disabled for performance)
       }
       
       // Get warps from sector
@@ -161,7 +220,10 @@ export class AIService {
         credits: ship.credits || 0,
         hull: ship.hull || 0,
         hullMax: ship.hull_max || 0,
-        hullLevel: shipLevels?.hull_level || 0,
+        fighters: ship.fighters || 0,
+        torpedoes: ship.torpedoes || 0,
+        armorPoints: ship.armor || 0,
+        shipLevels,
         cargo: {
           ore: ship.ore || 0,
           organics: ship.organics || 0,
@@ -281,6 +343,10 @@ export class AIService {
             
           case 'emergency_trade':
             result = await this.executeTradeRoute(playerId, sectorId, decision.turnsToSpend, universeId)
+            break
+            
+          case 'purchase_combat_equipment':
+            result = await this.executePurchaseCombatEquipment(playerId, sectorId, decision.turnsToSpend, universeId)
             break
             
           case 'explore':
@@ -838,15 +904,51 @@ export class AIService {
       return { success: false, actionsExecuted: 0, turnsUsed: 0, errors: ['No special port found'] }
     }
     
+    // Get player data to check current levels
+    const { data: player, error: playerError } = await supabaseAdmin
+      .from('players')
+      .select('id')
+      .eq('user_id', userId)
+      .single()
+    
+    if (playerError || !player) {
+      return { success: false, actionsExecuted: 0, turnsUsed: 0, errors: ['Player not found'] }
+    }
+    
     let successfulUpgrades = 0
     let turnsUsed = 0
     const errors: string[] = []
     
-    // Upgrade priority: hull, engine, computer, power, sensors, weapons, shields
-    const upgradeOrder = ['hull', 'engine', 'computer', 'power', 'sensors', 'beam', 'shields', 'torp_launcher', 'armor', 'cloak']
+    // Get player's personality type to determine upgrade priority
+    const { data: playerData } = await supabaseAdmin
+      .from('players')
+      .select('handle, is_ai')
+      .eq('id', player.id)
+      .single()
     
-    // Spend multiple turns upgrading different systems
-    for (let i = 0; i < Math.min(turnsToSpend, 10); i++) {
+    let upgradeOrder: string[]
+    
+    if (playerData?.handle) {
+      const personality = this.getPersonality(playerData.handle)
+      
+      if (personality.type === 'Warrior') {
+        // Warriors prioritize weapons and combat systems
+        upgradeOrder = ['beam', 'torp_launcher', 'shields', 'computer', 'sensors', 'cloak', 'armor', 'hull', 'engine', 'power']
+      } else if (personality.type === 'Trader' || personality.type === 'Colonizer') {
+        // Traders and Colonizers prioritize hull for cargo/economy
+        upgradeOrder = ['hull', 'engine', 'computer', 'power', 'sensors', 'beam', 'shields', 'torp_launcher', 'armor', 'cloak']
+      } else {
+        // Balanced and Explorer: balanced approach with slight combat emphasis
+        upgradeOrder = ['sensors', 'hull', 'beam', 'engine', 'torp_launcher', 'computer', 'shields', 'armor', 'cloak', 'power']
+      }
+    } else {
+      // Default balanced order
+      upgradeOrder = ['sensors', 'hull', 'beam', 'engine', 'torp_launcher', 'computer', 'shields', 'armor', 'cloak', 'power']
+    }
+    
+    // Try upgrading each system - don't stop on first failure, try them all
+    let consecutiveFailures = 0
+    for (let i = 0; i < Math.min(turnsToSpend, 20); i++) {
       const upgradeType = upgradeOrder[i % upgradeOrder.length]
       
       const { data: result, error: upgradeError } = await supabaseAdmin.rpc('game_ship_upgrade', {
@@ -858,17 +960,97 @@ export class AIService {
       if (!upgradeError && result?.success) {
         successfulUpgrades++
         turnsUsed++
-      } else if (upgradeError) {
-        // Stop if we get an error (likely out of credits or max level)
-        errors.push(upgradeError.message)
-        break
+        consecutiveFailures = 0
       } else {
-        // Stop if upgrade fails (likely out of credits)
-        break
+        consecutiveFailures++
+        // Only stop if we've failed on ALL upgrade types (full cycle through the list)
+        if (consecutiveFailures >= upgradeOrder.length) {
+          break
+        }
       }
       
       // Small delay to prevent overload
       await new Promise(resolve => setTimeout(resolve, 50))
+    }
+    
+    // After upgrades, ALWAYS try to purchase fighters, torpedoes, and armor
+    // This runs regardless of upgrade success to ensure combat readiness
+    try {
+      // Get current ship state to calculate capacities
+      const { data: shipData } = await supabaseAdmin
+        .from('ships')
+        .select('credits, comp_lvl, torp_launcher_lvl, armor_lvl, fighters, torpedoes, armor')
+        .eq('player_id', player.id)
+        .single()
+      
+      if (shipData && shipData.credits >= 1000) {
+        const purchases = []
+        
+        // Calculate capacities
+        const fighterCapacity = Math.floor(100 * Math.pow(1.5, shipData.comp_lvl - 1))
+        const torpedoCapacity = shipData.torp_launcher_lvl * 100
+        const armorCapacity = Math.floor(100 * Math.pow(1.5, shipData.armor_lvl))
+        
+        const currentFighters = shipData.fighters || 0
+        const currentTorpedoes = shipData.torpedoes || 0
+        const currentArmor = shipData.armor || 0
+        
+        // ALWAYS max-buy fighters to full capacity (if capacity > 0)
+        if (fighterCapacity > 0 && currentFighters < fighterCapacity) {
+          const fightersToBuy = fighterCapacity - currentFighters
+          if (fightersToBuy > 0 && shipData.credits >= fightersToBuy * 100) {
+            purchases.push({
+              name: 'Fighters',
+              quantity: fightersToBuy,
+              cost: 100
+            })
+          }
+        }
+        
+        // ALWAYS max-buy torpedoes to full capacity (if capacity > 0)
+        if (torpedoCapacity > 0 && currentTorpedoes < torpedoCapacity) {
+          const torpedoesToBuy = torpedoCapacity - currentTorpedoes
+          if (torpedoesToBuy > 0 && shipData.credits >= torpedoesToBuy * 200) {
+            purchases.push({
+              name: 'Torpedoes',
+              quantity: torpedoesToBuy,
+              cost: 200
+            })
+          }
+        }
+        
+        // ALWAYS max-buy armor to full capacity (if capacity > 0)
+        if (armorCapacity > 0 && currentArmor < armorCapacity) {
+          const armorToBuy = armorCapacity - currentArmor
+          if (armorToBuy > 0 && shipData.credits >= armorToBuy * 50) {
+            purchases.push({
+              name: 'Armor Points',
+              quantity: armorToBuy,
+              cost: 50
+            })
+          }
+        }
+        
+        // Make purchases if any
+        if (purchases.length > 0) {
+          // Attempting purchase (logging disabled for performance)
+          
+          const { data: purchaseResult, error: purchaseError } = await supabaseAdmin
+            .rpc('purchase_special_port_items', {
+              p_player_id: player.id,
+              p_purchases: purchases
+            })
+          
+          if (!purchaseError && purchaseResult?.success) {
+            // Purchases succeeded but don't count as turns
+            successfulUpgrades += purchases.length
+          }
+        }
+      } else {
+        // Insufficient credits (logging disabled for performance)
+      }
+    } catch (purchaseError) {
+      // Don't fail the whole operation if purchases fail (logging disabled for performance)
     }
     
     return { 
@@ -885,12 +1067,140 @@ export class AIService {
     return this.executeDeepExploration(userId, sectorId, Math.min(turnsToSpend, 15), universeId)
   }
   
+  private async executePurchaseCombatEquipment(userId: string, sectorId: string, turnsToSpend: number, universeId: string) {
+    // Find special port
+    const { data: ports, error: portsError } = await supabaseAdmin
+      .from('ports')
+      .select('id')
+      .eq('sector_id', sectorId)
+      .eq('kind', 'special')
+      .limit(1)
+    
+    if (portsError || !ports || ports.length === 0) {
+      return { success: false, actionsExecuted: 0, turnsUsed: 0, errors: ['No special port found'] }
+    }
+    
+    // Get player data
+    const { data: player, error: playerError } = await supabaseAdmin
+      .from('players')
+      .select('id')
+      .eq('user_id', userId)
+      .single()
+    
+    if (playerError || !player) {
+      return { success: false, actionsExecuted: 0, turnsUsed: 0, errors: ['Player not found'] }
+    }
+    
+    try {
+      // Get current ship state to calculate capacities
+      const { data: shipData } = await supabaseAdmin
+        .from('ships')
+        .select('credits, comp_lvl, torp_launcher_lvl, armor_lvl, fighters, torpedoes, armor')
+        .eq('player_id', player.id)
+        .single()
+      
+      if (!shipData) {
+        return { success: false, actionsExecuted: 0, turnsUsed: 0, errors: ['Ship not found'] }
+      }
+      
+      const purchases = []
+      
+      // Calculate capacities
+      const fighterCapacity = Math.floor(100 * Math.pow(1.5, shipData.comp_lvl - 1))
+      const torpedoCapacity = shipData.torp_launcher_lvl * 100
+      const armorCapacity = Math.floor(100 * Math.pow(1.5, shipData.armor_lvl))
+      
+      const currentFighters = shipData.fighters || 0
+      const currentTorpedoes = shipData.torpedoes || 0
+      const currentArmor = shipData.armor || 0
+      
+      // ALWAYS max-buy fighters to full capacity (if capacity > 0)
+      if (fighterCapacity > 0 && currentFighters < fighterCapacity) {
+        const fightersToBuy = fighterCapacity - currentFighters
+        if (fightersToBuy > 0 && shipData.credits >= fightersToBuy * 100) {
+          purchases.push({
+            name: 'Fighters',
+            quantity: fightersToBuy,
+            cost: 100
+          })
+        }
+      }
+      
+      // ALWAYS max-buy torpedoes to full capacity (if capacity > 0)
+      if (torpedoCapacity > 0 && currentTorpedoes < torpedoCapacity) {
+        const torpedoesToBuy = torpedoCapacity - currentTorpedoes
+        if (torpedoesToBuy > 0 && shipData.credits >= torpedoesToBuy * 200) {
+          purchases.push({
+            name: 'Torpedoes',
+            quantity: torpedoesToBuy,
+            cost: 200
+          })
+        }
+      }
+      
+      // ALWAYS max-buy armor to full capacity (if capacity > 0)
+      if (armorCapacity > 0 && currentArmor < armorCapacity) {
+        const armorToBuy = armorCapacity - currentArmor
+        if (armorToBuy > 0 && shipData.credits >= armorToBuy * 50) {
+          purchases.push({
+            name: 'Armor Points',
+            quantity: armorToBuy,
+            cost: 50
+          })
+        }
+      }
+      
+      // Make purchases if any
+      if (purchases.length > 0) {
+        // Attempting dedicated purchase (logging disabled for performance)
+        
+        const { data: purchaseResult, error: purchaseError } = await supabaseAdmin
+          .rpc('purchase_special_port_items', {
+            p_player_id: player.id,
+            p_purchases: purchases
+          })
+        
+        if (!purchaseError && purchaseResult?.success) {
+          return { 
+            success: true, 
+            actionsExecuted: 1, 
+            turnsUsed: 0, // Purchases don't use turns
+            action: 'purchase_combat_equipment'
+          }
+        } else {
+          return { 
+            success: false, 
+            actionsExecuted: 0, 
+            turnsUsed: 0,
+            errors: [purchaseError?.message || purchaseResult?.error || 'Purchase failed']
+          }
+        }
+      } else {
+        // No purchases needed (logging disabled for performance)
+        return { 
+          success: true, 
+          actionsExecuted: 0, 
+          turnsUsed: 0,
+          action: 'purchase_combat_equipment'
+        }
+      }
+    } catch (purchaseError) {
+      // Purchase error (logging disabled for performance)
+      return { 
+        success: false, 
+        actionsExecuted: 0, 
+        turnsUsed: 0,
+        errors: [purchaseError instanceof Error ? purchaseError.message : 'Unknown error']
+      }
+    }
+  }
+  
   private async executeExplore(userId: string, sectorId: string, turnsToSpend: number, universeId: string) {
     // Simple exploration
     return this.executeDeepExploration(userId, sectorId, Math.min(turnsToSpend, 10), universeId)
   }
   
-  // Communism boost system - help AI players catch up when human players are far ahead
+  // Competitive Balance System - Create multiple tiers of AI players across human score ranges
   async applyCommunismBoost(universeId: string): Promise<any> {
     try {
       // Refresh scores first to ensure they're up to date
@@ -900,37 +1210,28 @@ export class AIService {
         console.warn('Score refresh in communism boost failed', e)
       }
 
-      // Get all human scores to compute averages/percentiles
-      const { data: humanPlayers, error: humanError } = await supabaseAdmin
+      // Get all human players sorted by score with their tech levels
+      const { data: humanPlayersData, error: humanError } = await supabaseAdmin
         .from('players')
-        .select('score')
+        .select(`
+          id, score,
+          ships!inner(hull_lvl, engine_lvl, comp_lvl, sensor_lvl, beam_lvl, torp_launcher_lvl, shield_lvl, armor_lvl, cloak_lvl, power_lvl)
+        `)
         .eq('universe_id', universeId)
         .eq('is_ai', false)
         .order('score', { ascending: false })
       
-      if (humanError || !humanPlayers || humanPlayers.length === 0) {
+      if (humanError || !humanPlayersData || humanPlayersData.length === 0) {
         return { success: false, message: 'No human players found' }
       }
 
-      // Compute aggregates
-      const humanScores = humanPlayers.map(p => p.score || 0)
-      const humanTop = humanScores[0] || 0
-      const humanAvg = humanScores.reduce((a, b) => a + b, 0) / humanScores.length
-      const humanP75 = humanScores[Math.max(0, Math.floor(humanScores.length * 0.25) - 1)] || humanTop
-      
-      // Calculate median human score (avoids skew from brand new players)
-      const midIndex = Math.floor(humanScores.length / 2)
-      const humanMedian = humanScores.length % 2 === 0 
-        ? Math.floor((humanScores[midIndex - 1] + humanScores[midIndex]) / 2)
-        : humanScores[midIndex]
-      
-      // Target: AI should reach 80% of median human player
-      const targetAIScore = Math.floor(humanMedian * 0.80)
-
-      // Get all AI scores to derive distribution/ranks
+      // Get all AI players with their current data
       const { data: aiPlayersAll, error: aiError } = await supabaseAdmin
         .from('players')
-        .select('id, score')
+        .select(`
+          id, handle, score, user_id,
+          ships!inner(credits, hull_lvl, engine_lvl, comp_lvl, sensor_lvl, beam_lvl, torp_launcher_lvl, shield_lvl, armor_lvl, cloak_lvl, power_lvl)
+        `)
         .eq('universe_id', universeId)
         .eq('is_ai', true)
         .order('score', { ascending: false })
@@ -938,174 +1239,261 @@ export class AIService {
       if (aiError || !aiPlayersAll || aiPlayersAll.length === 0) {
         return { success: false, message: 'No AI players found' }
       }
-
-      const topAIScore = aiPlayersAll[0].score || 0
-      const scoreGap = Math.max(0, humanTop - topAIScore)
       
-      // Calculate minimum boost needed to get struggling AIs to target (80% of lowest human)
-      // Score formula: (ship_tech_value + credits + planet_value + exploration) / 100
-      // So: targetScore * 100 = raw value needed
-      // We give credits which convert to both ship upgrades AND direct score
-      // Conservative: give 50% of needed value as pure credits (rest from trading/upgrades)
-      const minBoostPerAI = Math.floor((targetAIScore * 100) * 0.50) // 50% of score gap as credits
+      // Calculate average tech levels for humans
+      const humanTechLevels = humanPlayersData.map(p => {
+        const ship = Array.isArray(p.ships) ? p.ships[0] : p.ships
+        return {
+          hull: ship.hull_lvl || 1,
+          engine: ship.engine_lvl || 1,
+          computer: ship.comp_lvl || 1,
+          sensors: ship.sensor_lvl || 1,
+          beam: ship.beam_lvl || 1,
+          torpLauncher: ship.torp_launcher_lvl || 0,
+          shields: ship.shield_lvl || 0,
+          armor: ship.armor_lvl || 1,
+          cloak: ship.cloak_lvl || 0,
+          power: ship.power_lvl || 1
+        }
+      })
+      
+      // Calculate median tech level for each system
+      const techSystems = ['hull', 'engine', 'computer', 'sensors', 'beam', 'torpLauncher', 'shields', 'armor', 'cloak', 'power'] as const
+      const humanMedianTech: Record<string, number> = {}
+      
+      for (const system of techSystems) {
+        const levels = humanTechLevels.map(t => t[system]).sort((a, b) => a - b)
+        const midIndex = Math.floor(levels.length / 2)
+        humanMedianTech[system] = levels.length % 2 === 0 
+          ? Math.floor((levels[midIndex - 1] + levels[midIndex]) / 2)
+          : levels[midIndex]
+      }
+      
+      // Calculate average tech level across all systems for humans
+      const humanAvgTechLevel = Object.values(humanMedianTech).reduce((sum, val) => sum + val, 0) / techSystems.length
+      
+      // Calculate standard deviation of human tech levels
+      const humanTechVariances = humanTechLevels.map(tech => {
+        const avgTech = Object.values(tech).reduce((sum, val) => sum + val, 0) / techSystems.length
+        return Math.pow(avgTech - humanAvgTechLevel, 2)
+      })
+      const humanTechStdDev = Math.sqrt(humanTechVariances.reduce((sum, val) => sum + val, 0) / humanTechVariances.length)
+      
+      // Tech analysis (logging disabled for performance)
 
-      // Trigger when top human significantly outpaces AI ecosystem
-      const boostThreshold = Math.max(Math.floor(humanAvg * 0.15), 10000)
-
-      // Communism boost analysis (minimal logging)
-
-      // Check if AIs have surpassed humans - if so, apply nerf to overpowered AIs
-      if (topAIScore >= humanMedian) {
-        // Find AIs that are too powerful (above human median) and nerf them
-        const overpoweredAIs = aiPlayersAll.filter(ai => (ai.score || 0) > humanMedian)
-        
-        if (overpoweredAIs.length > 0) {
-          
-          for (const ai of overpoweredAIs) {
-            // Reduce credits to bring them back in line (target 70% of median)
-            const targetCredits = Math.floor(humanMedian * 70) // Conservative target
-            
-            const { error: nerfError } = await supabaseAdmin
-              .from('ships')
-              .update({ credits: targetCredits })
-              .eq('player_id', ai.id)
-            
-            if (!nerfError) {
-              console.log(`  Nerfed ${ai.id}: reduced credits to ${targetCredits}`)
-            }
-          }
+      // PHASE 1: Automated Tech Leveling - Bring AI tech up to competitive levels
+      // Target: AI should be within 2 standard deviations of median human tech (more conservative)
+      // Only upgrade AI that are significantly behind to prevent score inflation
+      const techUpgradeResults = []
+      let totalTechUpgrades = 0
+      
+      for (const aiPlayer of aiPlayersAll) {
+        const ship = Array.isArray(aiPlayer.ships) ? aiPlayer.ships[0] : aiPlayer.ships
+        const aiTech = {
+          hull: ship.hull_lvl || 1,
+          engine: ship.engine_lvl || 1,
+          computer: ship.comp_lvl || 1,
+          sensors: ship.sensor_lvl || 1,
+          beam: ship.beam_lvl || 1,
+          torpLauncher: ship.torp_launcher_lvl || 0,
+          shields: ship.shield_lvl || 0,
+          armor: ship.armor_lvl || 1,
+          cloak: ship.cloak_lvl || 0,
+          power: ship.power_lvl || 1
         }
         
+        // Calculate AI average tech level
+        const aiAvgTech = Object.values(aiTech).reduce((sum, val) => sum + val, 0) / techSystems.length
+        
+        // Check if AI is more than 2 standard deviations below human median (more conservative)
+        const techDeficit = humanAvgTechLevel - aiAvgTech
+        
+        if (techDeficit > (humanTechStdDev * 2)) {
+          // AI needs tech upgrades - apply direct upgrades to lagging systems
+          const upgradeMap: Record<string, string> = {
+            hull: 'hull',
+            engine: 'engine',
+            computer: 'computer',
+            sensors: 'sensors',
+            beam: 'beam',
+            torpLauncher: 'torp_launcher',
+            shields: 'shields',
+            armor: 'armor',
+            cloak: 'cloak',
+            power: 'power'
+          }
+          
+          let upgradesApplied = 0
+          for (const system of techSystems) {
+            const aiLevel = aiTech[system]
+            const humanMedianLevel = humanMedianTech[system]
+            
+            // If AI is 3+ levels behind median, apply direct upgrades (more conservative)
+            if (humanMedianLevel - aiLevel >= 3) {
+              const levelsToUpgrade = Math.min(humanMedianLevel - aiLevel, 1) // Max 1 level per system per boost
+              
+              // Use admin function to bypass port/credit requirements
+              const { data: upgradeResult, error: upgradeError } = await supabaseAdmin.rpc('admin_force_ship_upgrade', {
+                p_player_id: aiPlayer.id,
+                p_attr: upgradeMap[system],
+                p_levels: levelsToUpgrade
+              })
+              
+              if (!upgradeError && upgradeResult?.success) {
+                upgradesApplied += upgradeResult.levels_applied || levelsToUpgrade
+                totalTechUpgrades += upgradeResult.levels_applied || levelsToUpgrade
+              }
+              
+              // Small delay to prevent overload
+              await new Promise(resolve => setTimeout(resolve, 25))
+            }
+          }
+          
+          if (upgradesApplied > 0) {
+            techUpgradeResults.push({
+              player: aiPlayer.handle,
+              aiAvgTech: aiAvgTech.toFixed(2),
+              humanAvgTech: humanAvgTechLevel.toFixed(2),
+              techDeficit: techDeficit.toFixed(2),
+              upgradesApplied
+            })
+          }
+        }
+      }
+      
+      // Tech upgrades applied (logging disabled for performance)
+      
+      const humanScores = humanPlayersData.map(p => p.score || 0).sort((a, b) => b - a)
+      const aiScores = aiPlayersAll.map(p => p.score || 0).sort((a, b) => b - a)
+      
+      const humanTop = humanScores[0] || 0
+      const humanMedian = humanScores[Math.floor(humanScores.length / 2)] || 0
+      const humanBottom = humanScores[humanScores.length - 1] || 0
+      
+      const aiTop = aiScores[0] || 0
+      const aiMedian = aiScores[Math.floor(aiScores.length / 2)] || 0
+      const aiBottom = aiScores[aiScores.length - 1] || 0
+
+      // Calculate score distribution width
+      const humanRange = humanTop - humanBottom
+      const aiRange = aiTop - aiBottom
+      const totalRange = Math.max(humanTop, aiTop) - Math.min(humanBottom, aiBottom)
+      
+      // Check if AI distribution is too narrow (all clustered together)
+      const aiDistributionTooNarrow = aiRange < (totalRange * 0.3) // AI should span at least 30% of total range
+      
+      // Check if AI are too far behind humans
+      const aiTooFarBehind = aiMedian < (humanMedian * 0.5)
+      
+      // Check if top AI is too far ahead (creating permanent gap)
+      const aiTopTooFarAhead = aiTop > (aiMedian * 3.0)
+      
+      // Balance check (logging disabled for performance)
+
+      // Only boost if we need to create better distribution
+      if (!aiDistributionTooNarrow && !aiTooFarBehind && !aiTopTooFarAhead) {
         return {
           success: true,
-          message: `AI players at/above median - nerfed ${overpoweredAIs.length} AIs`,
+          message: 'AI distribution is balanced - no boost needed',
+          humanRange,
+          aiRange,
           humanTop,
           humanMedian,
-          targetAIScore,
-          humanAvg,
-          scoreGap: 0,
-          nerfedAIs: overpoweredAIs.length,
-          boostThreshold
+          aiTop,
+          aiMedian
         }
       }
 
-      if (scoreGap > boostThreshold) {
-        // MASSIVELY aggressive boost to account for exponential score scaling
-        // Pool = MAX of: 200% of score gap OR enough to get all AIs to target
-        const dynamicPool = Math.max(
-          Math.floor(scoreGap * 2.00), 
-          minBoostPerAI * aiPlayersAll.length,
-          500000
-        )
-        
-        // Get all AI players with low scores
-        const { data: strugglingAIs, error: strugglingError } = await supabaseAdmin
-          .from('players')
-          .select(`
-            id, handle, score, user_id,
-            ships!inner(credits, hull)
-          `)
-          .eq('universe_id', universeId)
-          .eq('is_ai', true)
-          .lt('score', Math.max(topAIScore * 0.95, humanAvg * 0.40)) // widen eligibility: below 95% of top AI or 40% of human avg
-        
-        if (strugglingError || !strugglingAIs || strugglingAIs.length === 0) {
-          return { success: false, message: 'No struggling AI players found' }
-        }
-        
-        let boostedPlayers = 0
-        const boostResults = []
-        
-        for (let idx = 0; idx < strugglingAIs.length; idx++) {
-          const player = strugglingAIs[idx]
+      // Calculate target tiers: AI should be distributed across human score ranges
+      // Boost amounts are PROPORTIONAL to the score economy, not hard-capped
+      const targetTiers = [
+        { name: 'Elite AI', targetScore: Math.floor(humanTop * 0.9), targetPercent: 0.9 },      // 90% of top human
+        { name: 'Advanced AI', targetScore: Math.floor(humanMedian * 1.2), targetPercent: 1.2 }, // 120% of median human (relative to median)
+        { name: 'Standard AI', targetScore: Math.floor(humanMedian * 0.8), targetPercent: 0.8 }, // 80% of median human
+        { name: 'Beginner AI', targetScore: Math.floor(humanBottom * 1.5), targetPercent: 1.5 }  // 150% of bottom human (relative to bottom)
+      ]
+
+      let totalBoosted = 0
+      const boostResults = []
+
+      for (const tier of targetTiers) {
+        // Find AI players that should be in this tier
+        const tierAIs = aiPlayersAll.filter(ai => {
+          const currentScore = ai.score || 0
+          // Include AI that are significantly below this tier's target
+          return currentScore < (tier.targetScore * 0.7) && currentScore > (tier.targetScore * 0.3)
+        })
+
+        if (tierAIs.length === 0) continue
+
+        // Boosting tier (logging disabled for performance)
+
+        for (const player of tierAIs) {
           const ship = Array.isArray(player.ships) ? player.ships[0] : player.ships
           const currentCredits = ship.credits || 0
-          // Player-relative multiplier: worse rank -> larger share
-          const rankFactor = 1 - (idx / Math.max(1, strugglingAIs.length - 1)) // 1..~0 (worst gets highest)
-          // Scale per-player top-up by low hull (helps jump upgrade costs)
-          const hull = ship.hull || 0
-          const hullFactor = 1 + Math.max(0, 15 - hull) * 0.15 // even stronger hull boost for low levels
-          // Give each AI a much larger share - they need 10k-30k per upgrade
-          const perPlayerBoost = Math.floor(dynamicPool * (0.30 + 0.40 * rankFactor) * hullFactor)
-          const newCredits = currentCredits + perPlayerBoost
           
-          // Update AI player's credits
-          const { error: updateError } = await supabaseAdmin
-            .from('ships')
-            .update({ credits: newCredits })
-            .eq('player_id', player.id)
+          // Calculate how much boost this AI needs - PROPORTIONAL TO SCORE GAP
+          const currentScore = player.score || 0
+          const scoreGap = Math.max(0, tier.targetScore - currentScore)
           
-          if (!updateError) {
-            boostedPlayers++
-            boostResults.push({
-              player: player.handle,
-              oldCredits: currentCredits,
-              newCredits: newCredits,
-              boostAmount: perPlayerBoost
-            })
+          // Score is roughly: (ship_tech_value + credits + planet_value + exploration) / 100
+          // So to gain X score points, need roughly X * 100 in raw value
+          // Give 60% as pure credits (rest they can earn via trading/upgrades)
+          const creditNeeded = Math.floor(scoreGap * 100 * 0.6)
+          
+          if (creditNeeded > 10000) { // Only boost if significant gap
+            const newCredits = currentCredits + creditNeeded
+            
+            // Update AI player's credits
+            const { error: updateError } = await supabaseAdmin
+              .from('ships')
+              .update({ credits: newCredits })
+              .eq('player_id', player.id)
+            
+            if (!updateError) {
+              totalBoosted++
+              boostResults.push({
+                tier: tier.name,
+                player: player.handle,
+                oldCredits: currentCredits,
+                newCredits: newCredits,
+                boostAmount: creditNeeded,
+                targetScore: tier.targetScore
+              })
 
-            // Attempt to convert credits to assets via upgrades right away
-            // Try multiple upgrades to spend the boost on tech
-            for (let u = 0; u < 5; u++) {
-              // Prioritize hull for score
-              const { data: hullData, error: hullErr } = await supabaseAdmin.rpc('game_ship_upgrade', {
-                p_user_id: player.user_id,
-                p_attr: 'hull',
-                p_universe_id: universeId
-              })
-              if (hullErr || (hullData && hullData.error)) break
+              // Try to spend credits on upgrades (limited to prevent runaway)
+              const upgradeSequence = ['sensors', 'beam', 'torp_launcher', 'cloak', 'shields', 'armor', 'hull', 'engine', 'computer', 'power']
               
-              // Then engine for movement
-              const { data: engineData, error: engineErr } = await supabaseAdmin.rpc('game_ship_upgrade', {
-                p_user_id: player.user_id,
-                p_attr: 'engine',
-                p_universe_id: universeId
-              })
-              if (engineErr || (engineData && engineData.error)) {}
-              
-              // Then computer for trading capacity
-              const { data: compData, error: compErr } = await supabaseAdmin.rpc('game_ship_upgrade', {
-                p_user_id: player.user_id,
-                p_attr: 'computer',
-                p_universe_id: universeId
-              })
-              if (compErr || (compData && compData.error)) {}
-              
-              // Then power for energy
-              const { data: powerData, error: powerErr } = await supabaseAdmin.rpc('game_ship_upgrade', {
-                p_user_id: player.user_id,
-                p_attr: 'power',
-                p_universe_id: universeId
-              })
-              if (powerErr || (powerData && powerData.error)) {}
+              for (let u = 0; u < 5; u++) { // Limit to 5 upgrades per boost
+                const attr = upgradeSequence[u % upgradeSequence.length]
+                const { data: upgradeData, error: upgradeErr } = await supabaseAdmin.rpc('game_ship_upgrade', {
+                  p_user_id: player.user_id,
+                  p_attr: attr,
+                  p_universe_id: universeId
+                })
+                if (upgradeErr || !upgradeData?.success) break // Stop if upgrade fails
+              }
             }
           }
-        }
-        
-        return {
-          success: true,
-          message: `Applied communism boost to ${boostedPlayers} AI players`,
-          humanTop,
-          humanMedian,
-          targetAIScore,
-          humanAvg,
-          scoreGap,
-          dynamicPool,
-          minBoostPerAI,
-          boostedPlayers,
-          boostResults
         }
       }
       
       return {
         success: true,
-        message: 'No boost needed - AI players are competitive',
+        message: `Applied ${totalTechUpgrades} tech upgrades and tier-based boost to ${totalBoosted} AI players`,
+        humanRange,
+        aiRange,
         humanTop,
         humanMedian,
-        targetAIScore,
-        humanAvg,
-        scoreGap,
-        boostThreshold
+        aiTop,
+        aiMedian,
+        humanAvgTechLevel,
+        humanTechStdDev,
+        totalTechUpgrades,
+        techUpgradeResults,
+        totalBoosted,
+        boostResults,
+        targetTiers: targetTiers.map(t => ({ name: t.name, targetScore: t.targetScore }))
       }
       
     } catch (error) {
@@ -1159,6 +1547,19 @@ export class AIService {
       
       // Apply communism boost if needed (only once per cycle)
       const communismBoost = await this.applyCommunismBoost(universeId)
+      
+      // Regenerate AI combat supplies automatically
+      try {
+        const { data: regenResult, error: regenError } = await supabaseAdmin.rpc('ai_regenerate_combat_supplies', {
+          p_universe_id: universeId
+        })
+        
+        if (!regenError && regenResult?.success) {
+          // Combat supplies regenerated successfully
+        }
+      } catch (regenError) {
+        // Non-fatal error - combat supplies regeneration failed
+      }
       
       const aiService = new AIService()
       let playersProcessed = 0
@@ -1232,7 +1633,7 @@ export class AIService {
             }
             
           } catch (error) {
-            console.log(`Error processing AI player ${player.handle}:`, error)
+            // Error processing AI (logging disabled for performance)
             playerResults.push({
               player: player.handle,
               action: 'error',
@@ -1324,11 +1725,52 @@ export class AIService {
 // Personality Classes
 class TraderPersonality implements AIPersonality {
   type = 'Trader'
+  private aiService: AIService
+  
+  constructor(aiService: AIService) {
+    this.aiService = aiService
+  }
   
   makeDecision(situation: any): AIDecision {
-    const { turns, credits, ports, planets, warps, hull, cargo } = situation
+    const { turns, credits, ports, planets, warps, hull, cargo, shipLevels } = situation
     // Energy does not take cargo space
     const cargoTotal = (cargo?.ore || 0) + (cargo?.organics || 0) + (cargo?.goods || 0)
+    
+    // Check combat readiness and tech level
+    const combatStatus = this.aiService.checkCombatReadiness(situation)
+    const techStatus = this.aiService.checkTechLevel(situation)
+    
+    // CRITICAL: Return to sector 0 if combat supplies below 50%
+    if (combatStatus.needsRefill && ports.special === 0 && turns >= 1) {
+      return {
+        action: 'hyperspace',
+        turnsToSpend: 1,
+        priority: 97,
+        reason: 'trader_refill_combat_supplies'
+      }
+    }
+    
+    // Combat supplies auto-regenerate now - no need to purchase
+    
+    // CRITICAL: Hoarding credits with low tech - MUST UPGRADE
+    if (techStatus.isHoarding && ports.special > 0) {
+      return {
+        action: 'upgrade_ship',
+        turnsToSpend: Math.min(turns, 20),
+        priority: 99,
+        reason: 'trader_stop_hoarding'
+      }
+    }
+    
+    // Seek special port if hoarding and not there
+    if (techStatus.isHoarding && ports.special === 0 && turns >= 1) {
+      return {
+        action: 'hyperspace',
+        turnsToSpend: 1,
+        priority: 98,
+        reason: 'trader_seek_upgrades'
+      }
+    }
     
     // Emergency trading - only if we have cargo to sell or ports to trade at
     if (credits < 500 && (cargoTotal > 10 || ports.commodity > 0)) {
@@ -1351,21 +1793,21 @@ class TraderPersonality implements AIPersonality {
     }
     
     // PRIORITY: Ship upgrades - be VERY aggressive with high credits!
-    if (credits >= 5000 && ports.special > 0) {
+    if (credits >= 2000 && ports.special > 0) {
       return {
         action: 'upgrade_ship',
-        turnsToSpend: Math.min(turns, 10), // Spend lots of turns upgrading
-        priority: 95, // Higher priority than trading!
+        turnsToSpend: Math.min(turns, 15),
+        priority: 95,
         reason: 'trader_upgrading'
       }
     }
     
     // CRITICAL: Seek special port for upgrades if we have lots of credits
-    if (credits >= 5000 && ports.special === 0 && turns >= 3) {
+    if (credits >= 2000 && ports.special === 0 && turns >= 3) {
       return {
-        action: 'explore',
-        turnsToSpend: Math.min(turns, 10),
-        priority: 93, // Very high priority - must find special port!
+        action: 'hyperspace',
+        turnsToSpend: 1,
+        priority: 93,
         reason: 'trader_seeking_special_port'
       }
     }
@@ -1391,9 +1833,50 @@ class TraderPersonality implements AIPersonality {
 
 class ExplorerPersonality implements AIPersonality {
   type = 'Explorer'
+  private aiService: AIService
+  
+  constructor(aiService: AIService) {
+    this.aiService = aiService
+  }
   
   makeDecision(situation: any): AIDecision {
-    const { turns, credits, ports, planets, warps, hull, cargo } = situation
+    const { turns, credits, ports, planets, warps, hull, cargo, shipLevels } = situation
+    
+    // Check combat readiness and tech level
+    const combatStatus = this.aiService.checkCombatReadiness(situation)
+    const techStatus = this.aiService.checkTechLevel(situation)
+    
+    // CRITICAL: Return to sector 0 if combat supplies below 50%
+    if (combatStatus.needsRefill && ports.special === 0 && turns >= 1) {
+      return {
+        action: 'hyperspace',
+        turnsToSpend: 1,
+        priority: 97,
+        reason: 'explorer_refill_combat_supplies'
+      }
+    }
+    
+    // Combat supplies auto-regenerate now - no need to purchase
+    
+    // CRITICAL: Hoarding credits with low tech - MUST UPGRADE
+    if (techStatus.isHoarding && ports.special > 0) {
+      return {
+        action: 'upgrade_ship',
+        turnsToSpend: Math.min(turns, 20),
+        priority: 99,
+        reason: 'explorer_stop_hoarding'
+      }
+    }
+    
+    // Seek special port if hoarding
+    if (techStatus.isHoarding && ports.special === 0 && turns >= 1) {
+      return {
+        action: 'hyperspace',
+        turnsToSpend: 1,
+        priority: 98,
+        reason: 'explorer_seek_upgrades'
+      }
+    }
     
     // Deep exploration - be very aggressive with turn spending
     if (turns >= 5 && warps > 0) {
@@ -1441,25 +1924,66 @@ class ExplorerPersonality implements AIPersonality {
 
 class WarriorPersonality implements AIPersonality {
   type = 'Warrior'
+  private aiService: AIService
+  
+  constructor(aiService: AIService) {
+    this.aiService = aiService
+  }
   
   makeDecision(situation: any): AIDecision {
-    const { turns, credits, ports, planets, warps, hull, cargo } = situation
+    const { turns, credits, ports, planets, warps, hull, cargo, shipLevels } = situation
     
-    // Ship upgrades for combat - warriors prioritize this ABOVE ALL!
-    if (credits >= 3000 && ports.special > 0) {
+    // Check combat readiness and tech level
+    const combatStatus = this.aiService.checkCombatReadiness(situation)
+    const techStatus = this.aiService.checkTechLevel(situation)
+    
+    // CRITICAL: Warriors MUST stay combat ready - return to sector 0 if below 50%
+    if (combatStatus.needsRefill && ports.special === 0 && turns >= 1) {
+      return {
+        action: 'hyperspace',
+        turnsToSpend: 1,
+        priority: 99, // HIGHEST priority for warriors!
+        reason: 'warrior_refill_combat_supplies'
+      }
+    }
+    
+    // Combat supplies auto-regenerate now - no need to purchase
+    
+    // CRITICAL: Hoarding credits with low tech - MUST UPGRADE
+    if (techStatus.isHoarding && ports.special > 0) {
       return {
         action: 'upgrade_ship',
-        turnsToSpend: Math.min(turns, 15), // Warriors upgrade VERY aggressively
+        turnsToSpend: Math.min(turns, 25), // Warriors upgrade most aggressively
+        priority: 100,
+        reason: 'warrior_stop_hoarding'
+      }
+    }
+    
+    // Seek special port if hoarding
+    if (techStatus.isHoarding && ports.special === 0 && turns >= 1) {
+      return {
+        action: 'hyperspace',
+        turnsToSpend: 1,
+        priority: 99,
+        reason: 'warrior_seek_upgrades'
+      }
+    }
+    
+    // Ship upgrades for combat - warriors prioritize this ABOVE ALL!
+    if (credits >= 1500 && ports.special > 0) {
+      return {
+        action: 'upgrade_ship',
+        turnsToSpend: Math.min(turns, 20), // Warriors upgrade VERY aggressively
         priority: 98, // Highest priority!
         reason: 'warrior_upgrading'
       }
     }
     
     // Seek special port for upgrades - CRITICAL
-    if (credits >= 3000 && ports.special === 0 && turns >= 3) {
+    if (credits >= 1500 && ports.special === 0 && turns >= 3) {
       return {
-        action: 'explore',
-        turnsToSpend: Math.min(turns, 12),
+        action: 'hyperspace',
+        turnsToSpend: 1,
         priority: 96, // Must find special port!
         reason: 'warrior_seeking_special_port'
       }
@@ -1506,9 +2030,50 @@ class WarriorPersonality implements AIPersonality {
 
 class ColonizerPersonality implements AIPersonality {
   type = 'Colonizer'
+  private aiService: AIService
+  
+  constructor(aiService: AIService) {
+    this.aiService = aiService
+  }
   
   makeDecision(situation: any): AIDecision {
-    const { turns, credits, ports, planets, warps, hull, cargo } = situation
+    const { turns, credits, ports, planets, warps, hull, cargo, shipLevels } = situation
+    
+    // Check combat readiness and tech level
+    const combatStatus = this.aiService.checkCombatReadiness(situation)
+    const techStatus = this.aiService.checkTechLevel(situation)
+    
+    // CRITICAL: Return to sector 0 if combat supplies below 50%
+    if (combatStatus.needsRefill && ports.special === 0 && turns >= 1) {
+      return {
+        action: 'hyperspace',
+        turnsToSpend: 1,
+        priority: 97,
+        reason: 'colonizer_refill_combat_supplies'
+      }
+    }
+    
+    // Combat supplies auto-regenerate now - no need to purchase
+    
+    // CRITICAL: Hoarding credits with low tech - MUST UPGRADE
+    if (techStatus.isHoarding && ports.special > 0) {
+      return {
+        action: 'upgrade_ship',
+        turnsToSpend: Math.min(turns, 20),
+        priority: 99,
+        reason: 'colonizer_stop_hoarding'
+      }
+    }
+    
+    // Seek special port if hoarding
+    if (techStatus.isHoarding && ports.special === 0 && turns >= 1) {
+      return {
+        action: 'hyperspace',
+        turnsToSpend: 1,
+        priority: 98,
+        reason: 'colonizer_seek_upgrades'
+      }
+    }
     
     // Claim planets - highest priority
     if (planets.unclaimed > 0 && credits >= 10000) {
@@ -1531,20 +2096,20 @@ class ColonizerPersonality implements AIPersonality {
     }
     
     // Ship upgrades for better planet management
-    if (credits >= 4000 && ports.special > 0) {
+    if (credits >= 2000 && ports.special > 0) {
       return {
         action: 'upgrade_ship',
-        turnsToSpend: Math.min(turns, 10),
+        turnsToSpend: Math.min(turns, 15),
         priority: 90,
         reason: 'colonizer_upgrading'
       }
     }
     
     // Seek special port for upgrades
-    if (credits >= 4000 && ports.special === 0 && turns >= 3) {
+    if (credits >= 2000 && ports.special === 0 && turns >= 3) {
       return {
-        action: 'explore',
-        turnsToSpend: Math.min(turns, 8),
+        action: 'hyperspace',
+        turnsToSpend: 1,
         priority: 88,
         reason: 'colonizer_seeking_special_port'
       }
@@ -1571,11 +2136,52 @@ class ColonizerPersonality implements AIPersonality {
 
 class BalancedPersonality implements AIPersonality {
   type = 'Balanced'
+  private aiService: AIService
+  
+  constructor(aiService: AIService) {
+    this.aiService = aiService
+  }
   
   makeDecision(situation: any): AIDecision {
-    const { turns, credits, ports, planets, warps, hull, cargo } = situation
+    const { turns, credits, ports, planets, warps, hull, cargo, shipLevels } = situation
     // Energy does not take cargo space
     const cargoTotal = (cargo?.ore || 0) + (cargo?.organics || 0) + (cargo?.goods || 0)
+    
+    // Check combat readiness and tech level
+    const combatStatus = this.aiService.checkCombatReadiness(situation)
+    const techStatus = this.aiService.checkTechLevel(situation)
+    
+    // CRITICAL: Return to sector 0 if combat supplies below 50%
+    if (combatStatus.needsRefill && ports.special === 0 && turns >= 1) {
+      return {
+        action: 'hyperspace',
+        turnsToSpend: 1,
+        priority: 97,
+        reason: 'balanced_refill_combat_supplies'
+      }
+    }
+    
+    // Combat supplies auto-regenerate now - no need to purchase
+    
+    // CRITICAL: Hoarding credits with low tech - MUST UPGRADE
+    if (techStatus.isHoarding && ports.special > 0) {
+      return {
+        action: 'upgrade_ship',
+        turnsToSpend: Math.min(turns, 20),
+        priority: 99,
+        reason: 'balanced_stop_hoarding'
+      }
+    }
+    
+    // Seek special port if hoarding
+    if (techStatus.isHoarding && ports.special === 0 && turns >= 1) {
+      return {
+        action: 'hyperspace',
+        turnsToSpend: 1,
+        priority: 98,
+        reason: 'balanced_seek_upgrades'
+      }
+    }
     
     // Emergency trading - only if we have cargo to sell or ports to trade at
     if (credits < 500 && (cargoTotal > 10 || ports.commodity > 0)) {
@@ -1608,20 +2214,20 @@ class BalancedPersonality implements AIPersonality {
     }
     
     // Ship upgrades - balanced approach (HIGH PRIORITY!)
-    if (credits >= 5000 && ports.special > 0) {
+    if (credits >= 2000 && ports.special > 0) {
       return {
         action: 'upgrade_ship',
-        turnsToSpend: Math.min(turns, 10),
+        turnsToSpend: Math.min(turns, 15),
         priority: 92,
         reason: 'balanced_upgrading'
       }
     }
     
     // Seek special port for upgrades
-    if (credits >= 5000 && ports.special === 0 && turns >= 3) {
+    if (credits >= 2000 && ports.special === 0 && turns >= 3) {
       return {
-        action: 'explore',
-        turnsToSpend: Math.min(turns, 10),
+        action: 'hyperspace',
+        turnsToSpend: 1,
         priority: 90,
         reason: 'balanced_seeking_special_port'
       }
